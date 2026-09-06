@@ -17,13 +17,13 @@ export const FORMATION_TIERS = [
   { t: 2, name: '玄阶', q: 'success', mult: 1.7, minLevel: 6 },
   { t: 3, name: '地阶', q: 'primary', mult: 2.8, minLevel: 12 },
   { t: 4, name: '天阶', q: 'purple', mult: 4.5, minLevel: 20 },
-  { t: 5, name: '仙阶', q: 'pink', mult: 7, minLevel: 28 },
-  { t: 6, name: '帝阶', q: 'warning', mult: 11, minLevel: 36 },
-  { t: 7, name: '神阶', q: 'danger', mult: 17, minLevel: 45 },
-  { t: 8, name: '灵阶', q: 'cyan', mult: 26, minLevel: 55 },
-  { t: 9, name: '皇阶', q: 'orange', mult: 40, minLevel: 70 },
-  { t: 10, name: '圣阶', q: 'gold', mult: 62, minLevel: 90 },
-  { t: 11, name: '道阶', q: 'legendary', mult: 100, minLevel: 110 }
+  { t: 5, name: '仙阶', q: 'pink', mult: 6.2, minLevel: 28 },
+  { t: 6, name: '帝阶', q: 'warning', mult: 9, minLevel: 36 },
+  { t: 7, name: '神阶', q: 'danger', mult: 13, minLevel: 45 },
+  { t: 8, name: '灵阶', q: 'cyan', mult: 18, minLevel: 55 },
+  { t: 9, name: '皇阶', q: 'orange', mult: 24, minLevel: 70 },
+  { t: 10, name: '圣阶', q: 'gold', mult: 31, minLevel: 90 },
+  { t: 11, name: '道阶', q: 'legendary', mult: 38, minLevel: 110 }
 ]
 
 export const FORMATION_GROUPS = [

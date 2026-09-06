@@ -1,7 +1,7 @@
 // 时间流逝 —— 现实 1 秒 = 1 游戏小时；修仙历照此推进
 // 岁数随日推进，寿元随境界/转生增长，界内显示"岁数 + 寿元"
 
-export const DAYS_PER_SECOND = 1 / 24 // 现实 1 秒 = 1 游戏小时
+export const DAYS_PER_SECOND = 1 / 6 // 现实 1 秒 ≈ 4 游戏小时
 export const DAYS_PER_YEAR = 365
 export const DAYS_PER_MONTH = 30
 
@@ -14,7 +14,7 @@ export const rollInitAge = () => 6 + Math.floor(Math.random() * 7) // 6~12 岁
 // 凡人与各境界寿元(按大境界梯级)：凡人100年，越高越久，仙人不老
 const MORTAL_LIFESPAN = 100
 const REALM_LIFESPANS = [
-  150, 300, 800, 2000, 5000, 10000, 20000, 40000, 80000, 150000, 300000, 600000, 1000000, 2000000, 5000000, 10000000
+  150, 300, 600, 1200, 2400, 5000, 10000, 20000, 40000, 80000, 150000, 300000, 500000, 800000, 1200000, 2000000
 ]
 
 const now = () => Date.now()

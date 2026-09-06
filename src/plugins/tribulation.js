@@ -1,7 +1,8 @@
 // 天劫系统 —— 关键境界节点渡劫方可突破
-// 雷劫(战力判定)、心魔劫(心境判定)。渡劫成功得永久劫后加成，失败损修为/气血并进入冷却。
+// 雷劫按“突破境界”施加雷威伤害，抗住(存活)则成功，反之失败并进入冷却。
 import { equippedExtras } from './setBonus'
 import { playerPowerScore, tribulationPowerNeed, TRIBULATION_CD_FAIL, initGateState } from './breakthroughGate'
+import { realmStageOf } from './game'
 
 export const TRIBULATIONS = [
   { lv: 19, name: '金丹天劫', kind: 'thunder', bonus: { attack: 200, health: 800 }, penalty: '雷火噬身' },
@@ -19,7 +20,16 @@ export const isTribulationLevel = lv => !!tribulationOf(lv)
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-// 渡劫：kind 决定判定方式；失败进入冷却
+// 雷劫伤害：按突破境界(大阶段)递增的“最大气血百分比”，可被防御削减
+const thunderDamage = (player, lv) => {
+  const stage = realmStageOf(lv)
+  const hp = Math.max(1000, player.maxHealth || 1000)
+  const pct = Math.min(1.2, 0.3 + stage * 0.055)
+  const defMit = Math.min(0.6, (player.defense || 0) / (hp * 0.08 + 1))
+  return { dmg: Math.max(1, Math.floor(hp * pct * (1 - defMit))), pct: pct * (1 - defMit), defMit }
+}
+
+// 渡劫：抗住雷威则成功，否则失败并进入冷却
 export const conductTribulation = player => {
   initGateState(player)
   const lv = player.level + 1
@@ -33,37 +43,31 @@ export const conductTribulation = player => {
     return { ok: false, reason: `渡劫失败冷却中，还需 ${sec} 秒`, cd: true }
   }
 
+  // 战力门槛（仍保留：威压过盛无资格渡劫）
   const power = playerPowerScore(player)
   const needPower = tribulationPowerNeed(lv)
-  const br = equippedExtras(player).breakthroughRate || 0
-  let chance
-  if (t.kind === 'heart') {
-    // 心魔劫：侧重心境(暴击/闪避/道心)
-    chance = clamp(0.42 + (player.critical || 0) * 3 + (player.dodge || 0) * 1.5 - t.lv * 0.001 + br, 0.15, 0.9)
-  } else {
-    chance = clamp(power / (power + t.lv * 120) + br, 0.15, 0.95)
-  }
-
   if (power < needPower) {
     return failTribulation(player, `${t.penalty}·威压过盛，需战力 ${needPower.toLocaleString('zh-CN')} 方可渡劫（当前 ${power.toLocaleString('zh-CN')}）`)
   }
 
-  if (Math.random() < chance) {
+  const { dmg, pct } = thunderDamage(player, lv)
+  player.health -= dmg
+  if (player.health > 0) {
     if (!player.passedTribulation) player.passedTribulation = []
     player.passedTribulation.push(lv)
     applyBonus(player, t.bonus)
-    return { ok: true, name: t.name, bonus: t.bonus }
+    return { ok: true, name: t.name, bonus: t.bonus, dmg }
   }
-  return failTribulation(player, `${t.penalty}，修为受损，可再试`)
+  player.health = Math.max(1, player.health)
+  return failTribulation(player, `${t.penalty}！雷劫造成 ${dmg} 点伤害（${(pct * 100).toFixed(0)}%），未能抗住，渡劫失败`, dmg)
 }
 
-const failTribulation = (player, reason) => {
+const failTribulation = (player, reason, dmg = 0) => {
   const cultLost = Math.floor((player.cultivation || 0) * 0.15)
-  const hpLost = Math.floor((player.health || 0) * 0.2)
   player.cultivation = (player.cultivation || 0) - cultLost
-  player.health = Math.max(1, (player.health || 1) - hpLost)
+  player.health = Math.max(1, (player.health || 1))
   player.tribulationCdUntil = Date.now() + TRIBULATION_CD_FAIL
-  return { ok: false, reason, cd: true, cultLost, hpLost }
+  return { ok: false, reason, cd: true, cultLost, dmg }
 }
 
 const applyBonus = (player, bonus) => {

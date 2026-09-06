@@ -176,7 +176,8 @@ export const useTalisman = (player, id) => {
   } else {
     const eff = {}
     Object.keys(r.buff).forEach(k => {
-      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, k === 'critical' || k === 'dodge' || k === 'effectBoost' ? 0.5 : 3)
+      // 削弱符箓增益上限：暴击/闪避/特效 0.25，攻防修 1.2，避免中高阶符箓堆到顶
+      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, k === 'critical' || k === 'dodge' || k === 'effectBoost' ? 0.25 : 1.2)
     })
     addBuff(player, {
       name: r.name,

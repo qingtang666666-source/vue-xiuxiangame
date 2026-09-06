@@ -193,7 +193,8 @@ export const effectivePlayerStats = player => {
     health: (player.health || 0),
     maxHealth: Math.floor((player.maxHealth || 0) * (1 + (rb.health || 0)) + half(sk.health + sect.health + apt.health + tech.health + (s.health || 0))),
     critical: clamp((player.critical || 0) + na.critical + s.critical + f.critical + b.critical + sk.critical + sect.critical + apt.critical + tech.critical + (realm.critical || 0) + rb.critical),
-    dodge: clamp((player.dodge || 0) + na.dodge + s.dodge + f.dodge + b.dodge + sk.dodge + sect.dodge + apt.dodge + tech.dodge + (realm.dodge || 0) + rb.dodge),
+    // 闪避来源统一削弱：所有来源叠加后整体打 0.65 折，削弱数值且更难顶到 80% 上限
+    dodge: clamp(((player.dodge || 0) + na.dodge + s.dodge + f.dodge + b.dodge + sk.dodge + sect.dodge + apt.dodge + tech.dodge + (realm.dodge || 0) + rb.dodge) * 0.65),
     speed: equippedSpeed(player),
     // 扩展词条（供战斗/引擎读取）
     extras: ex

@@ -8,6 +8,7 @@ import { TREASURES, addTreasure, treasureTierOf, treasureByTier } from './treasu
 import { addBuff } from './buffs.js'
 import equip from './equip.js'
 import { rollTechniqueDrop } from './technique.js'
+import { performRebirth } from './rebirthFlow.js'
 
 export const ADVENTURE_COOLDOWN = 30000 // 现实 30 秒冷却
 
@@ -107,6 +108,11 @@ const badAdventure = player => {
   const lv = player.level || 1
   const scene = pickScene(BAD_SCENES)
   const roll = Math.random()
+  // 罕见陨落：直接死亡进入轮回转世（概率极低，避免频繁死亡）
+  if (roll < 0.03) {
+    performRebirth(player)
+    return { type: scene, title: '道陨坐化', desc: `你于【${scene}】中悟道陨落、身死道消，一缕真灵转世重修（轮回 +1）。`, dead: true }
+  }
   if (roll < 0.3) {
     const loss = Math.min(player.props.money || 0, 200 + lv * 25)
     player.props.money -= loss

@@ -53,7 +53,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '温养经脉，气血充盈',
     stems: ['养脉', '回春', '固本', '培元', '续命', '生骨', '通玄', '洗骨', '脱胎', '换骨'],
-    effect: m => ({ health: Math.round(50 * m) })
+    effect: m => ({ health: Math.round(30 * m) })
   },
   {
     key: 'attack',
@@ -61,7 +61,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '锋芒毕露，出手如风',
     stems: ['淬锋', '裂山', '破军', '星火', '斩龙', '裂天', '焚海', '碎星', '镇岳', '开天'],
-    effect: m => ({ attack: Math.round(20 * m) })
+    effect: m => ({ attack: Math.round(10 * m) })
   },
   {
     key: 'defense',
@@ -69,7 +69,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '铜皮铁骨，坚不可摧',
     stems: ['铁壁', '金刚', '御岳', '磐石', '玄龟', '镇守', '不动', '重甲', '明王', '冥王'],
-    effect: m => ({ defense: Math.round(15 * m) })
+    effect: m => ({ defense: Math.round(8 * m) })
   },
   {
     key: 'critical',
@@ -77,7 +77,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '眼到手到，招招致命',
     stems: ['锐眼', '入微', '点睛', '杀意', '锋芒', '战意', '贯日', '屠龙', '九击', '灭世'],
-    effect: m => ({ critical: 0.003 * m })
+    effect: m => ({ critical: 0.0015 * m })
   },
   {
     key: 'dodge',
@@ -85,7 +85,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '身法飘渺，难以捉摸',
     stems: ['轻身', '飘渺', '影遁', '惊鸿', '凌波', '踏风', '瞬影', '幻身', '无影', '无形'],
-    effect: m => ({ dodge: 0.003 * m })
+    effect: m => ({ dodge: 0.0015 * m })
   },
   {
     key: 'econ',
@@ -136,7 +136,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '阴阳调和，攻防气血俱增',
     stems: ['混元', '太一', '紫府', '周天', '先天', '无极', '鸿蒙', '造化', '轮回', '大衍'],
-    effect: m => ({ attack: Math.round(12 * m), defense: Math.round(10 * m), health: Math.round(40 * m) })
+    effect: m => ({ attack: Math.round(7 * m), defense: Math.round(5 * m), health: Math.round(24 * m) })
   },
   {
     key: 'longevity',
@@ -152,7 +152,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '怒意滔天，攻伐皆裂',
     stems: ['怒啸', '焚心', '狂战', '暴血', '凶威', '扬威', '破浪', '裂岳', '霸体', '辟易'],
-    effect: m => ({ attack: Math.round(12 * m), critical: 0.0015 * m })
+    effect: m => ({ attack: Math.round(7 * m), critical: 0.0008 * m })
   },
   {
     key: 'ironwall',
@@ -160,7 +160,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '玄武之壁，坚不可摧',
     stems: ['铁壁', '玄壁', '重楼', '镇岳', '不动', '磐石', '金城', '玉垒', '山岳', '天堑'],
-    effect: m => ({ defense: Math.round(10 * m), health: Math.round(30 * m) })
+    effect: m => ({ defense: Math.round(5 * m), health: Math.round(18 * m) })
   },
   {
     key: 'gale',
@@ -168,7 +168,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '身随风动，招招难避',
     stems: ['疾风', '惊鸿', '掠影', '残影', '瞬影', '踏月', '追云', '无影', '化风', '折光'],
-    effect: m => ({ dodge: 0.0015 * m, critical: 0.0015 * m })
+    effect: m => ({ dodge: 0.0008 * m, critical: 0.0008 * m })
   },
   {
     key: 'sagacity',
