@@ -50,7 +50,8 @@ export const playerPowerScore = player => {
   const defense = eff.defense || 0
   // 境界基础战力(标准曲线) + 装备/加点等实际加成：正常玩家≥本境界标准，装备/加点再往上叠加
   const realmBase = realmPower(player.level || 1)
-  return Math.floor(realmBase + dodge * 1.6 * 100 + attack * 2 + (health / 100) * 0.2 + defense * 1.2 + critical * 1.8 * 100)
+  // 基础属性战力加成加强：攻/防/暴/闪/血权重翻倍，让加点与装备更体现在战力上
+  return Math.floor(realmBase + dodge * 3.2 * 100 + attack * 4 + (health / 100) * 0.4 + defense * 2.4 + critical * 3.6 * 100)
 }
 
 // 与 above 同权重，用于敌手评分
