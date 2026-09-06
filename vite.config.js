@@ -61,6 +61,10 @@ export default defineConfig({
         enabled: false
       },
       registerType: 'autoUpdate'
+      ,
+      workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024
+      }
     }),
     AutoImport({
       resolvers: [
@@ -85,16 +89,20 @@ export default defineConfig({
         log: false,
         compact: true,
         stringArray: true,
+        shuffleStringArray: true,
         renameGlobals: false,
-        selfDefending: false,
-        debugProtection: false,
+        selfDefending: true,
+        debugProtection: true,
+        debugProtectionInterval: 0,
         rotateStringArray: true,
+        numbersToExpressions: true,
         deadCodeInjection: false,
-        stringArrayEncoding: ['none'],
+        stringArrayEncoding: ['base64'],
         disableConsoleOutput: true,
-        stringArrayThreshold: 0.75,
-        controlFlowFlattening: false,
-        unicodeEscapeSequence: true,
+        stringArrayThreshold: 0.85,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.6,
+        unicodeEscapeSequence: false,
         identifierNamesGenerator: 'hexadecimal'
       },
       excludes: ['router.js'],
