@@ -1,0 +1,355 @@
+<template>
+  <div class="alchemy">
+    <div class="alchemy-header">
+      <div class="title">
+        炼丹 · <span class="realm" v-text="levelNames(player.level)" />
+      </div>
+      <div class="resources">
+        <el-tag v-for="res in resourceList" :key="res.key" :type="res.type" effect="plain" class="res-tag">
+          {{ res.name }}: {{ formatNumberToChineseUnit(res.value) }}
+        </el-tag>
+      </div>
+    </div>
+
+    <div class="buffs" v-if="buffs.length">
+      <div class="section-title">当前增益</div>
+      <el-tag v-for="b in buffs" :key="b.name + b.expireAt" :type="b.quality" effect="dark" class="buff-tag">
+        {{ b.name }} · {{ b.expireAt ? `剩余 ${remainingMinutes(b.expireAt)} 分钟` : '（永久持续）' }}
+      </el-tag>
+    </div>
+
+    <div class="pills" v-if="pills.length">
+      <div class="section-title">丹药背包</div>
+      <el-card class="pill-card" v-for="p in pills" :key="p.id" shadow="never">
+        <div class="pill-row">
+          <el-tag :type="p.recipe.quality" effect="dark" class="clickable" @click="showPill(p)">{{ p.recipe.name }}</el-tag>
+          <span class="pill-count">×{{ p.count }}</span>
+          <span class="pill-val">价值 {{ formatNumberToChineseUnit(pillVal(p.recipe)) }} 灵石</span>
+          <el-button size="small" type="primary" @click="use(p)">服用</el-button>
+        </div>
+      </el-card>
+    </div>
+
+    <div class="section-title">
+      丹方
+      <span class="count">共 {{ recipes.length }} 种</span>
+    </div>
+    <div class="filter-bar">
+      <el-select v-model="tierFilter" size="small" class="filter-select" placeholder="品阶">
+        <el-option label="全部品阶" :value="0" />
+        <el-option v-for="t in TIERS" :key="t.t" :label="t.name" :value="t.t" />
+      </el-select>
+      <el-radio-group v-model="kindFilter" size="small">
+        <el-radio-button value="all">全部</el-radio-button>
+        <el-radio-button value="permanent">永久</el-radio-button>
+        <el-radio-button value="buff">限时</el-radio-button>
+      </el-radio-group>
+    </div>
+    <div v-if="crafting" class="crafting-bar">
+      正在炼制【{{ recipeById(crafting)?.name }}】...
+      <el-button size="small" type="primary" @click="skipCraft">跳 过</el-button>
+    </div>
+    <div class="recipe-grid">
+      <el-card v-for="r in displayRecipes" :key="r.id" class="recipe-card" shadow="hover">
+        <template #header>
+          <div class="card-head">
+            <el-tag :type="r.quality" effect="dark">{{ r.name }}</el-tag>
+            <el-tag size="small" :type="r.category === 'buff' ? 'warning' : 'info'" effect="plain">
+              {{ r.category === 'buff' ? '限时' : '永久' }}
+            </el-tag>
+          </div>
+        </template>
+        <p class="desc">{{ r.desc }}</p>
+        <p class="effect">{{ r.effectText }}</p>
+        <div class="cost">
+          <el-tag size="small" type="info">价值 {{ formatNumberToChineseUnit(pillVal(r)) }} 灵石</el-tag>
+          <el-tag size="small" v-if="r.cost.spiritHerb" type="success">灵草 {{ r.cost.spiritHerb }}</el-tag>
+          <el-tag size="small" v-if="r.cost.money" type="warning">灵石 {{ formatNumberToChineseUnit(r.cost.money) }}</el-tag>
+          <el-tag size="small" v-if="r.cost.cultivateDan" type="primary">培养丹 {{ r.cost.cultivateDan }}</el-tag>
+          <el-tag size="small" v-if="r.cost.material && r.cost.material.key" type="danger">核心药材 {{ matNameOf(r.cost.material.key) }}×{{ r.cost.material.qty }}</el-tag>
+        </div>
+        <el-button
+          class="craft-btn"
+          type="primary"
+          :disabled="!canCraftMap[r.id]"
+          @click="craft(r)"
+        >
+          炼制
+        </el-button>
+      </el-card>
+    </div>
+
+    <div class="actions">
+    </div>
+    <item-info :visible="infoShow" :data="infoData" @update:visible="infoShow = $event" />
+  </div>
+</template>
+
+<script setup>
+  import { ref, computed } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useMainStore } from '@/plugins/store'
+  import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
+  import { RECIPES, TIERS, recipeById, canCraft, usePill, activeBuffs } from '@/plugins/alchemy'
+  import { beginAction, actionTask, finishNow } from '@/plugins/actionTimer'
+  import { matNameOf } from '@/plugins/materialDb'
+  import { pillPrice } from '@/plugins/market'
+  import itemInfo from '@/components/itemInfo.vue'
+
+  const store = useMainStore()
+  const router = useRouter()
+  const player = ref(store.player)
+
+  const recipes = RECIPES
+  const tierFilter = ref(1)
+  const kindFilter = ref('all')
+  const crafting = computed(() => actionTask(player.value)?.id || null)
+  const infoShow = ref(false)
+  const infoData = ref(null)
+
+  const displayRecipes = computed(() => {
+    return recipes.filter(r => {
+      if (tierFilter.value && r.tier !== tierFilter.value) return false
+      if (kindFilter.value !== 'all' && r.category !== kindFilter.value) return false
+      return true
+    })
+  })
+
+  const resourceList = computed(() => {
+    const p = player.value.props || {}
+    return [
+      { key: 'spiritHerb', name: '灵草', value: p.spiritHerb || 0, type: 'success' },
+      { key: 'money', name: '灵石', value: p.money || 0, type: 'warning' },
+      { key: 'cultivateDan', name: '培养丹', value: p.cultivateDan || 0, type: 'primary' }
+    ]
+  })
+
+  const buffs = computed(() => activeBuffs(player.value))
+
+  const pills = computed(() => {
+    return (player.value.pills || [])
+      .map(p => ({ ...p, recipe: recipeById(p.id) }))
+      .filter(p => p.recipe)
+  })
+
+  // 各丹方是否可炼制，用于按钮置灰
+  const canCraftMap = computed(() => {
+    const map = {}
+    RECIPES.forEach(r => {
+      map[r.id] = canCraft(player.value, r.id).ok
+    })
+    return map
+  })
+
+  const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
+
+  const craft = r => {
+    if (actionTask(player.value)) {
+      gameNotifys({ title: '炼丹中', message: '请等待当前一炉完成或点击跳过', type: 'info' })
+      return
+    }
+    const check = canCraft(player.value, r.id)
+    if (!check.ok) {
+      gameNotifys({ title: '炼丹失败', message: check.reason, type: 'error' })
+      return
+    }
+    const res = beginAction(player.value, { kind: 'craft-pill', id: r.id, name: r.name, data: { tier: r.tier }, can: () => canCraft(player.value, r.id) })
+    if (res.ok) gameNotifys({ title: '炼丹', message: `开始炼制【${r.name}】，约 ${Math.round(res.duration / 1000)}s`, type: 'info' })
+    else gameNotifys({ title: '炼丹', message: res.reason, type: 'error' })
+  }
+
+  const skipCraft = () => {
+    const out = finishNow(player.value)
+    if (out) gameNotifys({ title: '工坊', message: out.message, type: out.type })
+  }
+
+  const showPill = p => {
+    const r = p.recipe
+    infoData.value = {
+      title: r.name,
+      rows: [
+        { k: '品阶', v: r.tierName },
+        { k: '类型', v: r.category === 'buff' ? '限时' : '永久' },
+        { k: '库存', v: p.count }
+      ],
+      effects: [r.effectText]
+    }
+    infoShow.value = true
+  }
+
+  const pillVal = r => pillPrice(r)
+
+  const use = p => {
+    const res = usePill(player.value, p.id)
+    if (res.ok) {
+      gameNotifys({
+        title: '丹药服用',
+        message: res.buff ? `服下【${p.recipe.name}】，${p.recipe.effectText}` : `服下【${p.recipe.name}】，${p.recipe.effectText}`,
+        type: 'success'
+      })
+    } else {
+      gameNotifys({ title: '丹药服用', message: res.reason, type: 'error' })
+    }
+  }
+</script>
+
+<style scoped>
+  .alchemy {
+    text-align: left;
+    padding: 0 4px;
+  }
+
+  .alchemy-header {
+    margin-bottom: 12px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .realm {
+    color: var(--el-color-primary);
+  }
+
+  .resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .res-tag {
+    font-size: 13px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin: 12px 0 8px;
+  }
+
+  .count {
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--el-text-color-secondary);
+    margin-left: 6px;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    width: 160px;
+  }
+
+  .buffs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .buff-tag {
+    font-size: 12px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .pill-card {
+    width: 200px;
+  }
+
+  .clickable {
+    cursor: pointer;
+  }
+
+  .pill-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pill-count {
+    font-weight: bold;
+  }
+
+  .pill-val {
+    font-size: 12px;
+    color: var(--el-color-warning);
+  }
+
+  .recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .recipe-card {
+    margin: 0;
+  }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .desc {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    margin: 4px 0;
+    min-height: 18px;
+  }
+
+  .effect {
+    font-size: 12px;
+    color: var(--el-color-success);
+    margin-bottom: 8px;
+  }
+
+  .cost {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .craft-btn {
+    width: 100%;
+  }
+
+  .crafting-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  @media only screen and (max-width: 768px) {
+    .recipe-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
