@@ -2,6 +2,7 @@
 import { effectivePlayerStats } from './setBonus.js'
 import { addTreasure, TREASURES } from './treasure.js'
 import { rollTechniqueDrop } from './technique.js'
+import { realmPower, playerPowerScore } from './breakthroughGate.js'
 
 // 多只 Boss 定义：tier 表示境界加成（越高越难、击杀奖励越丰厚）
 const BOSS_DEFS = [
@@ -35,8 +36,8 @@ export const ensureWorldBosses = player => {
     const baseStage = stageOf(player.level || 0)
     player.worldBosses = BOSS_DEFS.slice(0, 6).map((def, idx) => {
       const t = Math.min(15, baseStage + def.tier)
-      const atk = Math.max(100, power.attack || 100)
-      const maxHp = Math.floor(Math.max(50, atk * (16 + t * 2)))
+      const bossLv = Math.min(144, (t + 1) * 9)
+      const maxHp = Math.floor(Math.max(50, realmPower(bossLv) * 0.04))
       return {
         day,
         id: `wb-${idx}`,
@@ -68,7 +69,7 @@ export const fightWorldBoss = (player, id) => {
   if (wb.dead) return { ok: false, reason: '该 Boss 已被讨伐' }
   if ((wb.attacks || 0) >= DAILY_ATTACK_CAP) return { ok: false, reason: `该 Boss 今日已攻击 ${DAILY_ATTACK_CAP} 次，明日再来` }
   const power = effectivePlayerStats(player)
-  let dmg = Math.max(1, Math.floor(power.attack - 5))
+  let dmg = Math.max(1, Math.floor(playerPowerScore(player) / 400))
   if (Math.random() < (power.critical || 0)) dmg = Math.floor(dmg * 1.5)
   wb.hp = Math.max(0, wb.hp - dmg)
   wb.damage = (wb.damage || 0) + dmg

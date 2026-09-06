@@ -8,7 +8,7 @@
 import { ensureAptitude } from './aptitude.js'
 import { rollTechniqueDrop, techGradeForLevel } from './technique.js'
 import { levelNames } from './game.js'
-import { playerPowerScore } from './breakthroughGate.js'
+import { playerPowerScore, realmPower } from './breakthroughGate.js'
 
 // 宗门品级：从强到弱。index 0 = 超一流，index 6 = 六流（入门最易，8成）。
 // rootReq 为加入该宗所需的根骨品阶(0~5)，entry 为入门考核基准成功率。
@@ -179,8 +179,8 @@ export const nextPosition = player => {
     else chance = 0.05
   } else {
     // 其余按境界 + 战力上调难度
-    const power = playerPower(player)
-    const guardian = next.level * 12 + idx * 40
+    const power = playerPowerScore(player)
+    const guardian = Math.floor(realmPower(next.level) * 0.9)
     chance = Math.min(0.95, Math.max(0.1, power / (power + guardian)))
   }
   return {
@@ -227,8 +227,8 @@ export const completeMission = (player, missionId) => {
   if (player.level < mission.reqLevel) return { ok: false, reason: `实力不足(需${levelNames(mission.reqLevel)})` }
   // 战斗类任务：战力判定
   if (mission.combat) {
-    const pp = playerPower(player)
-    const monster = mission.reqLevel * 22
+    const pp = playerPowerScore(player)
+    const monster = Math.floor(realmPower(mission.reqLevel) * 0.9)
     if (Math.random() > pp / (pp + monster)) return { ok: false, reason: '除妖失利，可再试' }
   }
   sect.contribution = (sect.contribution || 0) + mission.contrib

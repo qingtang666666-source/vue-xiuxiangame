@@ -7,6 +7,7 @@ import { ITEM_DB, tierPool, weightedTierPick } from './market.js'
 import { TREASURES, addTreasure, treasureByTier } from './treasure.js'
 import { rollTechniqueDrop } from './technique.js'
 import { levelNames } from './game.js'
+import { realmPower, enemyStatsForPower, playerPowerScore } from './breakthroughGate.js'
 
 const LORE = [
   ['灵药园秘境', '灵雾缭绕，灵草遍地'],
@@ -89,8 +90,8 @@ export const exploreRealm = (player, realmId) => {
   player.realmTimes = (player.realmTimes || 0) + 1
   player.props.money -= r.fee
 
-  const guardian = Math.floor(r.minLevel * 7.5) + (r.lootTier + 1) * 75
-  const chance = Math.min(0.95, Math.max(0.15, playerPower(player) / (playerPower(player) + guardian)))
+  const guardian = Math.floor(realmPower(r.minLevel) * 0.9)
+  const chance = Math.min(0.95, Math.max(0.15, playerPowerScore(player) / (playerPowerScore(player) + guardian)))
   if (Math.random() < chance) {
     const rewards = rollLoot(player, r)
     return { ok: true, rewards, texts: [r.theme, '你闯过关隘，满载而归'] }
@@ -107,8 +108,8 @@ export const challengeRealmBoss = (player, realmId) => {
   if (player.level < r.minLevel) return { ok: false, reason: `需达${levelNames(r.minLevel)}` }
   if ((player.props.currency || 0) < r.bossFee) return { ok: false, reason: `混沌石不足(需 ${r.bossFee})` }
   player.props.currency -= r.bossFee
-  const pp = playerPower(player)
-  const boss = r.minLevel * 25 + (r.lootTier + 1) * 450
+  const pp = playerPowerScore(player)
+  const boss = Math.floor(realmPower(r.minLevel) * 1.4)
   const chance = clamp(pp / (pp + boss), 0.15, 0.9)
   if (Math.random() < chance) {
     const rewards = []
@@ -135,14 +136,15 @@ export const challengeRealmBoss = (player, realmId) => {
 // —— 回合制秘境辅助：敌人构造 + 胜利奖励 / 失败返还 ——
 export const realmEnemy = (realm, boss = false) => {
   const lv = (realm.minLevel || 10) + (boss ? 8 : 0)
+  const st = enemyStatsForPower(realmPower(lv), boss ? 1.25 : 1.0)
   return {
     name: realm.name + (boss ? '·首领' : '·守灵'),
     level: lv,
-    attack: Math.floor(lv * 60),
-    defense: Math.floor(lv * 40),
-    health: Math.floor(lv * 400),
+    attack: st.attack,
+    defense: st.defense,
+    health: st.health,
     critical: boss ? 0.08 : 0.03,
-    dodge: boss ? 0.05 : 0.02
+    dodge: (boss ? 0.05 : 0.02) * 0.4
   }
 }
 export const realmWin = (player, realm, boss = false) => {
