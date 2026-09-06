@@ -37,6 +37,7 @@ export const ensureWorldBosses = player => {
     player.worldBosses = BOSS_DEFS.slice(0, 6).map((def, idx) => {
       const t = Math.min(15, baseStage + def.tier)
       const bossLv = Math.min(144, (t + 1) * 9)
+      // 玩家 + 道友合力：总量约16刀的血量，协力几日内可击杀
       const maxHp = Math.floor(Math.max(50, realmPower(bossLv) * 0.04))
       return {
         day,
@@ -71,7 +72,9 @@ export const fightWorldBoss = (player, id) => {
   const power = effectivePlayerStats(player)
   let dmg = Math.max(1, Math.floor(playerPowerScore(player) / 400))
   if (Math.random() < (power.critical || 0)) dmg = Math.floor(dmg * 1.5)
-  wb.hp = Math.max(0, wb.hp - dmg)
+  // 道友协同伤害：若干虚拟道友一同出手，帮助削减Boss血（结算按玩家贡献）
+  const allyDmg = Math.floor(dmg * (6 + Math.random() * 4))
+  wb.hp = Math.max(0, wb.hp - dmg - allyDmg)
   wb.damage = (wb.damage || 0) + dmg
   wb.attacks = (wb.attacks || 0) + 1
   const small = Math.floor((player.level || 1) * 2)
