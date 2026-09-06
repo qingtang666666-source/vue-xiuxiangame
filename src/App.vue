@@ -916,8 +916,11 @@
     }
 
     .el-dialog,
-    .strengthen.el-drawer.rtl {
-      width: 80% !important;
+    .el-drawer {
+      width: 92% !important;
+      --el-dialog-width: 92% !important;
+      --el-drawer-width: 92% !important;
+      max-width: 92vw;
     }
 
     .actions .action {
