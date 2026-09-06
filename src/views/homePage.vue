@@ -2687,8 +2687,13 @@
   }
 
   // 属性加点
-  const pointNum = () => (player.value.reincarnation ? Math.min(60, player.value.reincarnation * 10) : 1)
-  const pointBonus = type => ((type === 'health' ? 100 : 50) * pointNum())
+  const pointNum = () => {
+    const rin = player.value.reincarnation || 0
+    const rinMult = rin ? Math.min(60, rin * 10) : 1
+    const lvMult = 1 + Math.min(2, Math.floor((player.value.level || 0) / 45))
+    return rinMult * lvMult
+  }
+  const pointBonus = type => ((type === 'health' ? 150 : 75) * pointNum())
   const spentPoints = computed(() => {
     const a = player.value.pointAlloc || {}
     return (a.attack || 0) + (a.defense || 0) + (a.health || 0)

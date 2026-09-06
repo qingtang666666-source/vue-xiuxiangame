@@ -208,10 +208,10 @@ const equips = {
     return this.drawPrize(lv, 'sutra', names_a, names_b, names_c, names_d, names_e, names_f, isNewbie, forceQuality)
   },
   equip_Attack(lv) {
-    return this.getRandomInt(5, 25) * lv
+    return this.getRandomInt(4, 20) * lv
   },
   equip_Health(lv) {
-    return this.getRandomInt(50, 250) * lv
+    return this.getRandomInt(40, 200) * lv
   },
   equip_Criticalhitrate() {
     return this.getRandomFloatInRange(0.01, 0.05)

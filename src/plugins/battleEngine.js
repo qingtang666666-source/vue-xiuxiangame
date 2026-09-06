@@ -67,7 +67,8 @@ export const getPlayerAbilities = player => {
     if (!player.methods?.[id]) continue
     const g = TECH_GRADES[t.grade - 1]?.mult || 1
     const chapter = methodChapter(player, id)
-    const power = t.divine.dmg * (1 + chapter * 0.04)
+    // 控制型神通削弱：伤害打折，且定身改为按 chance 概率触发
+    const power = t.divine.dmg * (1 + chapter * 0.04) * (t.divine.kind === 'control' ? 0.8 : 1)
     const mpCost = Math.max(15, Math.floor(18 + g * 6))
     list.push({
       id: `ab-${id}`,
@@ -75,6 +76,7 @@ export const getPlayerAbilities = player => {
       kind: t.divine.kind || 'burst',
       power,
       mpCost,
+      chance: t.divine.chance ?? 0.1,
       tier: t.grade
     })
     if (list.length >= 5) break // 主动最多 5 门
@@ -295,8 +297,13 @@ export const playerAttack = (st, enemyId, ability) => {
           const ls = applyLifesteal(p, r.dmg, 0.35)
           if (ls > 0) addLog(st, `<span class="ok">你吸取 ${ls} 点气血。</span>`, 'heal')
         } else if (ability.kind === 'control') {
-          target._stunned = true
-          addLog(st, `<span class="warn">${target.name}被${ability.name}所缚，无法行动！</span>`, 'debuff')
+          const stunChance = Math.min(0.5, (ability.chance ?? 0.1) * 0.6)
+          if (Math.random() < stunChance) {
+            target._stunned = true
+            addLog(st, `<span class="warn">${target.name}被${ability.name}所缚，无法行动！</span>`, 'debuff')
+          } else {
+            addLog(st, `<span class="dodge">${target.name}挣脱了${ability.name}的束缚。</span>`, 'dodge')
+          }
         }
       }
     }
