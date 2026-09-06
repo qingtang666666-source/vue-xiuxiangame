@@ -32,15 +32,18 @@ export const heroLevelOfRank = rank => {
   return Math.round(144 - ((rank - 1) / (HERO_COUNT - 1)) * 143)
 }
 
+// 排名越靠前战力越高：第1名约 2.4 倍基准 → 道祖顶级可达约1200万
+export const heroBoostOfRank = rank => 1 + (1 - Math.max(1, Math.min(HERO_COUNT, rank)) / HERO_COUNT) * 1.4
+
 export const heroPowerOfRank = rank => {
   const lv = heroLevelOfRank(rank)
-  return realmPower(lv)
+  return Math.floor(realmPower(lv) * heroBoostOfRank(rank))
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
 export const heroEnemy = (rank, name) => {
   const lv = heroLevelOfRank(rank)
-  const st = enemyStatsForPower(realmPower(lv), 1.15)
+  const st = enemyStatsForPower(realmPower(lv) * heroBoostOfRank(rank), 1.0)
   const s2 = Math.min(15, Math.max(0, Math.floor((lv - 1) / 9)))
   return {
     level: lv,
