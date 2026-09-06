@@ -32,8 +32,8 @@ export const heroLevelOfRank = rank => {
   return Math.round(144 - ((rank - 1) / (HERO_COUNT - 1)) * 143)
 }
 
-// 排名越靠前战力越高：第1名约 2.4 倍基准 → 道祖顶级可达约1200万
-export const heroBoostOfRank = rank => 1 + (1 - Math.max(1, Math.min(HERO_COUNT, rank)) / HERO_COUNT) * 1.4
+// 排名越靠前战力越高；加成封顶 ×2.0，让道祖顶级约1000万(5M×2)
+export const heroBoostOfRank = rank => Math.min(2.0, 1 + (1 - Math.max(1, Math.min(HERO_COUNT, rank)) / HERO_COUNT) * 1.4)
 
 export const heroPowerOfRank = rank => {
   const lv = heroLevelOfRank(rank)
