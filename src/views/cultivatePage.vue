@@ -313,12 +313,10 @@
           const need = breakthroughPowerNeed(player.value.level)
           const power = playerPowerScore(player.value)
           if (power < need) {
-            if (willCross) player.value.stageFails[stage] = fails + 1
-            player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
             stopCultivate()
             isStop.value = false
             isStart.value = false
-            texts.value.push(`<span style="color: #F56C6C">突破试炼失败！需击败 2 名同阶对手（需战力 ${need.toLocaleString('zh-CN')}，当前 ${power.toLocaleString('zh-CN')}），第 ${fails + 1}/${MAX_STAGE_FAILS} 次</span>`)
+            texts.value.push(`<span style="color: #F56C6C">战力未达标（需 ${need.toLocaleString('zh-CN')}，当前 ${power.toLocaleString('zh-CN')}），无法突破！请先强化装备/功法</span>`)
             return
           }
         }
@@ -327,8 +325,14 @@
           stopCultivate()
           isStop.value = false
           isStart.value = false
-          texts.value.push(`<span style="color: #E6A23C">条件已满足！开始突破试炼：击败 2 名同阶对手（回合制）</span>`)
-          breakthroughTrialShow.value = true
+          texts.value.push(`<span style="color: #E6A23C">条件已满足！是否开始突破试炼（击败 2 名同阶对手）？</span>`)
+          ElMessageBox.confirm('突破条件已满足，是否进入突破试炼？需击败 2 名同阶对手。', '突破确认', {
+            center: true,
+            confirmButtonText: '开始突破',
+            cancelButtonText: '暂不突破'
+          })
+            .then(() => { breakthroughTrialShow.value = true })
+            .catch(() => {})
           return
         }
         player.value.taskNum = 0

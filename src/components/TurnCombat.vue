@@ -21,7 +21,6 @@
       <div class="tc-arena">
         <div class="tc-side">
           <div class="tc-unit me" :class="{ dead: state.player.hp <= 0, active: isPlayerTurnV }">
-            <div class="tc-portrait">道</div>
             <div class="tc-name">{{ state.player.name }}<span class="lv">{{ levelNames(state.player.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(state.player.maxHp, state.player.hp) + '%' }" /></div>
@@ -36,7 +35,6 @@
 
         <div class="tc-side">
           <div class="tc-unit foe" :class="{ dead: foe.hp <= 0, sel: target === foe.id, active: !isPlayerTurnV && !battleOverV }" @click="target = foe.id">
-            <div class="tc-portrait foe-p">妖</div>
             <div class="tc-name">{{ foe.name }}<span class="lv">{{ levelNames(foe.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(foe.maxHp, foe.hp) + '%' }" /></div>
@@ -255,4 +253,57 @@
   .tc-res-sub { color: #ffe082; font-size: 14px; }
   .tc-res-lines { color: var(--el-text-color-primary); line-height: 2.1; font-size: 15px; }
   .tc-res-btns { margin-top: 12px; }
+
+  /* 淡雅主题：浅色、去头像后的简洁界面 */
+  .tc { color: var(--el-text-color-primary); }
+  .tc-topbar { background: linear-gradient(135deg, #f5f0e8, #eae4f0); color: #5a5470; border: 1px solid #e4dcc9; border-radius: 14px; }
+  .tc-round b { color: #8a6f4d; }
+  .tc-phase { color: #8a6f4d; }
+  .tc-phase.enemy { color: #c07a7a; }
+  .tc-phase.over { color: #6a9a6a; }
+  .tc-tip { color: #6a9a6a; }
+  .tc-unit { border-radius: 18px; padding: 18px 22px 16px; border: 1px solid #e6e0d2; background: linear-gradient(165deg, #fffdf8, #f4efe6); box-shadow: 0 8px 24px rgba(120, 100, 70, 0.12); }
+  .tc-unit.me { border-color: #bcd4f0; }
+  .tc-unit.foe { cursor: pointer; border-color: #f0c0c0; }
+  .tc-unit.active { box-shadow: 0 0 0 2px #e0c98a, 0 8px 24px rgba(120, 100, 70, 0.16); }
+  .tc-unit.foe.sel { border-color: #e07a7a; }
+  .tc-unit.dead { opacity: 0.5; filter: grayscale(0.8); }
+  .tc-name { font-size: 21px; font-weight: 800; color: #4a4560; margin-bottom: 10px; text-align: center; }
+  .tc-name .lv { font-size: 13px; color: #b08a4a; margin-left: 8px; font-weight: 600; }
+  .tc-bar { height: 14px; border-radius: 8px; background: rgba(120, 100, 70, 0.12); overflow: hidden; }
+  .tc-bar.hp span { background: linear-gradient(90deg, #e08a8a, #e5b1a0); }
+  .tc-bar.mp span { background: linear-gradient(90deg, #8ab0e0, #a9c6e5); }
+  .tc-num { font-size: 13px; color: #7a7590; margin-top: 6px; }
+  .tc-num b { font-size: 16px; color: #4a4560; }
+  .tc-pct { position: absolute; top: 18px; right: 20px; font-size: 20px; font-weight: 800; color: #8a8560; }
+  .tc-flag { font-size: 12px; color: #b08a4a; margin-top: 8px; }
+  .tc-vs i { font-size: 30px; font-weight: 900; color: #c9a06a; }
+  .tc-vs span { font-size: 12px; color: #a29a80; letter-spacing: 2px; }
+  .tc-act { flex: 1 1 118px; min-height: 60px; border: none; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-weight: 700; font-size: 14px; background: linear-gradient(160deg, #9b8b74, #b3a180); box-shadow: 0 6px 16px rgba(120, 100, 70, 0.2); transition: transform 0.1s; }
+  .tc-act:hover { transform: translateY(-2px); }
+  .tc-act:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .tc-act .ic { font-size: 26px; }
+  .tc-act .la { font-size: 15px; }
+  .tc-act .mp { font-size: 11px; color: #e6e0d0; }
+  .tc-act.atk { background: linear-gradient(160deg, #b0795f, #c99b6f); }
+  .tc-act.def { background: linear-gradient(160deg, #6f82a0, #8fa6c0); }
+  .tc-act.retr { background: linear-gradient(160deg, #a06f6f, #b58a8a); }
+  .tc-act.skill.burst { background: linear-gradient(160deg, #a05f72, #c07a90); }
+  .tc-act.skill.control { background: linear-gradient(160deg, #7a6fb0, #998fc8); }
+  .tc-act.skill.heal { background: linear-gradient(160deg, #6fa07f, #8fb89a); }
+  .tc-act.skill.lifesteal { background: linear-gradient(160deg, #a06fa0, #c08ac0); }
+  .tc-log { margin-top: 14px; max-height: 200px; overflow-y: auto; border-radius: 12px; padding: 10px 14px; background: #faf7f0; color: #6b6570; font-size: 14px; line-height: 2; border: 1px solid #e8e0d0; }
+  .tc-logline { margin-bottom: 2px; }
+  .tc-logline .r { color: #b0a88a; margin-right: 5px; }
+  .tc-logline.dmg { color: #c07a7a; }
+  .tc-logline.skill { color: #8a7ac0; }
+  .tc-logline.warn, .tc-logline.debuff { color: #c09a5a; }
+  .tc-logline.err { color: #d07a7a; }
+  .tc-logline.ok, .tc-logline.heal, .tc-logline.def { color: #6a9a6a; }
+  .tc-logline.dodge { color: #7a90b0; }
+  .tc-result { margin-top: 14px; text-align: center; padding: 20px; border-radius: 18px; background: linear-gradient(165deg, #fffdf8, #f4efe6); border: 1px solid #e6e0d2; box-shadow: 0 8px 24px rgba(120, 100, 70, 0.12); }
+  .tc-res-title { font-size: 26px; font-weight: 900; margin-bottom: 8px; letter-spacing: 2px; }
+  .tc-res-title.ok { color: #6a9a6a; }
+  .tc-res-title.err { color: #d07a7a; }
+  .tc-res-sub { color: #b08a4a; font-size: 14px; }
 </style>
