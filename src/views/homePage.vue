@@ -3001,13 +3001,27 @@
 
   @media only screen and (max-width: 768px) {
     .left-fabs {
-      top: 64px;
+      top: auto;
+      bottom: 10px;
       left: 6px;
+      right: 6px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 6px;
     }
     .left-fab {
-      padding: 5px 8px;
+      padding: 5px 9px;
       font-size: 12px;
+    }
+    .money-banner {
+      top: 6px;
+      left: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .index-box {
+      padding-bottom: 78px;
     }
   }
 

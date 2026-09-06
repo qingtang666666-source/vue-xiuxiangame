@@ -465,10 +465,16 @@
       top: 6px;
       right: 6px;
       gap: 5px;
+      max-width: calc(100vw - 8px);
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+      -webkit-overflow-scrolling: touch;
     }
     .nav-btn {
       padding: 5px 8px;
       font-size: 12px;
+      flex: none;
     }
   }
 
@@ -545,6 +551,7 @@
     .game-container {
       min-height: 574px;
       min-width: 356px;
+      padding: 66px 8px 24px;
     }
   }
 </style>
