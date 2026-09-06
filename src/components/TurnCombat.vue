@@ -79,7 +79,7 @@
         </template>
         <div v-else-if="state.phase === 'victory'" class="tc-res-sub">你已击败强敌！</div>
         <div class="tc-res-btns">
-          <el-button type="primary" size="large" @click="close('win')">确定</el-button>
+          <el-button type="primary" size="large" @click="close(state.phase === 'victory' ? 'win' : state.phase === 'defeat' ? 'lose' : 'flee')">确定</el-button>
         </div>
       </div>
     </div>

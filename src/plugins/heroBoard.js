@@ -1,6 +1,7 @@
 // 豪杰榜 —— 300 名 NPC，可挑战排名更高者晋升；前100有周期性奖励
 // 豪杰强度按“境界基准值”生成，不随玩家属性缩放
 import { playerPowerScore } from './breakthroughGate'
+import { levelNames } from './game'
 
 export const HERO_COUNT = 300
 
@@ -24,12 +25,15 @@ const heroStats = (lv, eliteMult = 1.15) => {
 const scoreOfStats = (atk, hp, def, crit, dodge) =>
   Math.floor(dodge * 1.6 * 100 + atk * 2 + (hp / 100) * 0.2 + def * 1.2 + crit * 1.8 * 100)
 
-// rank: 1=最强(最高境界)，300=最弱
+// rank: 1=最强(最高境界)，300=最弱；均衡覆盖 大境界1(炼气)~11(玄仙)，等级 1~99
 export const heroLevelOfRank = rank => {
   rank = Math.max(1, Math.min(HERO_COUNT, Math.floor(rank)))
-  const min = 25 // 最弱者境界(等级下限)，避免前期秒进前300
-  const max = 144
-  return Math.round(max - ((rank - 1) / (HERO_COUNT - 1)) * (max - min))
+  const stages = 11
+  const per = Math.ceil(HERO_COUNT / stages) // 约 28 名/境界
+  const stageIdx = stages - 1 - Math.min(stages - 1, Math.floor((rank - 1) / per)) // 0..10，rank1→最高
+  const inStage = (rank - 1) % per
+  const lv = stageIdx * 9 + 1 + (inStage % 9)
+  return Math.min(99, Math.max(1, lv))
 }
 
 export const heroPowerOfRank = rank => {
@@ -58,6 +62,7 @@ export const generateHeroes = () => {
       rank: i,
       name: nameOf(i),
       level: heroLevelOfRank(i),
+      realm: levelNames(heroLevelOfRank(i)),
       power: heroPowerOfRank(i)
     })
   }
@@ -120,7 +125,7 @@ export const boardList = player => {
   const out = []
   for (let r = 1; r <= HERO_COUNT; r++) {
     if (ptr === r) {
-      out.push({ rank: r, name: '你', level: player.level || 1, power: playerPowerScore(player), isPlayer: true, id: '__player__' })
+      out.push({ rank: r, name: '你', level: player.level || 1, realm: levelNames(player.level || 1), power: playerPowerScore(player), isPlayer: true, id: '__player__' })
     } else {
       const h = heroes.find(x => x.rank === r)
       if (h) out.push(h)

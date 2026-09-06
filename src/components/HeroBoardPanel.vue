@@ -23,7 +23,7 @@
         <div v-for="h in board" :key="h.id" class="hb-row" :class="{ me: h.isPlayer }">
           <span class="hb-rank">{{ h.rank }}</span>
           <span class="hb-name2">{{ h.name }}</span>
-          <span class="hb-lv">Lv.{{ h.level }}</span>
+          <span class="hb-lv">{{ h.realm }}</span>
           <span class="hb-power">{{ h.power.toLocaleString('zh-CN') }}</span>
           <el-button
             v-if="!h.isPlayer && canChallenge(h.rank)"
