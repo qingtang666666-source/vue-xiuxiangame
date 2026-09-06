@@ -15,10 +15,29 @@ export const MAX_STAGE_FAILS = 5
 // 境界战力标准：11阶(道祖, Lv~144)≈500万，几何递减到 Lv1≈8000
 export const STANDARD_TOP_POWER = 5000000
 export const STANDARD_BOTTOM_POWER = 8000
-const STANDARD_RATIO = Math.pow(STANDARD_TOP_POWER / STANDARD_BOTTOM_POWER, 1 / 143)
+// 按 16 大境界阶梯：中高境界战力更高(更丰满)，道祖=500万起步，仅最底层陡降
+const STAGE_POWER = [
+  20000,   // 炼气
+  40000,   // 筑基
+  80000,   // 金丹
+  160000,  // 元婴
+  350000,  // 化神
+  700000,  // 炼虚
+  1200000, // 合体
+  1800000, // 大乘
+  2400000, // 渡劫
+  2900000, // 真仙
+  3400000, // 玄仙
+  3900000, // 金仙
+  4300000, // 大罗金仙
+  4600000, // 太乙
+  4800000, // 混元
+  5000000  // 道祖
+]
 export const realmPower = level => {
   const lv = Math.max(1, Math.min(144, Math.floor(level || 1)))
-  return Math.max(1, Math.floor(STANDARD_TOP_POWER * Math.pow(1 / STANDARD_RATIO, 144 - lv)))
+  const stage = Math.max(0, Math.min(15, Math.floor((lv - 1) / 9)))
+  return STAGE_POWER[stage]
 }
 
 // 玩家正式战力（与“总体实力/装备评分”一致；不引入 equip 避免循环依赖，公式相同）
