@@ -15,9 +15,9 @@
 <script setup>
   import { ref, computed, watch } from 'vue'
   import TurnCombat from './TurnCombat.vue'
-  import { buildEnemies } from '@/plugins/battleEngine'
   import { isTribulationLevel } from '@/plugins/tribulation'
   import { realmStageOf } from '@/plugins/game'
+  import { realmPower, enemyStatsForPower } from '@/plugins/breakthroughGate'
   import { useMainStore } from '@/plugins/store'
 
   const props = defineProps({ visible: Boolean })
@@ -31,17 +31,18 @@
 
   // 生成 2 名同阶对手：按境界基准值(monster表)生成，略强(+2级)，不随玩家属性缩放
   const spawn = () => {
-    const list = buildEnemies(player, { count: 2, levelOffset: 2, reincarnation: player.reincarnation || 0 })
-    enemies.value = list.map(e => ({
-      name: e.name,
-      level: e.level,
-      health: e.maxHp,
-      maxHp: e.maxHp,
-      hp: e.maxHp,
-      attack: e.atk,
-      defense: e.def,
-      critical: e.crit,
-      dodge: e.dodge
+    const targetLv = Math.min(144, Math.max(1, player.level + 1))
+    const st = enemyStatsForPower(realmPower(targetLv), 1.15)
+    enemies.value = [0, 1].map(i => ({
+      name: `同阶对手·${i + 1}`,
+      level: targetLv,
+      health: st.health,
+      maxHp: st.health,
+      hp: st.health,
+      attack: st.attack,
+      defense: st.defense,
+      critical: 0.03,
+      dodge: 0.02 * 0.4
     }))
     round.value = 1
   }

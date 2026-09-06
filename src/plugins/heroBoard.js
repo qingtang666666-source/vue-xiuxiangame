@@ -1,6 +1,7 @@
 // 豪杰榜 —— 300 名 NPC，可挑战排名更高者晋升；前100有周期性奖励
 // 豪杰强度按“境界基准值”生成，不随玩家属性缩放
 import { playerPowerScore } from './breakthroughGate'
+import { realmPower, enemyStatsForPower } from './breakthroughGate'
 import { levelNames } from './game'
 
 export const HERO_COUNT = 300
@@ -25,30 +26,33 @@ const heroStats = (lv, eliteMult = 1.15) => {
 const scoreOfStats = (atk, hp, def, crit, dodge) =>
   Math.floor(dodge * 1.6 * 100 + atk * 2 + (hp / 100) * 0.2 + def * 1.2 + crit * 1.8 * 100)
 
-// rank: 1=最强(最高境界)，300=最弱；均衡覆盖 大境界1(炼气)~11(玄仙)，等级 1~99
+// rank: 1=最强(道祖/11阶)，300=最弱(炼气/1阶)；等级 1~144 全覆盖，战力按标准曲线
 export const heroLevelOfRank = rank => {
   rank = Math.max(1, Math.min(HERO_COUNT, Math.floor(rank)))
-  const stages = 11
-  const per = Math.ceil(HERO_COUNT / stages) // 约 28 名/境界
-  const stageIdx = stages - 1 - Math.min(stages - 1, Math.floor((rank - 1) / per)) // 0..10，rank1→最高
-  const inStage = (rank - 1) % per
-  const lv = stageIdx * 9 + 1 + (inStage % 9)
-  return Math.min(99, Math.max(1, lv))
+  return Math.round(144 - ((rank - 1) / (HERO_COUNT - 1)) * 143)
 }
 
 export const heroPowerOfRank = rank => {
   const lv = heroLevelOfRank(rank)
-  const st = heroStats(lv, 1.0)
-  return scoreOfStats(st.attack, st.health, st.defense, st.critical, st.dodge)
+  return realmPower(lv)
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
 export const heroEnemy = (rank, name) => {
   const lv = heroLevelOfRank(rank)
-  const st = heroStats(lv, 1.15)
-  st.name = name || '无名单客'
-  st.dodge = 0.03 * 0.4
-  return st
+  const st = enemyStatsForPower(realmPower(lv), 1.15)
+  const s2 = Math.min(15, Math.max(0, Math.floor((lv - 1) / 9)))
+  return {
+    level: lv,
+    name: name || '无名单客',
+    health: st.health,
+    maxHp: st.health,
+    hp: st.health,
+    attack: st.attack,
+    defense: st.defense,
+    critical: 0.005 + s2 * 0.001,
+    dodge: 0.03 * 0.4
+  }
 }
 
 let _heroes = null

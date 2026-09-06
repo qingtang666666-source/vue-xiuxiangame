@@ -275,7 +275,7 @@
   .tc-bar.mp span { background: linear-gradient(90deg, #8ab0e0, #a9c6e5); }
   .tc-num { font-size: 13px; color: #7a7590; margin-top: 6px; }
   .tc-num b { font-size: 16px; color: #4a4560; }
-  .tc-pct { position: absolute; top: 18px; right: 20px; font-size: 20px; font-weight: 800; color: #8a8560; }
+  .tc-pct { text-align: right; margin-top: 4px; font-size: 14px; font-weight: 700; color: #8a8560; }
   .tc-flag { font-size: 12px; color: #b08a4a; margin-top: 8px; }
   .tc-vs i { font-size: 30px; font-weight: 900; color: #c9a06a; }
   .tc-vs span { font-size: 12px; color: #a29a80; letter-spacing: 2px; }
