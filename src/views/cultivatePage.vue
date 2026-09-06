@@ -47,6 +47,7 @@
   import { ensureWorldNpcs } from '@/plugins/npcSystem'
   import { ensureSect } from '@/plugins/sect'
   import { isTribulationLevel, tribulationOf, conductTribulation } from '@/plugins/tribulation'
+  import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState } from '@/plugins/breakthroughGate'
   import { checkAchievements } from '@/plugins/achievementChecker'
   import { celebrate } from '@/plugins/celebrate'
   import { ElMessageBox } from 'element-plus'
@@ -240,6 +241,7 @@
   }
 
   const breakThrough = exp => {
+    initGateState(player.value)
     const reincarnation = player.value.reincarnation ? player.value.reincarnation + 1 : 1
     if (player.value.level < maxLv) {
       if (player.value.cultivation >= player.value.maxCultivation) {
@@ -276,6 +278,37 @@
             isStop.value = false
             isStart.value = false
             texts.value.push(`<span style="color: #F56C6C">寿元不足（需余寿 ${req} 年），无法冲击更高境界！请服延寿丹或转世轮回</span>`)
+            return
+          }
+        }
+        // 大境界突破门槛：需正式战力击败同阶对手，失败计次并进入冷却，超过上限此生无法再突破
+        if (willCross && player.value.level >= 19) {
+          const stage = targetStage
+          const fails = player.value.stageFails[stage] || 0
+          if (fails >= MAX_STAGE_FAILS) {
+            stopCultivate()
+            isStop.value = false
+            isStart.value = false
+            texts.value.push(`<span style="color: #F56C6C">此【${levelNames(nextLv)}】突破已失败 ${fails} 次，此生无法再突破！</span>`)
+            return
+          }
+          if ((player.value.btCdUntil || 0) > Date.now()) {
+            const sec = Math.max(1, Math.ceil((player.value.btCdUntil - Date.now()) / 1000))
+            stopCultivate()
+            isStop.value = false
+            isStart.value = false
+            texts.value.push(`<span style="color: #E6A23C">突破试炼冷却中，还需 ${sec} 秒</span>`)
+            return
+          }
+          const need = breakthroughPowerNeed(player.value.level)
+          const power = playerPowerScore(player.value)
+          if (power < need) {
+            player.value.stageFails[stage] = fails + 1
+            player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
+            stopCultivate()
+            isStop.value = false
+            isStart.value = false
+            texts.value.push(`<span style="color: #F56C6C">突破试炼失败！需击败 2 名同阶对手（需战力 ${need.toLocaleString('zh-CN')}，当前 ${power.toLocaleString('zh-CN')}），第 ${fails + 1}/${MAX_STAGE_FAILS} 次</span>`)
             return
           }
         }
@@ -375,6 +408,9 @@
             player.value.props.chips = 0
             player.value.level = 0
             player.value.taskNum = 0
+            player.value.stageFails = {}
+            player.value.btCdUntil = 0
+            player.value.tribulationCdUntil = 0
             player.value.cultivation = 0
             player.value.maxCultivation = computeMaxCultivation(0, player.value.reincarnation)
             player.value.reincarnation++

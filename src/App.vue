@@ -463,13 +463,11 @@
   @media only screen and (max-width: 768px) {
     .top-right {
       top: 6px;
+      left: 6px;
       right: 6px;
       gap: 5px;
-      max-width: calc(100vw - 8px);
-      overflow-x: auto;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       justify-content: flex-end;
-      -webkit-overflow-scrolling: touch;
     }
     .nav-btn {
       padding: 5px 8px;
@@ -551,7 +549,7 @@
     .game-container {
       min-height: 574px;
       min-width: 356px;
-      padding: 66px 8px 24px;
+      padding: 80px 8px 24px;
     }
   }
 </style>

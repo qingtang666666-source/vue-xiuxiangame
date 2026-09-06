@@ -3015,9 +3015,9 @@
       font-size: 12px;
     }
     .money-banner {
-      top: 6px;
-      left: 6px;
-      padding: 4px 10px;
+      position: static;
+      width: fit-content;
+      margin: 4px auto 8px;
       font-size: 12px;
     }
     .index-box {

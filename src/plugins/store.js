@@ -119,6 +119,9 @@ export const useMainStore = defineStore('main', {
       techniqueScrolls: [],
       techniqueSet: { active: [], passive: [] },
       passedTribulation: [],
+      stageFails: {},
+      btCdUntil: 0,
+      tribulationCdUntil: 0,
       realm: {
         stage: 0
       },
