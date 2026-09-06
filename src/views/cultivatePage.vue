@@ -70,6 +70,7 @@
   const scrollbar = ref(null)
   const breakthroughTrialShow = ref(false)
   let trialPassed = false
+  let pendingMajor = false
   const buttonsFor = computed(() => {
     return [
       { text: '开始修炼', click: () => startCultivate(), disabled: !isStart.value },
@@ -291,10 +292,10 @@
           }
         }
         // 大境界突破门槛：需正式战力击败同阶对手，失败计次并进入冷却，超过上限此生无法再突破
-        if (willCross && player.value.level >= 19) {
+        if (player.value.level >= 9 && (player.value.level + 1) % 3 === 1) {
           const stage = targetStage
           const fails = player.value.stageFails[stage] || 0
-          if (fails >= MAX_STAGE_FAILS) {
+          if (willCross && fails >= MAX_STAGE_FAILS) {
             stopCultivate()
             isStop.value = false
             isStart.value = false
@@ -312,7 +313,7 @@
           const need = breakthroughPowerNeed(player.value.level)
           const power = playerPowerScore(player.value)
           if (power < need) {
-            player.value.stageFails[stage] = fails + 1
+            if (willCross) player.value.stageFails[stage] = fails + 1
             player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
             stopCultivate()
             isStop.value = false
@@ -321,7 +322,8 @@
             return
           }
         }
-        if (willCross && player.value.level >= 19 && !trialPassed) {
+        if (player.value.level >= 9 && (player.value.level + 1) % 3 === 1 && !trialPassed) {
+          pendingMajor = willCross
           stopCultivate()
           isStop.value = false
           isStart.value = false
@@ -455,11 +457,15 @@
   }
 
   const onTrialFail = () => {
+    player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
+    if (!pendingMajor) {
+      texts.value.push(`突破试炼失败！请提升战力后再挑战`)
+      return
+    }
     const stage = realmStageOf(player.value.level + 1)
     if (!player.value.stageFails) player.value.stageFails = {}
     const f = (player.value.stageFails[stage] || 0) + 1
     player.value.stageFails[stage] = f
-    player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
     texts.value.push(`<span style="color: #F56C6C">突破试炼失败！第 ${f}/${MAX_STAGE_FAILS} 次。请强化装备/功法、提升战力后再挑战</span>`)
   }
 

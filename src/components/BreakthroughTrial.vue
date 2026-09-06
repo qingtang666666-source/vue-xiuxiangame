@@ -16,6 +16,8 @@
   import { ref, computed, watch } from 'vue'
   import TurnCombat from './TurnCombat.vue'
   import { buildEnemies } from '@/plugins/battleEngine'
+  import { isTribulationLevel } from '@/plugins/tribulation'
+  import { realmStageOf } from '@/plugins/game'
   import { useMainStore } from '@/plugins/store'
 
   const props = defineProps({ visible: Boolean })
@@ -53,8 +55,28 @@
 
   const onWin = () => {
     if (round.value >= 2) {
-      emit('update:visible', false)
-      emit('success')
+      // 第三重门槛：渡劫/雷罚 —— 按突破境界造成气血百分比伤害，抗住才成功
+      const nextLv = player.level + 1
+      if (!isTribulationLevel(nextLv)) {
+        const stage = realmStageOf(nextLv)
+        const hp = Math.max(1000, player.maxHealth || 1000)
+        const pct = Math.min(1.2, 0.3 + stage * 0.055)
+        const defMit = Math.min(0.6, (player.defense || 0) / (hp * 0.08 + 1))
+        const dmg = Math.max(1, Math.floor(hp * pct * (1 - defMit)))
+        player.health -= dmg
+        if (player.health > 0) {
+          emit('update:visible', false)
+          emit('success')
+        } else {
+          player.health = Math.max(1, player.health)
+          emit('update:visible', false)
+          emit('fail')
+        }
+      } else {
+        // 天劫节点：已有“渡劫”按钮单独处理（并给劫后加成），此处直接通过
+        emit('update:visible', false)
+        emit('success')
+      }
     } else {
       round.value++
     }
