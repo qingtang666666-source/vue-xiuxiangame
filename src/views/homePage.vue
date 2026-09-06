@@ -2,6 +2,7 @@
   <div class="index">
     <div class="money-banner"><MoneyBar compact /></div>
     <div class="left-fabs">
+      <div class="left-fab" @click="heroShow = true">⚔️ 豪杰</div>
       <div class="left-fab" @click="equipAllShow = true">📖 图鉴</div>
       <div class="left-fab" @click="sellingEquipmentBox">🗂️ 批量</div>
       <div class="left-fab" @click="seasonShow = true">🏆 赛季</div>
@@ -1219,6 +1220,7 @@
     <NaArtifactPanel :visible="naShow" @update:visible="naShow = $event" />
     <WorldBossPanel :visible="wbShow" @update:visible="wbShow = $event" />
     <SeasonPanel :visible="seasonShow" @update:visible="seasonShow = $event" />
+    <HeroBoardPanel :visible="heroShow" @update:visible="heroShow = $event" />
     <TechniquePanel :visible="techniqueShow" @update:visible="techniqueShow = $event" />
     <el-drawer
       title="新手礼包"
@@ -1358,6 +1360,7 @@
   import equipTooltip from '@/components/equipTooltip.vue'
   import itemInfo from '@/components/itemInfo.vue'
   import SeasonPanel from '@/components/SeasonPanel.vue'
+  import HeroBoardPanel from '@/components/HeroBoardPanel.vue'
   import WorldBossPanel from '@/components/WorldBossPanel.vue'
   import NaArtifactPanel from '@/components/NaArtifactPanel.vue'
   import LevelsBoard from '@/components/LevelsBoard.vue'
@@ -1412,6 +1415,7 @@
     player.value.autoIdle.breakthrough = on
   }
   const seasonShow = ref(false)
+  const heroShow = ref(false)
   const naShow = ref(false)
   const naTier = computed(() => natalArtifactTier(player.value))
   const naLv = computed(() => player.value.natalArtifact?.level || 1)

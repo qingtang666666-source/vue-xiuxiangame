@@ -122,6 +122,8 @@ export const useMainStore = defineStore('main', {
       stageFails: {},
       btCdUntil: 0,
       tribulationCdUntil: 0,
+      heroRank: 301,
+      heroClaimDate: '',
       realm: {
         stage: 0
       },

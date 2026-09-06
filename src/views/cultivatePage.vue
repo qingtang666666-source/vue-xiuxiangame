@@ -33,6 +33,12 @@
       </div>
     </div>
   </div>
+  <BreakthroughTrial
+    :visible="breakthroughTrialShow"
+    @update:visible="breakthroughTrialShow = $event"
+    @success="onTrialSuccess"
+    @fail="onTrialFail"
+  />
 </template>
 
 <script setup>
@@ -48,6 +54,7 @@
   import { ensureSect } from '@/plugins/sect'
   import { isTribulationLevel, tribulationOf, conductTribulation } from '@/plugins/tribulation'
   import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState } from '@/plugins/breakthroughGate'
+  import BreakthroughTrial from '@/components/BreakthroughTrial.vue'
   import { checkAchievements } from '@/plugins/achievementChecker'
   import { celebrate } from '@/plugins/celebrate'
   import { ElMessageBox } from 'element-plus'
@@ -61,6 +68,8 @@
   const timerIds = ref([])
   const observer = ref(null)
   const scrollbar = ref(null)
+  const breakthroughTrialShow = ref(false)
+  let trialPassed = false
   const buttonsFor = computed(() => {
     return [
       { text: '开始修炼', click: () => startCultivate(), disabled: !isStart.value },
@@ -258,7 +267,7 @@
           return
         }
         // 中阶以上冲击大境界：需吞服丹药（培养丹）；低阶(1~18)及小境界内突破自由
-        if (willCross && player.value.level >= 19) {
+        if (willCross && player.value.level >= 19 && !trialPassed) {
           const danNeed = Math.max(1, Math.ceil(player.value.level / 15))
           if ((player.value.props.cultivateDan || 0) < danNeed) {
             stopCultivate()
@@ -311,6 +320,14 @@
             texts.value.push(`<span style="color: #F56C6C">突破试炼失败！需击败 2 名同阶对手（需战力 ${need.toLocaleString('zh-CN')}，当前 ${power.toLocaleString('zh-CN')}），第 ${fails + 1}/${MAX_STAGE_FAILS} 次</span>`)
             return
           }
+        }
+        if (willCross && player.value.level >= 19 && !trialPassed) {
+          stopCultivate()
+          isStop.value = false
+          isStart.value = false
+          texts.value.push(`<span style="color: #E6A23C">条件已满足！开始突破试炼：击败 2 名同阶对手（回合制）</span>`)
+          breakthroughTrialShow.value = true
+          return
         }
         player.value.taskNum = 0
         player.value.level++
@@ -430,6 +447,21 @@
     }
   }
 
+
+  const onTrialSuccess = () => {
+    trialPassed = true
+    breakThrough(0)
+    trialPassed = false
+  }
+
+  const onTrialFail = () => {
+    const stage = realmStageOf(player.value.level + 1)
+    if (!player.value.stageFails) player.value.stageFails = {}
+    const f = (player.value.stageFails[stage] || 0) + 1
+    player.value.stageFails[stage] = f
+    player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
+    texts.value.push(`<span style="color: #F56C6C">突破试炼失败！第 ${f}/${MAX_STAGE_FAILS} 次。请强化装备/功法、提升战力后再挑战</span>`)
+  }
 
   const setupObserver = () => {
     const element = scrollbar.value?.wrapRef
