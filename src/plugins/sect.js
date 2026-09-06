@@ -8,6 +8,7 @@
 import { ensureAptitude } from './aptitude.js'
 import { rollTechniqueDrop, techGradeForLevel } from './technique.js'
 import { levelNames } from './game.js'
+import { playerPowerScore } from './breakthroughGate.js'
 
 // 宗门品级：从强到弱。index 0 = 超一流，index 6 = 六流（入门最易，8成）。
 // rootReq 为加入该宗所需的根骨品阶(0~5)，entry 为入门考核基准成功率。
@@ -168,7 +169,14 @@ export const nextPosition = player => {
     // 入门考核：成功率由宗门品级决定(最低六流8成，越高越难)
     const sect = getSect(player)
     const grade = SECT_GRADES[sect.gradeIdx] || SECT_GRADES[SECT_GRADES.length - 1]
-    chance = grade.entry
+    // 改为双门槛：战力达标 + 战胜一名同境界门内弟子，难度随宗门品级提升
+    const lv = Math.max(1, player.level || 1)
+    const powerNeed = Math.floor((120 + lv * 40) * (0.7 + grade.mult * 0.6))
+    const disciplePower = Math.floor(powerNeed * 1.15)
+    const power = playerPowerScore(player)
+    if (power >= disciplePower) chance = 0.98
+    else if (power >= powerNeed) chance = Math.min(0.95, Math.max(0.2, 0.2 + ((power - powerNeed) / (disciplePower - powerNeed)) * 0.6))
+    else chance = 0.05
   } else {
     // 其余按境界 + 战力上调难度
     const power = playerPower(player)

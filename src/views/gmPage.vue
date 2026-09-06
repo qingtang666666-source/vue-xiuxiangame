@@ -110,14 +110,14 @@
       </el-collapse-item>
     </el-collapse>
 
-    <div class="current">当前：Lv.{{ player.level }} · 灵石{{ formatNumberToChineseUnit(player.props.money) }} · 攻{{ formatNumberToChineseUnit(player.attack) }} · 血{{ formatNumberToChineseUnit(player.maxHealth) }} · 转世{{ player.reincarnation }}</div>
+    <div class="current">当前：{{ levelNames(player.level) }} · 灵石{{ formatNumberToChineseUnit(player.props.money) }} · 攻{{ formatNumberToChineseUnit(player.attack) }} · 血{{ formatNumberToChineseUnit(player.maxHealth) }} · 转世{{ player.reincarnation }}</div>
   </div>
 </template>
 
 <script setup>
   import { ref, reactive } from 'vue'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit, gameNotifys, computeMaxCultivation, gradeNames } from '@/plugins/game'
+  import { formatNumberToChineseUnit, gameNotifys, computeMaxCultivation, gradeNames, levelNames } from '@/plugins/game'
   import { drawTalentForPlayer } from '@/plugins/talent'
   import { RECIPES } from '@/plugins/alchemy'
   import { TALISMANS } from '@/plugins/talisman'
@@ -291,4 +291,11 @@
   }
   .row > .el-button { flex-shrink: 0; }
   .current { margin-top: 14px; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; }
+  @media only screen and (max-width: 768px) {
+    .gm { padding: 0 2px; }
+    .row > span { min-width: 46px; font-size: 12px; }
+    .row > .el-select,
+    .row > .el-input-number { min-width: 0; max-width: none; flex: 1 1 100%; width: 100%; }
+    .row > .el-button { flex: 1 1 auto; }
+  }
 </style>

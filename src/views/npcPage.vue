@@ -242,7 +242,7 @@
     const f = v => Math.round(v || 0).toLocaleString('zh-CN')
     ElMessageBox.alert(
       `<div style="text-align:left;font-size:13px;line-height:1.7">
-        <b>【${res.name}】</b> ${res.role} · Lv.${res.level}（大境界 ${res.realm + 1}）<br>
+        <b>【${res.name}】</b> ${res.role} · 境界 ${levelNames(res.level)}<br>
         战力：<b style="color:#E6A23C">${f(res.score)}</b><br>
         攻击 ${f(res.stats.attack)} · 防御 ${f(res.stats.defense)} · 气血 ${f(res.stats.health)}<br>
         暴击 ${(res.stats.critical * 100).toFixed(1)}% · 闪避 ${(res.stats.dodge * 100).toFixed(1)}%<br>

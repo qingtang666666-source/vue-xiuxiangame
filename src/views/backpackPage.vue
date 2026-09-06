@@ -38,7 +38,7 @@
             <el-tooltip :content="eqTip(it)" placement="top" :hide-after="0">
               <tag :type="it.quality" @click="showItem(it)">{{ it.name }}</tag>
             </el-tooltip>
-            <div class="sub">{{ genre[it.type] }} · {{ it.gradeName }} {{ it.noReq ? '无穿戴限制' : it.level + '级' }}</div>
+            <div class="sub">{{ genre[it.type] }} · {{ it.gradeName }} {{ it.noReq ? '无穿戴限制' : levelNames(it.level) }}</div>
             <div class="v">价值 {{ formatNumberToChineseUnit(valueOf(it)) }} 灵石</div>
             <div class="ops">
               <el-button size="small" type="primary" @click="equipItem(it)">穿戴</el-button>

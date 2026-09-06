@@ -13,9 +13,9 @@
       </div>
       <div class="opt-group">
         <span class="label">底注（筹码）</span>
-        <el-select v-model="anteIdx" :disabled="inPlay" style="width: 240px">
-          <el-option v-for="(a, i) in anteList" :key="i" :label="`${a} · 上限 ${potCapOf(a)}`" :value="i" />
-        </el-select>
+        <el-radio-group v-model="anteIdx" :disabled="inPlay" class="ante-group">
+          <el-radio-button v-for="(a, i) in anteList" :key="i" :value="i">{{ a }} · 上限 {{ potCapOf(a) }}</el-radio-button>
+        </el-radio-group>
       </div>
     </div>
     <div class="balance-row">
@@ -98,7 +98,7 @@
   const emit = defineEmits(['game-result'])
 
   const MODES = { solo: 2, four: 4, six: 6, nine: 9 }
-  const ANTE_LIST = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 300000, 500000]
+  const ANTE_LIST = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 4000000, 5000000]
 
   const mode = ref('solo')
   const anteIdx = ref(0)
@@ -233,6 +233,7 @@
     align-items: center;
     gap: 10px;
   }
+  .ante-group { flex-wrap: wrap; gap: 4px; }
 
   .label {
     color: #909399;

@@ -44,7 +44,8 @@ const LORE = [
 export const REALMS = LORE.map(([name, theme], idx) => {
   const minLevel = Math.round(3 + (idx / (LORE.length - 1)) * 135)
   const lootTier = Math.min(7, Math.floor(idx / (LORE.length / 8)))
-  const fee = Math.floor(minLevel * 40 + lootTier * 150 + 200)
+  // 费用按几何倍数增长：最低约200灵石，最高一档约20万灵石(≥15万)
+  const fee = Math.floor(200 * Math.pow(1.28, idx))
   const bossFee = 1 + Math.floor(idx / 4) // 混沌石
   return { id: `realm-${idx}`, name, minLevel, fee, lootTier, theme, bossFee }
 })
@@ -58,7 +59,8 @@ const playerPower = player =>
 
 const rollLoot = (player, r) => {
   const pool = tierPool(r.lootTier)
-  const totalValue = r.minLevel * (1 + r.lootTier) * 6
+  // 收益与费用对等：约 1.3 倍入场费价值的物品
+  const totalValue = Math.floor(r.fee * 1.3)
   const rewards = []
   const parts = randInt(2, 4)
   for (let i = 0; i < parts; i++) {
@@ -118,7 +120,7 @@ export const challengeRealmBoss = (player, realmId) => {
     rewards.push({ name: '混沌石', qty: g })
     const pool = tierPool(r.lootTier)
     const it = weightedTierPick(pool, r.lootTier) || ITEM_DB[0]
-    const qty = Math.max(1, Math.floor((r.minLevel * 10) / it.price))
+    const qty = Math.max(1, Math.floor((r.fee * 0.4) / it.price))
     player.props[it.key] = (player.props[it.key] || 0) + qty
     rewards.push({ name: it.name, qty })
     if (Math.random() < 0.35) {

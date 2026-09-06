@@ -4,9 +4,9 @@
     <div class="setup-bar" v-if="phase === 'setup'">
       <div class="opt-group">
         <span class="label">底分（筹码）</span>
-        <el-select v-model="anteIdx" style="width: 240px">
-          <el-option v-for="(a, i) in anteList" :key="i" :label="`${a} 分`" :value="i" />
-        </el-select>
+        <el-radio-group v-model="anteIdx" class="ante-group">
+          <el-radio-button v-for="(a, i) in anteList" :key="i" :value="i">{{ a }} 分</el-radio-button>
+        </el-radio-group>
       </div>
       <div class="balance">持有筹码：<b>{{ chips }}</b></div>
       <el-button type="primary" @click="startGame">开始游戏</el-button>
@@ -80,7 +80,7 @@
   const player = ref(store.player)
   const emit = defineEmits(['game-result'])
 
-  const ANTE_LIST = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 300000, 500000]
+  const ANTE_LIST = [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 4000000, 5000000]
   const names = ['你', '玩家1', '玩家2']
 
   const phase = ref('setup')
@@ -367,6 +367,7 @@
     color: #909399;
     font-size: 15px;
   }
+  .ante-group { flex-wrap: wrap; gap: 4px; }
 
   .balance {
     color: #606266;

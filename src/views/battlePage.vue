@@ -39,7 +39,7 @@
 
       <div class="side-row player-row">
         <div class="unit player-unit" :class="{ active: isPlayerTurnV, dead: state.player.hp <= 0 }">
-          <div class="unit-name">{{ state.player.name }} <span class="lv">Lv.{{ state.player.level }}</span></div>
+          <div class="unit-name">{{ state.player.name }} <span class="lv">{{ levelNames(state.player.level) }}</span></div>
           <div class="bar hp"><span :style="{ width: hpPct(state.player) + '%' }" /></div>
           <div class="bar mp"><span :style="{ width: mpPct(state.player) + '%' }" /></div>
           <div class="unit-sub">气血 {{ Math.max(0, Math.floor(state.player.hp)) }}/{{ state.player.maxHp }}</div>
@@ -56,7 +56,7 @@
           :class="{ active: e.id === state.activeId && !e.isPlayer, dead: e.hp <= 0, sel: target === e.id }"
           @click="target = e.id"
         >
-          <div class="unit-name">{{ e.name }} <span class="lv">Lv.{{ e.level }}</span></div>
+          <div class="unit-name">{{ e.name }} <span class="lv">{{ levelNames(e.level) }}</span></div>
           <div class="bar hp"><span :style="{ width: hpPct(e) + '%' }" /></div>
           <div class="unit-sub">气血 {{ Math.max(0, Math.floor(e.hp)) }}/{{ e.maxHp }}</div>
           <div class="def-tag" v-if="e._defending">🛡 防御中</div>

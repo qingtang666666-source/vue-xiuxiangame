@@ -21,9 +21,6 @@
       <el-tab-pane name="checkin" label="签到">
         <CheckIn @game-result="processGameResult" />
       </el-tab-pane>
-      <el-tab-pane name="dice" label="骰子">
-        <DiceGame @game-result="processGameResult" />
-      </el-tab-pane>
       <el-tab-pane name="zhajinhua" label="炸金花">
         <ZhaJinHua @game-result="processGameResult" />
       </el-tab-pane>
@@ -57,7 +54,6 @@
 <script setup>
   import tag from '@/components/tag.vue'
   import CheckIn from './checkin.vue'
-  import DiceGame from './Dicegame.vue'
   import ZhaJinHua from './zhaJinHua.vue'
   import TexasPoker from './texasPoker.vue'
   import DouDiZhu from './douDizhu.vue'

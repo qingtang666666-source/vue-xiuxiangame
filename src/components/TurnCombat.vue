@@ -22,7 +22,7 @@
         <div class="tc-side">
           <div class="tc-unit me" :class="{ dead: state.player.hp <= 0, active: isPlayerTurnV }">
             <div class="tc-portrait">道</div>
-            <div class="tc-name">{{ state.player.name }}<span class="lv">Lv.{{ state.player.level }}</span></div>
+            <div class="tc-name">{{ state.player.name }}<span class="lv">{{ levelNames(state.player.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(state.player.maxHp, state.player.hp) + '%' }" /></div>
               <div class="tc-bar mp"><span :style="{ width: pct(state.player.maxMp, state.player.mp) + '%' }" /></div>
@@ -37,7 +37,7 @@
         <div class="tc-side">
           <div class="tc-unit foe" :class="{ dead: foe.hp <= 0, sel: target === foe.id, active: !isPlayerTurnV && !battleOverV }" @click="target = foe.id">
             <div class="tc-portrait foe-p">妖</div>
-            <div class="tc-name">{{ foe.name }}<span class="lv">Lv.{{ foe.level }}</span></div>
+            <div class="tc-name">{{ foe.name }}<span class="lv">{{ levelNames(foe.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(foe.maxHp, foe.hp) + '%' }" /></div>
               <div class="tc-num">血 <b>{{ Math.max(0, Math.floor(foe.hp)) }}</b>/{{ foe.maxHp }}</div>
@@ -89,7 +89,7 @@
 <script setup>
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
   import {
     startBattle,
     monsterToEntity,

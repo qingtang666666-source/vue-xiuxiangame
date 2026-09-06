@@ -93,7 +93,7 @@
           </div>
           <div class="row" v-for="(e, i) in ownedEquips" :key="'e'+i">
             <div class="info">
-              <tag :type="e.quality">{{ e.name }}</tag><span class="sub">{{ e.gradeName }}{{ e.level }}级 · 寄售价 {{ e.sellPrice }}灵石（市场 {{ e.mval }}）</span>
+              <tag :type="e.quality">{{ e.name }}</tag><span class="sub">{{ e.gradeName }}{{ levelNames(e.level) }} · 寄售价 {{ e.sellPrice }}灵石（市场 {{ e.mval }}）</span>
             </div>
             <div class="ops"><el-button size="small" type="warning" plain @click="sellE(e)">寄售</el-button></div>
           </div>
@@ -237,7 +237,7 @@
   import { ref, computed, watch, reactive } from 'vue'
   import { useRouter, useRoute } from 'vue-router'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit, gameNotifys } from '@/plugins/game'
+  import { formatNumberToChineseUnit, gameNotifys, levelNames } from '@/plugins/game'
   import { ElMessageBox } from 'element-plus'
   import {
     MARKET_SCALES,
@@ -538,4 +538,14 @@
   .gamble-result { background: var(--el-fill-color-light); padding: 10px; border-radius: 6px; }
   .result-text { margin-top: 6px; font-size: 13px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
+  @media only screen and (max-width: 768px) {
+    .market { padding: 0 2px; }
+    .row { flex-direction: column; align-items: stretch; gap: 8px; }
+    .info { width: 100%; }
+    .ops, .qty-ops { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+    .place { flex-direction: column; align-items: stretch; gap: 4px; }
+    .place-select { width: 100%; max-width: none; }
+    .cat-filter { width: 100%; }
+    .cat-filter .el-select { width: 100% !important; }
+  }
 </style>

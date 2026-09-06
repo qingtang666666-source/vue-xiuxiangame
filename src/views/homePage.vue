@@ -1249,9 +1249,6 @@
           </el-icon>
         </tag>
       </div>
-      <el-button type="primary" :loading="newBieLoading" @click="refreshNewBie">
-        {{ newBieLoading ? '开启中...' : '换一个数字' }}
-      </el-button>
       <el-button type="primary" @click="confirmCollectionNewBie">领取装备</el-button>
     </el-drawer>
     <el-dialog v-model="newBieInfoBox" :lock-scroll="false" :title="newBieItem.name" width="420px">
