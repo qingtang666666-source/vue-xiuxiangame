@@ -40,8 +40,8 @@ export function createPokerEngine(opts) {
     allIn: false,
     acted: false,
     revealed: false,
-    tight: 0.18 + Math.random() * 0.3, // 松紧度：AI 性格（0.18~0.48，偏松）
-    aggr: 0.2 + Math.random() * 0.35 // 激进程度：AI 性格（0.2~0.55，偏弱/被动）
+    tight: 0.1 + Math.random() * 0.2, // 松紧度：AI 性格（0.10~0.30，更松）
+    aggr: 0.28 + Math.random() * 0.35 // 激进程度：AI 性格（0.28~0.63，偏主动）
   }))
 
   const totalCommunity = opts.communityPerStreet.reduce((a, b) => a + b, 0)
@@ -136,19 +136,20 @@ export function createPokerEngine(opts) {
     }
     // 面对下注：先判断要不要被 "吓" 到弃牌
     if (toCall > 0) {
-      let foldP = 0.08
-      if (isWeak) foldP += 0.28
-      else if (isMed) foldP += 0.08
-      if (bigBet) foldP += 0.12
+      let foldP = 0.05
+      if (isWeak) foldP += 0.22
+      else if (isMed) foldP += 0.05
+      if (bigBet) foldP += 0.06
       if (profitable) foldP -= 0.24
       if (isStrong) foldP = 0.02
-      if (allInBet && !isGood) foldP += 0.22
+      if (allInBet && !isGood) foldP += 0.15
       foldP += (tight - 0.5) * 0.3
       foldP = Math.max(0.02, Math.min(0.97, foldP))
       if (Math.random() < foldP) return { action: 'fold' }
       // 弱牌面对「非全下」的大注：必弃；全下交给上面的概率路径（弱牌以极低概率接、接了多半输），
       // 避免“只接必赢”的错觉，也防止 67o 无脑硬跟。
-      if (isWeak && bigBet && !allInBet) return { action: 'fold' }
+      // 弱牌面对非全下的大注：不再是必弃，改为约 40% 概率弃牌（松弱 AI 更敢跟）
+      if (isWeak && bigBet && !allInBet && Math.random() < 0.4) return { action: 'fold' }
     }
     // 可过牌：考虑价值下注 / 半诈唬 / 偷鸡 / 慢打
     if (toCall <= 0) {
@@ -183,8 +184,8 @@ export function createPokerEngine(opts) {
     if (isMed && canBet && toCall <= pot * 0.5 && Math.random() < 0.03 + (1 - tight) * 0.03) return { action: 'raise', raiseTo: target(0.3 + Math.random() * 0.3) }
     // 松弱：跟注得更宽松——中注只要牌不差就咬，小额注几乎都跟
     if (profitable) return { action: 'call' }
-    if (toCall <= pot * 0.6 && str >= 0.35) return { action: 'call' }
-    if (toCall <= pot * 0.3) return Math.random() < 0.65 ? { action: 'call' } : { action: 'fold' }
+    if (toCall <= pot * 0.6 && str >= 0.3) return { action: 'call' }
+    if (toCall <= pot * 0.3) return Math.random() < 0.75 ? { action: 'call' } : { action: 'fold' }
     return { action: 'fold' }
   }
 
