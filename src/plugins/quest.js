@@ -9,7 +9,7 @@ const COUNTERS = {
   explore: p => p.exploreWins || 0,
   boss: p => p.bossKills || 0,
   craft: p => p.craftCount || 0,
-  worldboss: p => (p.worldBoss?.rewards?.kill || 0),
+  worldboss: p => ((p.worldBosses || []).reduce((s, b) => s + ((b.rewards && b.rewards.kill) || 0), 0)),
   season: p => (p.season?.points || 0),
   alchemy: p => p.skills?.alchemy || 0,
   forge: p => p.skills?.forge || 0,
@@ -47,7 +47,7 @@ export const FIXED_QUESTS = [
   { id: 'f24', name: '初探秘境', desc: '探索一次秘境', reward: { money: 1500 }, done: p => (p.realmTimes || 0) >= 1 },
   { id: 'f25', name: '偶遇奇缘', desc: '触发一次奇遇', reward: { cultivateDan: 3 }, done: p => (p.adventureTimes || 0) >= 1 },
   { id: 'f26', name: '洞府初立', desc: '拥有任意洞府建筑', reward: { money: 2000 }, done: p => (p.manor && Object.keys(p.manor).length > 0) },
-  { id: 'f27', name: '挑战世界Boss', desc: '击败一次世界Boss', reward: { money: 30000 }, done: p => ((p.worldBoss?.rewards?.kill || 0) > 0) },
+  { id: 'f27', name: '挑战世界Boss', desc: '击败一次世界Boss', reward: { money: 30000 }, done: p => ((p.worldBosses || []).some(b => (b.rewards && b.rewards.kill) > 0)) },
   { id: 'f28', name: '投身赛季', desc: '获得任意赛季积分', reward: { money: 5000 }, done: p => ((p.season?.points || 0) > 0) },
   // —— 早期引导 ——
   { id: 'f29', name: '初试练气', desc: '境界达到炼气二层，开始正式修行', reward: { money: 200 }, done: p => p.level >= 2 },

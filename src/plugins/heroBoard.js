@@ -18,7 +18,7 @@ const heroStats = (lv, eliteMult = 1.15) => {
   const hp = Math.floor(150 * lv * mult * eliteMult)
   const def = Math.floor(4.5 * lv * eliteMult)
   const critical = 0.005 + s * 0.001
-  return { level: lv, health: hp, maxHp: hp, hp, attack: atk, defense: def, critical, dodge: 0.015 }
+  return { level: lv, health: hp, maxHp: hp, hp, attack: atk, defense: def, critical, dodge: 0.03 * 0.4 }
 }
 
 const scoreOfStats = (atk, hp, def, crit, dodge) =>
@@ -43,7 +43,7 @@ export const heroEnemy = (rank, name) => {
   const lv = heroLevelOfRank(rank)
   const st = heroStats(lv, 1.15)
   st.name = name || '无名单客'
-  st.dodge = 0.015
+  st.dodge = 0.03 * 0.4
   return st
 }
 
