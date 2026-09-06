@@ -9,7 +9,7 @@ import { addBuff } from './buffs.js'
 import equip from './equip.js'
 import { rollTechniqueDrop } from './technique.js'
 
-export const ADVENTURE_COOLDOWN = 60000 // 现实 60 秒冷却
+export const ADVENTURE_COOLDOWN = 30000 // 现实 30 秒冷却
 
 const GOOD_SCENES = ['大能传功', '神秘洞府', '遗落宝藏', '故人重逢', '仙缘垂青', '灵兽相随', '山间遗宝', '高人指点', '古碑参悟', '灵泉沐浴']
 const BAD_SCENES = ['妖兽突袭', '心魔滋生', '陷入绝地', '被劫匪盯上', '天降横祸', '走火入魔', '误入幻阵', '天雷肆虐', '山崩地裂', '阴风入体']

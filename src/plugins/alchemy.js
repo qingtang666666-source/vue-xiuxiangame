@@ -17,6 +17,7 @@ import { methodStats } from './technique.js'
 import { realmBonus } from './ascension.js'
 import { rebirthStats } from './rebirth.js'
 import { insightMult } from './insight.js'
+import { realmCultSpeedMult } from './game.js'
 import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier } from './craft.js'
 import { codexBonus } from './codex.js'
 import { tierMaterial, matNameOf } from './materialDb.js'
@@ -301,7 +302,7 @@ export const idleRates = player => {
     (ex.cultivationSpeed || 0) +
     (tech.cultivationSpeed || 0) +
     (realm.cultivationSpeed || 0) +
-    (rb.cultivationSpeed || 0)) * apt.cultivationMult + apt.cultivationSpeed)
+    (rb.cultivationSpeed || 0)) * apt.cultivationMult + apt.cultivationSpeed) * realmCultSpeedMult(player.level || 0)
   const money = Math.min(30, (1 + b.moneyMult + cd.money + (f.moneyMult || 0) + (sk.moneyMult || 0) + (sect.moneyMult || 0) + (ex.moneyMult || 0) + (tech.moneyMult || 0) + (realm.moneyMult || 0) + (rb.moneyMult || 0)))
   const offl = Math.min(30, (1 + b.offlineMult + (f.offlineMult || 0) + (rb.offlineMult || 0)))
   return {

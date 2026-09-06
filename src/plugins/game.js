@@ -12,6 +12,12 @@ export const computeMaxCultivation = (level, reincarnation = 0) => {
   return Math.max(1, Math.floor(100 * base * rebirth))
 }
 
+// 境界越深，修炼越慢：中高境界略降（1 → 0.5，随等级线性递减）
+export const realmCultSpeedMult = level => {
+  const lv = Math.max(0, Math.min(144, level || 0))
+  return Math.max(0.5, 1 - (lv / 144) * 0.5)
+}
+
 // 界域定义：宏观主线。level 仍为 1~144 统一刻度，这里做"界域 + 大境界"归档。
 export const realms = [
   { id: 'mortal', name: '人界', desc: '凡人修仙，踏出长生第一步', minLevel: 1, maxLevel: 45 },
