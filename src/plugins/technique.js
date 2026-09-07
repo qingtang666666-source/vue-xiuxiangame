@@ -41,6 +41,15 @@ export const RARITY_NAMES = RARITIES.map(r => r.name)
 export const STAT_NAMES = { attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石', critDamage: '暴伤', accuracy: '命中', armorPen: '破甲', block: '格挡', damageReduction: '减伤', tenacity: '韧性' }
 export const statName = s => STAT_NAMES[s] || s
 
+// 神通四类效果的说明与结算口径（与 battleEngine 实现严格对应），供功法阁与战斗悬浮共用
+export const DIVINE_KINDS = {
+  burst: { name: '爆发', color: '#f56c6c', desc: '单次高倍率伤害，无附加效果', formula: '伤害 =（我方攻击 − 对方防御）× 威力倍率' },
+  control: { name: '控制', color: '#409eff', desc: '伤害打 8 折，命中后有机会定身对手 1 回合', formula: '定身几率 = 触发率 × 35%（封顶 30%）' },
+  heal: { name: '回复', color: '#67c23a', desc: '不造成伤害，按威力回复自身气血', formula: '回复 = 我方最大气血 × 12% × 威力倍率' },
+  lifesteal: { name: '吸血', color: '#e6a23c', desc: '造成伤害后按比例吸血，续航强', formula: '回复 = 本次伤害 × 35%' }
+}
+export const divineKind = k => DIVINE_KINDS[k] || { name: k || '未知', color: '#909399', desc: '战斗中的神通效果', formula: '' }
+
 // 流派库：尽力覆盖 攻击/防御/气血/暴击/闪避/修炼速度/灵石 七个属性，且每属性都同时有主动与被动。
 // per/per2 为「每重 × 品阶倍率 × 熟练度倍率」的基础值，已在下方 balanceAudit 里校准。
 export const FAMILIES = [

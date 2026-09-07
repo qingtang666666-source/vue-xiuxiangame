@@ -10,7 +10,8 @@
 // 每次动作后调用 nextTurn(st) 推进到下一个行动者。
 
 import { effectivePlayerStats } from './setBonus.js'
-import { techniqueById, methodChapter, TECH_GRADES } from './technique.js'
+import { techniqueById } from './technique.js'
+import { divineAbilityInfo } from './divine.js'
 import { realmSuppressionMult } from './game.js'
 import { applyDotDamage, isStunned, clearStun, aggregatePlayerEffects, resolveHitEffects, applyLifesteal } from './effectCombat.js'
 import monsters from './monster.js'
@@ -62,23 +63,10 @@ export const getPlayerAbilities = player => {
   const hasSet = set && set.active && set.active.length
   const activeIds = hasSet ? set.active : Object.keys(player.methods || {}).filter(id => techniqueById(id)?.type === 'active')
   for (const id of activeIds) {
-    const t = techniqueById(id)
-    if (!t || !t.divine) continue
-    if (!player.methods?.[id]) continue
-    const g = TECH_GRADES[t.grade - 1]?.mult || 1
-    const chapter = methodChapter(player, id)
-    // 控制型神通削弱：伤害打折，且定身改为按 chance 概率触发
-    const power = t.divine.dmg * (1 + chapter * 0.04) * (t.divine.kind === 'control' ? 0.8 : 1)
-    const mpCost = Math.max(15, Math.floor(18 + g * 6))
-    list.push({
-      id: `ab-${id}`,
-      name: t.divine.name,
-      kind: t.divine.kind || 'burst',
-      power,
-      mpCost,
-      chance: t.divine.chance ?? 0.1,
-      tier: t.grade
-    })
+    // 威力/耗灵/触发率由 divine.js 统一提供，界面悬浮介绍与实战结算同源
+    const ab = divineAbilityInfo(player, id)
+    if (!ab) continue
+    list.push({ ...ab, id: `ab-${id}`, tier: techniqueById(id)?.grade })
     if (list.length >= 5) break // 主动最多 5 门
   }
   return list

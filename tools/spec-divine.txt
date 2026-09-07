@@ -1,0 +1,165 @@
+### FILE src/components/TurnCombat.vue
+<<< FROM
+  import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
+=== TO
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { divineTipText } from '@/plugins/divine'
+>>>
+### FILE src/components/TurnCombat.vue
+<<< FROM
+        <button
+          v-for="ab in abilities"
+          :key="ab.id"
+          class="tc-act skill"
+          :class="ab.kind"
+          :disabled="state.player.mp < ab.mpCost || (ab.kind !== 'heal' && !foe)"
+          @click="doSkill(ab)"
+        ><span class="ic">{{ kindIcon(ab.kind) }}</span><span class="la">{{ ab.name }}</span><span class="mp">{{ ab.mpCost }}灵</span></button>
+=== TO
+        <el-tooltip
+          v-for="ab in abilities"
+          :key="ab.id"
+          placement="top"
+          :hide-after="0"
+          :content="abilityTip(ab)"
+          popper-class="divine-tip"
+        >
+          <button
+            class="tc-act skill"
+            :class="ab.kind"
+            :disabled="state.player.mp < ab.mpCost || (ab.kind !== 'heal' && !foe)"
+            @click="doSkill(ab)"
+          ><span class="ic">{{ kindIcon(ab.kind) }}</span><span class="la">{{ ab.name }}</span><span class="mp">{{ ab.mpCost }}灵</span></button>
+        </el-tooltip>
+>>>
+### FILE src/components/TurnCombat.vue
+<<< FROM
+  const doSkill = ab => { auto.value = false; chooseAction(state.value, { type: 'attack', target: target.value, ability: ab }) }
+=== TO
+  const doSkill = ab => { auto.value = false; chooseAction(state.value, { type: 'attack', target: target.value, ability: ab }) }
+
+  // 神通悬浮介绍：通用说明 + 针对当前敌人的预估数值
+  const abilityEstimate = ab => {
+    const st = state.value
+    if (!st) return ''
+    const p = st.player
+    if (ab.kind === 'heal') return `预计回复 ≈ ${formatNumberToChineseUnit(Math.floor(p.maxHp * 0.12 * ab.power))} 气血`
+    const e = foe.value
+    if (!e) return ''
+    const raw = Math.max(1, p.atk - Math.max(0, (e.def || 0) - (p.armorPen || 0)))
+    const dmg = Math.floor(raw * ab.power * realmSuppressionMult(p.level, e.level))
+    return `预计伤害 ≈ ${formatNumberToChineseUnit(dmg)}（未计闪避/暴击/格挡）`
+  }
+  const abilityTip = ab => divineTipText(ab, abilityEstimate(ab))
+>>>
+### FILE src/views/battlePage.vue
+<<< FROM
+  import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
+=== TO
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { divineTipText } from '@/plugins/divine'
+>>>
+### FILE src/views/battlePage.vue
+<<< FROM
+        <el-button
+          v-for="ab in abilities"
+          :key="ab.id"
+          :type="ab.kind === 'heal' ? 'success' : ab.kind === 'control' ? 'warning' : 'danger'"
+          :disabled="state.player.mp < ab.mpCost || ab.kind !== 'heal' && !selTarget"
+          @click="doSkill(ab)"
+        >
+          {{ ab.name }}({{ ab.mpCost }}灵)
+        </el-button>
+=== TO
+        <el-tooltip
+          v-for="ab in abilities"
+          :key="ab.id"
+          placement="top"
+          :hide-after="0"
+          :content="abilityTip(ab)"
+          popper-class="divine-tip"
+        >
+          <el-button
+            :type="ab.kind === 'heal' ? 'success' : ab.kind === 'control' ? 'warning' : 'danger'"
+            :disabled="state.player.mp < ab.mpCost || ab.kind !== 'heal' && !selTarget"
+            @click="doSkill(ab)"
+          >
+            {{ ab.name }}({{ ab.mpCost }}灵)
+          </el-button>
+        </el-tooltip>
+>>>
+### FILE src/views/battlePage.vue
+<<< FROM
+  const abilities = computed(() => (state.value ? getPlayerAbilities(player.value) : []))
+=== TO
+  const abilities = computed(() => (state.value ? getPlayerAbilities(player.value) : []))
+  // 神通悬浮介绍：说明 + 对当前目标的预估伤害/回复
+  const abilityEstimate = ab => {
+    const st = state.value
+    if (!st) return ''
+    const p = st.player
+    if (ab.kind === 'heal') return `预计回复 ≈ ${formatNumberToChineseUnit(Math.floor(p.maxHp * 0.12 * ab.power))} 气血`
+    const e = selTarget.value
+    if (!e) return ''
+    const raw = Math.max(1, p.atk - Math.max(0, (e.def || 0) - (p.armorPen || 0)))
+    const dmg = Math.floor(raw * ab.power * realmSuppressionMult(p.level, e.level))
+    return `预计伤害 ≈ ${formatNumberToChineseUnit(dmg)}（未计闪避/暴击/格挡）`
+  }
+  const abilityTip = ab => divineTipText(ab, abilityEstimate(ab))
+>>>
+### FILE src/components/TechniqueCard.vue
+<<< FROM
+    <el-tooltip v-if="t.divine" :content="divineTip" placement="top" :hide-after="0">
+=== TO
+    <el-tooltip v-if="t.divine" :content="divineTip" placement="top" :hide-after="0" popper-class="divine-tip">
+>>>
+### FILE src/components/TechniqueCard.vue
+<<< FROM
+  } from '@/plugins/technique'
+=== TO
+  } from '@/plugins/technique'
+  import { divineTipForTech } from '@/plugins/divine'
+>>>
+### FILE src/components/TechniqueCard.vue
+<<< FROM
+  const divineTip = computed(() => {
+    const d = t.value.divine
+    if (!d) return ''
+    const kind = { burst: '爆发', control: '控制', heal: '回复', lifesteal: '吸血' }[d.kind] || d.kind
+    return `神通【${d.name}】\n类型：${kind} · 威力 ×${d.dmg}\n战斗中可主动施放，也会按触发率自动激发`
+  })
+=== TO
+  const divineTip = computed(() => divineTipForTech(player.value, t.value.id))
+>>>
+### FILE src/views/techniquePage.vue
+<<< FROM
+        <el-tooltip v-if="t.divine" :content="divineTip(t)" placement="top" :hide-after="0">
+=== TO
+        <el-tooltip v-if="t.divine" :content="divineTip(t)" placement="top" :hide-after="0" popper-class="divine-tip">
+>>>
+### FILE src/views/techniquePage.vue
+<<< FROM
+  } from '@/plugins/technique'
+=== TO
+  } from '@/plugins/technique'
+  import { divineTipForTech } from '@/plugins/divine'
+>>>
+### FILE src/views/techniquePage.vue
+<<< FROM
+  const kindName = k => ({ burst: '爆发', control: '控制', lifesteal: '吸血', heal: '回复' }[k] || k)
+  const divineTip = t => {
+    const d = t.divine
+    if (!d) return ''
+    return `神通【${d.name}】\n类型：${kindName(d.kind)} · 威力 ×${d.dmg}\n战斗中可主动施放，也会按触发率自动激发`
+  }
+=== TO
+  const divineTip = t => divineTipForTech(player.value, t.id)
+>>>
+### FILE src/App.vue
+<<< FROM
+  .el-tooltip__content { white-space: pre-line; }
+=== TO
+  .el-tooltip__content,
+  .el-popper.el-tooltip { white-space: pre-line; }
+  .divine-tip { max-width: 360px; line-height: 1.75; }
+>>>

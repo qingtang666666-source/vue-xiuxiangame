@@ -32,7 +32,7 @@
         </template>
         <p class="desc">{{ t.desc }}</p>
         <div class="passive">被动：{{ passiveText(t, methodChapter(player, t.id)) }}</div>
-        <el-tooltip v-if="t.divine" :content="divineTip(t)" placement="top" :hide-after="0">
+        <el-tooltip v-if="t.divine" :content="divineTip(t)" placement="top" :hide-after="0" popper-class="divine-tip">
           <div class="divine">神通：{{ t.divine.name }}（{{ t.type === 'active' ? '主动' : '被动' }}）</div>
         </el-tooltip>
         <div v-else class="divine">神通：无（被动）</div>
@@ -88,6 +88,7 @@
     forgetTechnique,
     techniqueSellPrice
   } from '@/plugins/technique'
+  import { divineTipForTech } from '@/plugins/divine'
 
   const store = useMainStore()
   const router = useRouter()
@@ -132,12 +133,7 @@
   )
 
   const isLearned = t => !!player.value.methods?.[t.id]
-  const kindName = k => ({ burst: '爆发', control: '控制', lifesteal: '吸血', heal: '回复' }[k] || k)
-  const divineTip = t => {
-    const d = t.divine
-    if (!d) return ''
-    return `神通【${d.name}】\n类型：${kindName(d.kind)} · 威力 ×${d.dmg}\n战斗中可主动施放，也会按触发率自动激发`
-  }
+  const divineTip = t => divineTipForTech(player.value, t.id)
   const statName = s => ({ attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石' }[s] || s)
 
   const passiveText = (t, ch) => {

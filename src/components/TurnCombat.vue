@@ -50,14 +50,21 @@
 
       <div v-if="isPlayerTurnV" class="tc-actions">
         <button class="tc-act atk" @click="doAttack"><span class="ic">⚔</span><span class="la">普攻</span></button>
-        <button
+        <el-tooltip
           v-for="ab in abilities"
           :key="ab.id"
-          class="tc-act skill"
-          :class="ab.kind"
-          :disabled="state.player.mp < ab.mpCost || (ab.kind !== 'heal' && !foe)"
-          @click="doSkill(ab)"
-        ><span class="ic">{{ kindIcon(ab.kind) }}</span><span class="la">{{ ab.name }}</span><span class="mp">{{ ab.mpCost }}灵</span></button>
+          placement="top"
+          :hide-after="0"
+          :content="abilityTip(ab)"
+          popper-class="divine-tip"
+        >
+          <button
+            class="tc-act skill"
+            :class="ab.kind"
+            :disabled="state.player.mp < ab.mpCost || (ab.kind !== 'heal' && !foe)"
+            @click="doSkill(ab)"
+          ><span class="ic">{{ kindIcon(ab.kind) }}</span><span class="la">{{ ab.name }}</span><span class="mp">{{ ab.mpCost }}灵</span></button>
+        </el-tooltip>
         <button class="tc-act def" @click="doDefend"><span class="ic">🛡</span><span class="la">防御</span></button>
         <button class="tc-act retr" @click="doFlee"><span class="ic">🏃</span><span class="la">撤退</span></button>
       </div>
@@ -90,7 +97,8 @@
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useMainStore } from '@/plugins/store'
   import { bumpDaily } from '@/plugins/dailyGoals'
-  import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { divineTipText } from '@/plugins/divine'
   import {
     startBattle,
     monsterToEntity,
@@ -192,6 +200,20 @@
 
   const doAttack = () => { auto.value = false; chooseAction(state.value, { type: 'attack', target: target.value }) }
   const doSkill = ab => { auto.value = false; chooseAction(state.value, { type: 'attack', target: target.value, ability: ab }) }
+
+  // 神通悬浮介绍：通用说明 + 针对当前敌人的预估数值
+  const abilityEstimate = ab => {
+    const st = state.value
+    if (!st) return ''
+    const p = st.player
+    if (ab.kind === 'heal') return `预计回复 ≈ ${formatNumberToChineseUnit(Math.floor(p.maxHp * 0.12 * ab.power))} 气血`
+    const e = foe.value
+    if (!e) return ''
+    const raw = Math.max(1, p.atk - Math.max(0, (e.def || 0) - (p.armorPen || 0)))
+    const dmg = Math.floor(raw * ab.power * realmSuppressionMult(p.level, e.level))
+    return `预计伤害 ≈ ${formatNumberToChineseUnit(dmg)}（未计闪避/暴击/格挡）`
+  }
+  const abilityTip = ab => divineTipText(ab, abilityEstimate(ab))
   const doDefend = () => { auto.value = false; chooseAction(state.value, { type: 'defend' }) }
   const doFlee = () => { auto.value = false; chooseAction(state.value, { type: 'flee' }) }
 

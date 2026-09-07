@@ -6,7 +6,7 @@
     </div>
     <div class="tmeta">{{ t.familyName }} · {{ t.rarityName }} · {{ t.gradeName }}</div>
     <div class="tstat">{{ passiveText }}</div>
-    <el-tooltip v-if="t.divine" :content="divineTip" placement="top" :hide-after="0">
+    <el-tooltip v-if="t.divine" :content="divineTip" placement="top" :hide-after="0" popper-class="divine-tip">
       <div class="tdivine">神通：{{ t.divine.name }}</div>
     </el-tooltip>
 
@@ -73,6 +73,7 @@
     techniqueSellPrice,
     statName
   } from '@/plugins/technique'
+  import { divineTipForTech } from '@/plugins/divine'
 
   const props = defineProps({ t: Object, player: Object, active: { type: Object, default: null } })
   const t = computed(() => props.t)
@@ -108,12 +109,7 @@
     if (t.value.passive2) parts.push(fmtStat(t.value.passive2, t.value.per2))
     return chapter.value ? parts.join('，') : `每重 +${parts.join('，')}`
   })
-  const divineTip = computed(() => {
-    const d = t.value.divine
-    if (!d) return ''
-    const kind = { burst: '爆发', control: '控制', heal: '回复', lifesteal: '吸血' }[d.kind] || d.kind
-    return `神通【${d.name}】\n类型：${kind} · 威力 ×${d.dmg}\n战斗中可主动施放，也会按触发率自动激发`
-  })
+  const divineTip = computed(() => divineTipForTech(player.value, t.value.id))
 
   const learn = () => {
     const r = learnTechnique(player.value, t.value.id)

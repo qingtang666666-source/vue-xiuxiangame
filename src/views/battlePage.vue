@@ -66,15 +66,22 @@
       <!-- 玩家操作 -->
       <div v-if="isPlayerTurnV" class="actions">
         <el-button type="primary" :disabled="!selTarget" @click="doAttack">⚔ 普攻</el-button>
-        <el-button
+        <el-tooltip
           v-for="ab in abilities"
           :key="ab.id"
-          :type="ab.kind === 'heal' ? 'success' : ab.kind === 'control' ? 'warning' : 'danger'"
-          :disabled="state.player.mp < ab.mpCost || ab.kind !== 'heal' && !selTarget"
-          @click="doSkill(ab)"
+          placement="top"
+          :hide-after="0"
+          :content="abilityTip(ab)"
+          popper-class="divine-tip"
         >
-          {{ ab.name }}({{ ab.mpCost }}灵)
-        </el-button>
+          <el-button
+            :type="ab.kind === 'heal' ? 'success' : ab.kind === 'control' ? 'warning' : 'danger'"
+            :disabled="state.player.mp < ab.mpCost || ab.kind !== 'heal' && !selTarget"
+            @click="doSkill(ab)"
+          >
+            {{ ab.name }}({{ ab.mpCost }}灵)
+          </el-button>
+        </el-tooltip>
         <el-button type="info" @click="doDefend">🛡 防御</el-button>
         <el-button type="danger" plain @click="doFlee">🏃 逃跑</el-button>
       </div>
@@ -117,7 +124,8 @@
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useRouter } from 'vue-router'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { divineTipText } from '@/plugins/divine'
   import {
     startBattle,
     buildEnemies,
@@ -151,6 +159,19 @@
   const logRef = ref(null)
 
   const abilities = computed(() => (state.value ? getPlayerAbilities(player.value) : []))
+  // 神通悬浮介绍：说明 + 对当前目标的预估伤害/回复
+  const abilityEstimate = ab => {
+    const st = state.value
+    if (!st) return ''
+    const p = st.player
+    if (ab.kind === 'heal') return `预计回复 ≈ ${formatNumberToChineseUnit(Math.floor(p.maxHp * 0.12 * ab.power))} 气血`
+    const e = selTarget.value
+    if (!e) return ''
+    const raw = Math.max(1, p.atk - Math.max(0, (e.def || 0) - (p.armorPen || 0)))
+    const dmg = Math.floor(raw * ab.power * realmSuppressionMult(p.level, e.level))
+    return `预计伤害 ≈ ${formatNumberToChineseUnit(dmg)}（未计闪避/暴击/格挡）`
+  }
+  const abilityTip = ab => divineTipText(ab, abilityEstimate(ab))
   const selTarget = computed(() => {
     if (!state.value) return null
     return state.value.enemies.find(e => e.id === target.value && e.hp > 0) || state.value.enemies.find(e => e.hp > 0) || null

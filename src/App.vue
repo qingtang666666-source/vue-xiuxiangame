@@ -605,7 +605,9 @@
     user-select: none;
   }
 
-  .el-tooltip__content { white-space: pre-line; }
+  .el-tooltip__content,
+  .el-popper.el-tooltip { white-space: pre-line; }
+  .divine-tip { max-width: 360px; line-height: 1.75; }
 
   html {
     background: #fff;
