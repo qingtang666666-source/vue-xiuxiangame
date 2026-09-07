@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, onBeforeUnmount } from 'vue'
+  import { ref, computed, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
   import { useRouter } from 'vue-router'
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
@@ -126,10 +126,17 @@
   const npcs = computed(() => ensureWorldNpcs(player.value))
   // 窥探冷却倒计时（每秒刷新，使按钮禁用/秒数实时更新）
   const now = ref(Date.now())
-  const scoutTimer = setInterval(() => {
-    now.value = Date.now()
-  }, 1000)
-  onBeforeUnmount(() => clearInterval(scoutTimer))
+  let scoutTimer = null
+  const startScoutTimer = () => {
+    if (scoutTimer) return
+    scoutTimer = setInterval(() => {
+      now.value = Date.now()
+    }, 1000)
+  }
+  startScoutTimer()
+  onDeactivated(() => { if (scoutTimer) { clearInterval(scoutTimer); scoutTimer = null } })
+  onActivated(() => { now.value = Date.now(); startScoutTimer() })
+  onBeforeUnmount(() => { if (scoutTimer) clearInterval(scoutTimer) })
   const cdOf = n => Math.max(0, Math.ceil((SCOUT_CD - (now.value - (n.scoutAt || 0))) / 1000))
   const trusted = n => n.favorability >= SCOUT_FAV_TRUST
   const roleFilter = ref('all')

@@ -4,12 +4,10 @@
       <ActionTimerBar :player="player" />
       <main class="page-viewport">
         <router-view v-slot="{ Component }">
-          <transition name="page-fade" mode="out-in">
-            <keep-alive v-if="route.meta.keepAlive">
-              <component :is="Component" :key="key" />
-            </keep-alive>
-            <component v-else :is="Component" :key="key" />
-          </transition>
+          <keep-alive v-if="route.meta.keepAlive">
+            <component :is="Component" :key="key" />
+          </keep-alive>
+          <component v-else :is="Component" :key="key" />
         </router-view>
       </main>
     <div class="top-right">
@@ -424,6 +422,15 @@
   }
   .page-viewport {
     min-height: 0;
+  }
+
+  .page-viewport > * {
+    animation: page-view-in 0.16s ease both;
+  }
+
+  @keyframes page-view-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @media only screen and (min-width: 800px) {
