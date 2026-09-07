@@ -32,7 +32,7 @@
   // 生成 2 名同阶对手：按境界基准值(monster表)生成，略强(+2级)，不随玩家属性缩放
   const spawn = () => {
     const targetLv = Math.min(144, Math.max(1, player.level + 1))
-    const st = enemyStatsForPower(realmPower(targetLv), 1.15)
+    const st = enemyStatsForPower(realmPower(targetLv), 1.0)
     enemies.value = [0, 1].map(i => ({
       name: `同阶对手·${i + 1}`,
       level: targetLv,

@@ -137,19 +137,19 @@ export function createPokerEngine(opts) {
     // 面对下注：先判断要不要被 "吓" 到弃牌
     if (toCall > 0) {
       let foldP = 0.05
-      if (isWeak) foldP += 0.22
-      else if (isMed) foldP += 0.05
-      if (bigBet) foldP += 0.06
+      if (isWeak) foldP += 0.16
+      else if (isMed) foldP += 0.04
+      if (bigBet) foldP -= 0.06
       if (profitable) foldP -= 0.24
       if (isStrong) foldP = 0.02
-      if (allInBet && !isGood) foldP += 0.15
+      if (allInBet && !isGood) foldP -= 0.12
       foldP += (tight - 0.5) * 0.3
-      foldP = Math.max(0.02, Math.min(0.97, foldP))
+      foldP = Math.max(0.02, Math.min(0.95, foldP))
       if (Math.random() < foldP) return { action: 'fold' }
       // 弱牌面对「非全下」的大注：必弃；全下交给上面的概率路径（弱牌以极低概率接、接了多半输），
       // 避免“只接必赢”的错觉，也防止 67o 无脑硬跟。
       // 弱牌面对非全下的大注：不再是必弃，改为约 40% 概率弃牌（松弱 AI 更敢跟）
-      if (isWeak && bigBet && !allInBet && Math.random() < 0.4) return { action: 'fold' }
+      if (isWeak && bigBet && !allInBet && Math.random() < 0.12) return { action: 'fold' }
     }
     // 可过牌：考虑价值下注 / 半诈唬 / 偷鸡 / 慢打
     if (toCall <= 0) {
@@ -169,12 +169,12 @@ export function createPokerEngine(opts) {
     if (allInBet) {
       const looseBias = Math.max(0, 0.45 - tight) // 越松，接全下概率越高（0~0.27）
       let callP
-      if (str >= 0.7) callP = 0.9
-      else if (str >= 0.55) callP = 0.58 + looseBias * 0.3
-      else if (str >= 0.42) callP = 0.24 + looseBias * 0.5
+      if (str >= 0.7) callP = 0.92
+      else if (str >= 0.55) callP = 0.7 + looseBias * 0.3
+      else if (str >= 0.42) callP = 0.44 + looseBias * 0.5
       else callP = 0.05 + looseBias * 0.2 // 弱牌(67o/K7o)极低概率接，接了多半输
       // 若下注相对底池极离谱，再压低一点；但保留一定“接单”率使其看起来像真人
-      if (potOdds > 0.72 && str < 0.5) callP *= 0.55
+      if (potOdds > 0.8 && str < 0.5) callP *= 0.6
       if (Math.random() < Math.min(0.95, callP)) return { action: 'allin' }
       return { action: 'fold' }
     }
