@@ -154,7 +154,7 @@
         const baseExp =
           player.value.level <= 10
             ? Math.floor(player.value.maxCultivation / equip.getRandomInt(15, 45))
-            : Math.floor(player.value.maxCultivation / 160)
+            : Math.floor(player.value.maxCultivation / (160 + realmStageOf(player.value.level) * 40))
         const exp = Math.floor(baseExp * idleRates(player.value).cultivationSpeed)
         texts.value.push(
           player.value.level < maxLv

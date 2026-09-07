@@ -1322,6 +1322,7 @@
   import equip from '@/plugins/equip'
   import { applyPlayerAttribute } from '@/plugins/playerAttr'
   import { wearEquip, removeEquip } from '@/plugins/equipOps'
+  import { playerPowerScore } from '@/plugins/breakthroughGate'
   // 数据导出
   import { saveAs } from 'file-saver'
   // 图鉴
@@ -1394,13 +1395,7 @@
   const player = ref(store.player)
   // 有效属性（含装备/功法/阵法/增益等），暴击/闪避封顶 80%
   const effStats = computed(() => effectivePlayerStats(player.value))
-  const powerScore = computed(() => equip.calculateEquipmentScore(
-    effStats.value.dodge,
-    effStats.value.attack,
-    effStats.value.maxHealth,
-    effStats.value.critical,
-    effStats.value.defense
-  ))
+  const powerScore = computed(() => playerPowerScore(player.value))
   const calendar = computed(() => gameDate(player.value))
   const fateData = computed(() => fateInfo(player.value))
   const codexStat = computed(() => codexStats(player.value))

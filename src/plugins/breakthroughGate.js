@@ -77,9 +77,9 @@ export const tribulationPowerNeed = lv => Math.floor(realmPower(lv) * 1.1)
 // 由目标战力反推“攻/防/血”三围，用于同阶对手/豪杰/渡劫敌手生成
 export const enemyStatsForPower = (targetPower, eliteMult = 1.0) => {
   const p = Math.max(1, Math.floor(targetPower || 1))
-  const attack = Math.floor((p * 0.42 / 2) * eliteMult)
-  const defense = Math.floor((p * 0.18 / 1.2) * eliteMult)
-  const health = Math.floor((p * 0.28 / 0.002) * eliteMult)
+  const attack = Math.floor(p * 0.13 * eliteMult)
+  const defense = Math.floor(p * 0.03 * eliteMult)
+  const health = Math.floor(p * 0.95 * eliteMult)
   return { attack, defense, health }
 }
 
