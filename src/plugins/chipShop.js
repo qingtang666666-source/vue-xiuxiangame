@@ -212,12 +212,12 @@ export const openChipEquipChest = (player, item) => {
   let jackpot = false
   const valChips = eq => Math.round(equipSellPrice(eq) / 10)
   if (rand < 0.9) {
-    const eq = genEquip(Math.max(40, Math.min(player.level || 40, 90)), 'danger')
+    const eq = genEquip(Math.max(55, Math.min(player.level || 55, 110)), 'orange')
     eq.noReq = true
     player.inventory.push(eq)
     texts.push(`装备【${eq.name}】（价值约 ${valChips(eq)} 筹码）`)
   } else if (rand < 0.99) {
-    const eq = genEquip(Math.max(80, Math.min(player.level || 80, 120)), 'gold')
+    const eq = genEquip(Math.max(95, Math.min(player.level || 95, 135)), 'gold')
     eq.noReq = true
     player.inventory.push(eq)
     texts.push(`珍品装备【${eq.name}】（价值约 ${valChips(eq)} 筹码）`)
@@ -256,12 +256,18 @@ export const openChipHighEquipChest = (player, item) => {
   let jackpot = false
   const valChips = eq => Math.round(equipSellPrice(eq) / 10)
   if (rand < 0.9) {
-    const eq = genEquip(Math.max(100, Math.min(player.level || 100, 130)), 'legendary')
+    const lv = Math.max(120, Math.min(player.level || 120, 144))
+    let eq = null
+    for (let i = 0; i < 25; i++) { const c = genEquip(lv, 'legendary'); if (equipSellPrice(c) >= 800000) { eq = c; break } }
+    if (!eq) eq = genEquip(lv, 'legendary')
     eq.noReq = true
     player.inventory.push(eq)
     texts.push(`神装【${eq.name}】（价值约 ${valChips(eq)} 筹码）`)
   } else if (rand < 0.99) {
-    const eq = genEquip(Math.max(130, Math.min(player.level || 130, 144)), 'legendary')
+    const lv = Math.max(138, Math.min(player.level || 138, 144))
+    let eq = null
+    for (let i = 0; i < 25; i++) { const c = genEquip(lv, 'legendary'); if (equipSellPrice(c) >= 1600000) { eq = c; break } }
+    if (!eq) eq = genEquip(lv, 'legendary')
     eq.noReq = true
     player.inventory.push(eq)
     texts.push(`绝世神装【${eq.name}】（价值约 ${valChips(eq)} 筹码）`)

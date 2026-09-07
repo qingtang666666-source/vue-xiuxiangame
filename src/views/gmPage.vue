@@ -278,6 +278,7 @@
 
 <style scoped>
   .gm { text-align: left; padding: 0 6px; width: 100%; box-sizing: border-box; overflow-x: auto; }
+  .gm :deep(.el-collapse-item__content) { display: block; width: 100%; }
   .gm-head { margin-bottom: 10px; }
   .title { font-size: 22px; font-weight: bold; margin-bottom: 4px; }
   .hint { font-size: 12px; color: var(--el-text-color-secondary); }
@@ -293,9 +294,10 @@
   .current { margin-top: 14px; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; }
   @media only screen and (max-width: 768px) {
     .gm { padding: 0 2px; }
-    .row > span { min-width: 46px; font-size: 12px; }
+    .row { flex-direction: column; align-items: stretch; gap: 4px; }
+    .row > span { min-width: 0; width: 100%; font-size: 12px; }
     .row > .el-select,
-    .row > .el-input-number { min-width: 0; max-width: none; flex: 1 1 100%; width: 100%; }
-    .row > .el-button { flex: 1 1 auto; }
+    .row > .el-input-number { min-width: 0; max-width: none; width: 100%; }
+    .row > .el-button { width: 100%; margin-top: 2px; }
   }
 </style>
