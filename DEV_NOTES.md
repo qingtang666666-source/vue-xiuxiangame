@@ -134,3 +134,37 @@
 
 > 调参提示：只想让“装”更陡 → 改 `GEAR_STAGE_RATIO`；只想让“符/丹”更陡 → 改 `TIER_FLAT` / `TIER_BUFF`；
 > 若发现高阶玩家战力溢出（突破/豪杰榜过易），优先回调 `TIER_FLAT` 与 `GEAR_STAGE_RATIO`，而不是改 `STAGE_POWER`。
+
+## 十一、敌人强度锚定（历战 / 无尽塔 / 大世界探索 / 世界BOSS）
+
+统一入口：`src/plugins/enemyScale.js`。**敌人一律以“挑战者自己的战力”（`playerPowerScore`）为锚再乘倍率**，
+所以装备/丹药变强只会把锚一起抬高，越级不再白送。
+
+| 玩法 | 函数 | 倍率口径 |
+|---|---|---|
+| 历战 `/battle` | `ladderEnemies` | 风平浪静 0.6 / 势均力敌 1.0 / 凶险莫测 1.4 / 首领 1.4×elite(1.8+转世×0.15)；多只时单只 ÷count^0.7 |
+| 无尽塔 `/endless` | `towerFloorEnemy` | `0.25 + (层−1)×0.065`，再乘精英（5层1.12 / 10层1.4 / 50层1.8） |
+| 大世界探索 | `exploreEnemy` | `0.42 + 区域序号×0.11`（上限 1.15） |
+| 领地/拦路 | `territoryEnemy` | `0.75 + 区域序号×0.16`（上限 1.9） |
+| 世界BOSS `/boss` | `worldBossEnemy` | `2.2 + 转世×0.18` 倍玩家战力 |
+
+- 三围由 `enemyStatsForPower(power)` 反推（攻 13%、防 3%、血 95%），暴击/闪避按大境界温和成长（封顶 0.28 / 0.22）。
+- **反秒杀保护** `guardOneShot`：敌人攻击不超过挑战者气血的 42%（世界BOSS 50%），避免早期真实属性远低于名义境界战力时被一刀带走。
+- 突破试炼/豪杰榜/秘境/宗门/协力世界BOSS 仍按 `realmPower` 绝对标准（它们本身是“境界考核”），不在此列。
+- 旧实现的两处硬伤（已修）：历战与无尽塔直接吃 monster 表裸数值（合体期只有标准战力约 1/10，随便越一个大境界碾压）；
+  monster 表在 144→145 级一次跳约 480 倍，导致无尽塔 72 层实质封顶。
+- 调参：想让塔更软 → 调 `towerFloorGrowth` 的 0.065；想更硬 → 抬 `towerElite`；历战难度在 `LADDER_DIFFICULTIES` 与 `battlePage.difficulties.mult`。
+
+## 十二、存档保险库（加密 + 验签 + 数值体检）
+
+`src/plugins/saveVault.js`（`persistence.js` 仍负责脏标记与延迟落盘，读写全部转调这里）。
+
+- 结构：`XSYX2|salt|iv|cipher|HMAC`。密钥 = `PBKDF2(前端常量, 随机盐, 1300 轮, 256bit)`，AES-256-CBC；
+  明文里再嵌一层 `SHA256(数据|密钥)` 摘要作第二道校验。
+- **改一个字节就验签失败**；失败时不覆盖原档：自动另存 `vuex.corrupt-<ts>` 并提示可从备份回滚。
+- 兼容：旧版 `{"boss":AES,"player":AES}`（localStorage 与导出文件）仍可读取，下次落盘自动升级为 v2。
+- 数值体检 `auditPlayer`：结构/数值有限性/概率范围/`总体实力 ≤ 境界标准×8`；导入不合格直接拒绝（手搓 JSON 无效）。
+- 备份：`backupSave(label)` 保留最近 5 份 `vuex.bak-*`；导出前先 `flushPersistence`（旧版会导出“上一次自动保存”的旧档）；
+  导入前自动备份 + `stopPersistence()`（防止内存旧态在刷新前倒灌）；删档走 `wipeSave()`（先停表再删，修掉“删了又活过来”）。
+- 说明：单机游戏的密钥必然在前端代码里（构建另有混淆），所以它是“抬高改档门槛”，不是密码学意义上不可破解。
+- GM 页导出同样使用该加密格式；验证脚本 `node --import ./tools/preload.mjs tools/check-save.mjs`（7 场景）。
