@@ -18,7 +18,7 @@ import { realmBonus } from './ascension.js'
 import { rebirthStats } from './rebirth.js'
 import { insightMult } from './insight.js'
 import { realmCultSpeedMult } from './game.js'
-import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier } from './craft.js'
+import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier, costRows, costShortfallText } from './craft.js'
 import { bumpDaily } from './dailyGoals.js'
 import { codexBonus } from './codex.js'
 import { tierMaterial, matNameOf } from './materialDb.js'
@@ -342,6 +342,24 @@ export const canCraft = (player, id) => {
   if (r.cost.material && r.cost.material.key && (props[r.cost.material.key] || 0) < (r.cost.material.qty || 0)) return { ok: false, reason: `缺少核心材料【${matNameOf(r.cost.material.key)}】` }
   return { ok: true, recipe: r }
 }
+
+// ---- 材料标注（供界面显示“已有 / 需要 / 所缺”）----
+
+// 单张丹方的材料清单：[{ key, name, need, have, ok, type, core }]
+export const recipeCostList = (player, id) => {
+  const r = typeof id === 'object' ? id : recipeById(id)
+  return r ? costRows(player, r.cost, matNameOf) : []
+}
+
+// 炼制此丹方还需的境界等级（0 表示当前境界已够）
+export const recipeNeedLevel = (player, id) => {
+  const r = typeof id === 'object' ? id : recipeById(id)
+  if (!r) return 0
+  return r.level > (player.level || 0) + 2 ? Math.max(1, r.level - 2) : 0
+}
+
+// 缺失汇总文案（空串=材料齐全且境界达标）
+export const recipeShortfall = (player, id) => costShortfallText(recipeCostList(player, id), recipeNeedLevel(player, id))
 
 // 炼制丹药：扣材料，入背包（可叠加）
 export const craftPill = (player, id) => {

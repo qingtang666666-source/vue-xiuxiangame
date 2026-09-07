@@ -34,3 +34,41 @@ export const bumpCraftRank = (player, key, tier) => {
   player.skills[key] = Math.max(player.skills[key] || 0, Math.min(CRAFT_MAX, tier || 0))
   return player.skills[key]
 }
+
+// ---- 通用「已有 / 需要 / 所缺」材料清单（炼丹 / 制符 / 炼器共用）----
+
+// 常见消耗项的显示名与配色
+export const COST_META = [
+  { key: 'spiritHerb', name: '灵草', type: 'success' },
+  { key: 'money', name: '灵石', type: 'warning' },
+  { key: 'cultivateDan', name: '培养丹', type: 'primary' },
+  { key: 'strengtheningStone', name: '炼器石', type: 'danger' }
+]
+
+// cost = { spiritHerb, money, cultivateDan, strengtheningStone, material?: { key, qty } }
+// matName(key) 把核心材料 key 翻成中文显示名
+export const costRows = (player, cost, matName) => {
+  if (!cost) return []
+  const props = player?.props || {}
+  const rows = COST_META.filter(c => (cost[c.key] || 0) > 0).map(c => {
+    const need = cost[c.key] || 0
+    const have = props[c.key] || 0
+    return { key: c.key, name: c.name, need, have, ok: have >= need, type: c.type, core: false }
+  })
+  const mat = cost.material
+  if (mat && mat.key) {
+    const need = mat.qty || 0
+    const have = props[mat.key] || 0
+    rows.push({ key: mat.key, name: matName ? matName(mat.key) : mat.key, need, have, ok: have >= need, type: 'danger', core: true })
+  }
+  return rows
+}
+
+// 缺失清单 → 文案（传 needLevel 则一并提示境界不足）
+export const costShortfallText = (rows, needLevel = 0) => {
+  const parts = []
+  if (needLevel) parts.push(`境界需 ${needLevel} 级`)
+  const lack = rows.filter(r => !r.ok).map(r => `${r.name}×${Math.max(1, r.need - r.have)}`)
+  if (lack.length) parts.push(`缺 ${lack.join('、')}`)
+  return parts.join(' · ')
+}

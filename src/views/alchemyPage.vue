@@ -44,6 +44,7 @@
         <el-radio-button value="permanent">永久</el-radio-button>
         <el-radio-button value="buff">限时</el-radio-button>
       </el-radio-group>
+      <el-checkbox v-model="onlyReady" size="small" label="只看可炼制" border />
     </div>
     <div v-if="crafting" class="crafting-bar">
       正在炼制【{{ recipeById(crafting)?.name }}】...
@@ -62,11 +63,19 @@
         <p class="desc">{{ r.desc }}</p>
         <p class="effect">{{ r.effectText }}</p>
         <div class="cost">
-          <el-tag size="small" type="info">价值 {{ formatNumberToChineseUnit(pillVal(r)) }} 灵石</el-tag>
-          <el-tag size="small" v-if="r.cost.spiritHerb" type="success">灵草 {{ r.cost.spiritHerb }}</el-tag>
-          <el-tag size="small" v-if="r.cost.money" type="warning">灵石 {{ formatNumberToChineseUnit(r.cost.money) }}</el-tag>
-          <el-tag size="small" v-if="r.cost.cultivateDan" type="primary">培养丹 {{ r.cost.cultivateDan }}</el-tag>
-          <el-tag size="small" v-if="r.cost.material && r.cost.material.key" type="danger">核心药材 {{ matNameOf(r.cost.material.key) }}×{{ r.cost.material.qty }}</el-tag>
+          <div class="cost-head">
+            <span>炼制消耗</span>
+            <span class="cost-val">成品价值 {{ formatNumberToChineseUnit(pillVal(r)) }} 灵石</span>
+          </div>
+          <div class="cost-row" v-for="c in costMap[r.id]" :key="c.key" :class="{ lack: !c.ok }">
+            <span class="cname" :title="c.core ? '核心药材' : ''">{{ c.core ? '★ ' : '' }}{{ c.name }}</span>
+            <span class="cost-bar"><i :style="{ width: costPct(c) + '%' }" /></span>
+            <span class="cnum">{{ formatNumberToChineseUnit(c.have) }} / {{ formatNumberToChineseUnit(c.need) }}</span>
+            <span class="cflag">{{ c.ok ? '✔ 已有' : '缺 ' + formatNumberToChineseUnit(Math.max(1, c.need - c.have)) }}</span>
+          </div>
+        </div>
+        <div class="verdict" :class="canCraftMap[r.id] ? 'ready' : 'lack'">
+          {{ canCraftMap[r.id] ? '✔ 材料齐全，可入炉' : shortMap[r.id] || '材料不足' }}
         </div>
         <el-button
           class="craft-btn"
@@ -92,7 +101,7 @@
   import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
   import { RECIPES, TIERS, recipeById, canCraft, usePill, activeBuffs } from '@/plugins/alchemy'
   import { beginAction, actionTask, finishNow } from '@/plugins/actionTimer'
-  import { matNameOf } from '@/plugins/materialDb'
+  import { recipeCostList, recipeShortfall } from '@/plugins/alchemy'
   import { pillPrice } from '@/plugins/market'
   import itemInfo from '@/components/itemInfo.vue'
 
@@ -103,6 +112,7 @@
   const recipes = RECIPES
   const tierFilter = ref(1)
   const kindFilter = ref('all')
+  const onlyReady = ref(false)
   const crafting = computed(() => actionTask(player.value)?.id || null)
   const infoShow = ref(false)
   const infoData = ref(null)
@@ -111,6 +121,7 @@
     return recipes.filter(r => {
       if (tierFilter.value && r.tier !== tierFilter.value) return false
       if (kindFilter.value !== 'all' && r.category !== kindFilter.value) return false
+      if (onlyReady.value && !canCraft(player.value, r.id).ok) return false
       return true
     })
   })
@@ -140,6 +151,26 @@
     })
     return map
   })
+
+  // 每张丹方的「已有 / 需要 / 所缺」清单
+  const costMap = computed(() => {
+    const map = {}
+    RECIPES.forEach(r => {
+      map[r.id] = recipeCostList(player.value, r.id)
+    })
+    return map
+  })
+
+  // 缺失汇总文案（卡片底部一行标注）
+  const shortMap = computed(() => {
+    const map = {}
+    RECIPES.forEach(r => {
+      map[r.id] = recipeShortfall(player.value, r.id)
+    })
+    return map
+  })
+
+  const costPct = c => (c.need > 0 ? Math.max(4, Math.min(100, Math.floor((c.have / c.need) * 100))) : 100)
 
   const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
 
@@ -323,6 +354,80 @@
     flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 8px;
+  }
+  .cost-head {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 2px;
+  }
+  .cost-val {
+    color: var(--el-color-warning);
+  }
+  .cost-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 82px 1fr auto auto;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 2px 0;
+  }
+  .cost-row .cname {
+    color: var(--el-text-color-regular);
+    white-space: nowrap;
+  }
+  .cost-row .cnum {
+    font-variant-numeric: tabular-nums;
+    color: var(--el-text-color-secondary);
+  }
+  .cost-row .cflag {
+    color: var(--el-color-success);
+    min-width: 60px;
+    text-align: right;
+  }
+  .cost-row.lack .cname,
+  .cost-row.lack .cnum {
+    color: var(--el-color-danger);
+  }
+  .cost-row.lack .cflag {
+    color: var(--el-color-danger);
+    font-weight: bold;
+  }
+  .cost-bar {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--el-fill-color);
+    overflow: hidden;
+  }
+  .cost-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--el-color-success);
+    transition: width 0.3s ease;
+  }
+  .cost-row.lack .cost-bar i {
+    background: var(--el-color-danger);
+  }
+  .verdict {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--el-fill-color-light);
+  }
+  .verdict.ready {
+    color: var(--el-color-success);
+    background: rgba(103, 194, 58, 0.12);
+  }
+  .verdict.lack {
+    color: var(--el-color-danger);
+    background: rgba(245, 108, 108, 0.12);
   }
 
   .craft-btn {
