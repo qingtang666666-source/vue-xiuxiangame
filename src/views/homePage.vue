@@ -1172,6 +1172,10 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="我的成就" name="achievement">
+          <div class="ach-progress">
+            <div class="ach-progress-head">成就收集度 <b>{{ achievementStats.done }}</b> / {{ achievementStats.total }}（{{ Math.round(achievementStats.percent * 100) }}%）</div>
+            <el-progress :percentage="Math.round(achievementStats.percent * 100)" :stroke-width="10" :color="achievementStats.percent >= 1 ? '#67c23a' : '#409eff'" />
+          </div>
           <el-tabs v-model="achievementActive" :stretch="true">
             <el-tab-pane :label="i.name" :name="i.type" v-for="(i, k) in achievementAll" :key="k">
               <div class="achievement-content" v-if="i.data.length > 0">
@@ -1568,6 +1572,19 @@
   // 灵宠转生勾选状态
   const petReincarnation = ref(false)
   const achievementActive = ref('pet')
+  // 成就收集度：已完成 / 总数（用于进度条与集齐加成）
+  const achievementStats = computed(() => {
+    const playerAch = player.value.achievement || {}
+    let total = 0
+    let done = 0
+    achievementAll.value.forEach(cat => {
+      ;(cat.data || []).forEach(item => {
+        total++
+        if ((playerAch[cat.type] || []).some(a => a.id === item.id)) done++
+      })
+    })
+    return { done, total, percent: total ? done / total : 0 }
+  })
   // 当前界域展示
   const currentRealmName = computed(() => {
     const r = realmOf(player.value.level || 0)
@@ -3406,6 +3423,8 @@
     color: #e6a23c;
     background: rgba(230, 162, 60, 0.15);
   }
+  .ach-progress { margin-bottom: 12px; }
+  .ach-progress-head { margin-bottom: 6px; font-size: 14px; color: #303133; font-weight: 700; }
   .talent-content {
     display: flex;
     flex-wrap: wrap;
