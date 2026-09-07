@@ -65,6 +65,7 @@ export const useMainStore = defineStore('main', {
       wifes: [],
       props: {
         money: 0,
+        daoFruit: 0,
         chips: 0,
         flying: 0,
         qingyuan: 0,

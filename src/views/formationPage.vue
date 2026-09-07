@@ -18,14 +18,14 @@
 
     <div class="section-title">大阵库 · 共 {{ totalFormations }} 座</div>
     <div class="filter-bar">
-      <el-radio-group v-model="groupFilter" size="small">
+      <el-radio-group v-model="groupFilter" size="small" class="group-filter">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button v-for="g in FORMATION_GROUPS" :key="g.key" :value="g.key">{{ g.name }}</el-radio-button>
       </el-radio-group>
-      <el-select v-model="tierFilter" size="small" placeholder="品阶" class="tier-select">
-        <el-option label="全部品阶" :value="0" />
-        <el-option v-for="t in FORMATION_TIERS" :key="t.t" :label="t.name" :value="t.t" />
-      </el-select>
+      <div class="tier-chips">
+        <button class="tier-chip" :class="{ on: tierFilter === 0 }" @click="tierFilter = 0">全部品阶</button>
+        <button v-for="t in FORMATION_TIERS" :key="t.t" class="tier-chip" :class="{ on: tierFilter === t.t }" @click="tierFilter = t.t">{{ t.name }}</button>
+      </div>
     </div>
 
     <div class="grid">
@@ -132,8 +132,11 @@
   .section-title { font-size: 15px; font-weight: bold; margin: 12px 0 8px; }
   .summary { background: var(--el-fill-color-light); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
   .summary-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .filter-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .tier-select { width: 140px; }
+  .filter-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+  .group-filter { flex-wrap: wrap; }
+  .tier-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tier-chip { border: 1px solid var(--el-border-color-lighter); border-radius: 999px; padding: 4px 12px; background: var(--el-fill-color-light); color: var(--el-text-color-primary); cursor: pointer; font-size: 12px; line-height: 1.4; }
+  .tier-chip.on { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-weight: bold; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .card { margin: 0; }
   .card-head { display: flex; align-items: center; gap: 6px; }

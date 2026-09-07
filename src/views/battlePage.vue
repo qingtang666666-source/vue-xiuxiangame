@@ -5,6 +5,7 @@
       <div class="resources">
         <el-tag type="warning">灵石 {{ formatNumberToChineseUnit(player.props.money || 0) }}</el-tag>
         <el-tag type="primary">培养丹 {{ player.props.cultivateDan || 0 }}</el-tag>
+        <el-tag type="success">道果 {{ player.props.daoFruit || 0 }}（突破大境界用）</el-tag>
       </div>
     </div>
 
@@ -26,11 +27,11 @@
         </el-radio-group>
       </div>
       <el-button type="primary" size="large" @click="startFight" class="fight-btn">开始战斗</el-button>
-      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。</div>
+      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。历战胜利有概率掉落「道果」，突破大境界必备（灵石买不到）。</div>
     </div>
 
     <!-- 战斗主体 -->
-    <div v-else class="arena">
+    <div v-else class="arena" :style="arenaStyle">
       <div class="round-bar">第 <b>{{ state.round }}</b> 回合 · {{ phaseLabel }}</div>
       <div class="controls">
         <el-switch v-model="auto" active-text="自动战斗" inline-prompt />
@@ -101,6 +102,7 @@
             <div>修为 +{{ formatNumberToChineseUnit(state.reward?.exp || 0) }}</div>
             <div>灵石 +{{ formatNumberToChineseUnit(state.reward?.money || 0) }}</div>
             <div>培养丹 +{{ state.reward?.dan || 0 }}</div>
+            <div v-if="state.reward?.dao" class="res-fruit">道果 +{{ state.reward.dao }}（历战专属·突破大境界用）</div>
             <div>灵草 +{{ state.reward?.herb || 0 }} · 炼器石 +{{ state.reward?.stone || 0 }}</div>
           </div>
         </template>
@@ -126,6 +128,7 @@
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
   import { divineTipText } from '@/plugins/divine'
+  import battleArenaBg from '@/assets/images/battle-arena-bg.png'
   import {
     startBattle,
     buildEnemies,
@@ -141,12 +144,13 @@
   const store = useMainStore()
   const router = useRouter()
   const player = computed(() => store.player)
+  const arenaStyle = { '--arena-img': `url(${battleArenaBg})` }
 
   const difficulties = [
-    { key: 'easy', name: '风平浪静', desc: '约你六成战力，境界低你一层', levelOffset: -9, mult: 0.6 },
-    { key: 'normal', name: '势均力敌', desc: '与你同等战力，需手法与神通', levelOffset: 0, mult: 1.0 },
-    { key: 'hard', name: '凶险莫测', desc: '高出你四成战力，境界也压你一头', levelOffset: 9, mult: 1.4 },
-    { key: 'boss', name: '秘境首领', desc: '战力与境界双重压制，掉落丰厚', levelOffset: 18, mult: 1.4, boss: true }
+    { key: 'easy', name: '风平浪静', desc: '约你五成五战力，轻松取胜', levelOffset: -9, mult: 0.55 },
+    { key: 'normal', name: '势均力敌', desc: '略逊于你，稳扎稳打可胜', levelOffset: 0, mult: 0.9 },
+    { key: 'hard', name: '凶险莫测', desc: '高出你二成五战力，需小心应对', levelOffset: 9, mult: 1.25 },
+    { key: 'boss', name: '秘境首领', desc: '战力与境界双重压制，掉落丰厚', levelOffset: 18, mult: 1.5, boss: true }
   ]
   const diff = ref('normal')
   const count = ref(1)
@@ -221,7 +225,7 @@
       reincarnation: player.value.reincarnation || 0,
       mult: d.mult || 1
     })
-    state.value = reactive(startBattle(player.value, enemies))
+    state.value = reactive(startBattle(player.value, enemies, { award: true, ladder: true }))
     target.value = state.value.enemies[0]?.id || null
     nextTick(scrollLog)
   }
@@ -269,7 +273,7 @@
   .fight-btn { width: 100%; }
   .tip { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 10px; line-height: 1.7; }
 
-  .arena { display: flex; flex-direction: column; }
+  .arena { display: flex; flex-direction: column; border-radius: 14px; padding: 12px; background: linear-gradient(rgba(250, 247, 240, 0.86), rgba(238, 234, 224, 0.9)), var(--arena-img, none) center / cover no-repeat; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
   .round-bar { font-size: 14px; margin-bottom: 8px; }
   .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .auto-tip { font-size: 12px; color: var(--el-color-success); }
@@ -305,6 +309,7 @@
   .res-title.ok { color: var(--el-color-success); }
   .res-title.err { color: var(--el-color-danger); }
   .res-lines { color: var(--el-text-color-primary); line-height: 2; }
+  .res-fruit { color: var(--el-color-success); font-weight: 700; }
   .res-sub { color: var(--el-text-color-secondary); margin-bottom: 8px; }
   .res-btns { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
 

@@ -8,7 +8,7 @@
     :close-on-press-escape="false"
     @update:model-value="v => emit('update:visible', v)"
   >
-    <div v-if="state" class="tc">
+    <div v-if="state" class="tc" :style="arenaStyle">
       <div class="tc-topbar">
         <div class="tc-round">第 <b>{{ state.round }}</b> 回合</div>
         <div class="tc-phase" :class="{ enemy: !isPlayerTurnV && !battleOverV, over: battleOverV }">{{ phaseLabel }}</div>
@@ -99,6 +99,7 @@
   import { bumpDaily } from '@/plugins/dailyGoals'
   import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
   import { divineTipText } from '@/plugins/divine'
+  import battleArenaBg from '@/assets/images/battle-arena-bg.png'
   import {
     startBattle,
     monsterToEntity,
@@ -119,6 +120,7 @@
   })
   const emit = defineEmits(['update:visible', 'win', 'lose', 'flee'])
   const store = useMainStore()
+  const arenaStyle = { '--arena-img': `url(${battleArenaBg})` }
 
   const state = ref(null)
   const auto = ref(false)
@@ -247,7 +249,7 @@
   .tc-phase.over { color: #8be08b; }
   .tc-controls { display: flex; align-items: center; gap: 8px; }
   .tc-tip { font-size: 12px; color: var(--el-color-success); }
-  .tc-arena { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .tc-arena { display: flex; align-items: center; gap: 12px; margin-top: 14px; border-radius: 16px; padding: 12px; background: linear-gradient(rgba(250, 247, 240, 0.8), rgba(242, 237, 227, 0.88)), var(--arena-img, none) center / cover no-repeat; }
   .tc-side { flex: 1; min-width: 0; }
   .tc-unit { position: relative; border-radius: 18px; padding: 18px 22px 16px; border: 1px solid rgba(255, 255, 255, 0.1); background: radial-gradient(circle at 30% 16%, rgba(255, 255, 255, 0.08), transparent 60%), linear-gradient(160deg, #3a3550, #232036); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 10px 28px rgba(0, 0, 0, 0.3); }
   .tc-unit.me { border-color: rgba(96, 165, 250, 0.5); }

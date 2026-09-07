@@ -4,7 +4,7 @@
     :model-value="visible"
     @update:model-value="v => emit('update:visible', v)"
     direction="rtl"
-    size="440px"
+    size="min(440px, 100vw)"
     class="technique-drawer"
   >
     <div class="tech-body">

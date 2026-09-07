@@ -54,7 +54,7 @@ export const ladderEnemies = (player, { count = 1, boss = false, levelOffset = 0
   const pLv = Math.max(1, player.level || 1)
   const n = Math.max(1, Math.floor(count) || 1)
   const split = n > 1 ? 1 / Math.pow(n, 0.7) : 1
-  const elite = boss ? 1.8 + reincarnation * 0.15 : 1
+  const elite = boss ? 1.2 + reincarnation * 0.12 : 1
   const out = []
   for (let i = 0; i < n; i++) {
     const lv = Math.max(1, Math.min(160, pLv + levelOffset + Math.floor(Math.random() * 5) - 2))
@@ -66,10 +66,10 @@ export const ladderEnemies = (player, { count = 1, boss = false, levelOffset = 0
 
 // 难度档位 → 战力倍率（相对玩家自己）
 export const LADDER_DIFFICULTIES = {
-  easy: { mult: 0.6, label: '低于你一头' },
-  normal: { mult: 1.0, label: '与你相当' },
-  hard: { mult: 1.4, label: '高出你四成' },
-  boss: { mult: 1.8, label: '首领（含额外加压）' }
+  easy: { mult: 0.55, label: '低于你一头' },
+  normal: { mult: 0.9, label: '略逊于你' },
+  hard: { mult: 1.25, label: '高出你二成五' },
+  boss: { mult: 1.5, label: '首领（含额外加压）' }
 }
 
 // —— 无尽塔：层数无限，且以玩家战力为锚持续加压 ——

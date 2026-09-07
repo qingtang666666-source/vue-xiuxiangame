@@ -16,6 +16,7 @@
       <div class="cultivate-flavor" v-if="flavorText">{{ flavorText }}</div>
       <div class="cultivate-stats">
         <span class="stat">修炼速度 ×<b>{{ cultSpeed.toFixed(2) }}</b></span>
+        <span class="stat">道果 <b>{{ player.props.daoFruit || 0 }}</b>（大境界突破用）</span>
         <span class="stat" v-if="breakthroughInfo">下一境界：<b>{{ breakthroughInfo.next }}</b> · 还需 {{ formatNumberToChineseUnit(breakthroughInfo.remain) }} · {{ breakthroughInfo.reqText }}</span>
         <span class="stat" v-if="nextTrib">渡劫将至：<b class="trib">{{ nextTrib.name }}</b></span>
       </div>
@@ -120,6 +121,7 @@
     const prevStage = realmStageOf(p.level)
     const targetStage = realmStageOf(nextLv)
     const willCross = targetStage > prevStage
+    if (willCross) req.push('道果×1')
     if (willCross && p.level >= 19) {
       const danNeed = Math.max(1, Math.ceil(p.level / 15))
       req.push(`培养丹×${danNeed}`)
@@ -279,6 +281,17 @@
             return
           }
           player.value.props.cultivateDan -= danNeed
+        }
+        // 灵石买不到的「道果」：每次跨大境界需 1 枚，仅历战掉落
+        if (willCross) {
+          if ((player.value.props.daoFruit || 0) < 1) {
+            stopCultivate()
+            isStop.value = false
+            isStart.value = false
+            texts.value.push(`<span style="color: #E6A23C">突破大境界需 1 枚「道果」（当前 ${player.value.props.daoFruit || 0}），道果只从历战掉落，灵石买不到！</span>`)
+            return
+          }
+          player.value.props.daoFruit -= 1
         }
         // 寿元不足无法冲击更高境界
         if (willCross) {

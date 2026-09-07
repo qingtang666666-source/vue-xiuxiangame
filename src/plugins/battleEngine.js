@@ -99,7 +99,8 @@ export const startBattle = (player, enemies = buildEnemies(player, {}), opts = {
     activeId: null,
     log: [],
     reward: null,
-    award: opts.award !== false // 由调用方决定是否自动发放奖励（探索用 false，自行结算）
+    award: opts.award !== false, // 由调用方决定是否自动发放奖励（探索用 false，自行结算）
+    ladder: opts.ladder === true // 历战模式：胜利时判定「道果」掉落与胜场计数
   }
   buildOrder(st)
   st.phase = 'idle'
@@ -459,5 +460,19 @@ const awardVictory = st => {
   p.props.cultivateDan = (p.props.cultivateDan || 0) + dan
   p.props.spiritHerb = (p.props.spiritHerb || 0) + herb
   p.props.strengtheningStone = (p.props.strengtheningStone || 0) + stone
-  st.reward = { exp, money, dan, herb, stone, enemies: st.enemies.length }
+  // —— 突破「道果」：只有历战掉落，灵石买不到；约 20~100 场必掉 ——
+  let dao = 0
+  if (st.ladder) {
+    st.realPlayer.ladderWins = (st.realPlayer.ladderWins || 0) + 1
+    const pity = (st.realPlayer.ladderFruitPity || 0) + 1
+    const chance = Math.min(1, 0.035 + Math.max(0, pity - 60) * 0.02)
+    if (pity >= 100 || Math.random() < chance) {
+      dao = 1
+      st.realPlayer.props.daoFruit = (st.realPlayer.props.daoFruit || 0) + 1
+      st.realPlayer.ladderFruitPity = 0
+    } else {
+      st.realPlayer.ladderFruitPity = pity
+    }
+  }
+  st.reward = { exp, money, dan, herb, stone, dao, enemies: st.enemies.length }
 }

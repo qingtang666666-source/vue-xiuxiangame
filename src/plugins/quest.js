@@ -16,6 +16,8 @@ const COUNTERS = {
   talisman: p => p.skills?.talisman || 0,
   formation: p => p.skills?.formation || 0,
   sectPos: p => (p.sect?.position ?? 0),
+  ladder: p => p.ladderWins || 0,
+  techniques: p => Object.keys(p.methods || {}).length,
   strengthen: p => p.strengthenCount || 0
 }
 export const counterProgress = (player, key) => (COUNTERS[key] ? COUNTERS[key](player) : 0)
@@ -57,7 +59,10 @@ export const FIXED_QUESTS = [
   { id: 'f33', name: '签到入门', desc: '完成 1 次签到', reward: { money: 2000 }, done: p => (p.checkinDays || 0) >= 1 },
   { id: 'f34', name: '初炼丹药', desc: '炼制 1 次丹药', reward: { money: 400 }, done: p => (p.skills?.alchemy || 0) >= 1 },
   { id: 'f35', name: '初锻灵器', desc: '炼制 1 次装备', reward: { money: 400 }, done: p => (p.skills?.forge || 0) >= 1 },
-  { id: 'f36', name: '小试身手', desc: '完成 1 次休闲小游戏', reward: { money: 3000 }, done: p => ((p.gameWins || 0) + (p.gameLosses || 0)) >= 1 }
+  { id: 'f36', name: '小试身手', desc: '完成 1 次休闲小游戏', reward: { money: 3000 }, done: p => ((p.gameWins || 0) + (p.gameLosses || 0)) >= 1 },
+  { id: 'f37', name: '初入历战', desc: '取得 1 场历战胜利', reward: { money: 300 }, done: p => (p.ladderWins || 0) >= 1 },
+  { id: 'f38', name: '参悟首门功法', desc: '参悟任意 1 门功法', reward: { money: 400 }, done: p => Object.keys(p.methods || {}).length >= 1 },
+  { id: 'f39', name: '装备初强', desc: '强化装备 1 次', reward: { money: 300 }, done: p => (p.strengthenCount || 0) >= 1 }
 ]
 
 export const SELECTABLE_POOL = [

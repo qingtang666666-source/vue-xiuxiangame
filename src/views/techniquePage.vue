@@ -12,14 +12,16 @@
     </div>
 
     <div class="filter-bar">
-      <el-select v-model="gradeFilter" size="small" class="fselect">
-        <el-option label="全部品阶" :value="0" />
-        <el-option v-for="g in TECH_GRADES" :key="g.g" :label="g.name" :value="g.g" />
-      </el-select>
-      <el-select v-model="familyFilter" size="small" class="fselect">
-        <el-option label="全部流派" value="all" />
-        <el-option v-for="f in families" :key="f.key" :label="f.name" :value="f.key" />
-      </el-select>
+      <div class="chips-row">
+        <span class="chips-label">品阶</span>
+        <button class="chip" :class="{ on: gradeFilter === 0 }" @click="gradeFilter = 0">全部</button>
+        <button v-for="g in TECH_GRADES" :key="g.g" class="chip" :class="{ on: gradeFilter === g.g }" @click="gradeFilter = g.g">{{ g.name }}</button>
+      </div>
+      <div class="chips-row">
+        <span class="chips-label">流派</span>
+        <button class="chip" :class="{ on: familyFilter === 'all' }" @click="familyFilter = 'all'">全部</button>
+        <button v-for="f in families" :key="f.key" class="chip" :class="{ on: familyFilter === f.key }" @click="familyFilter = f.key">{{ f.name }}</button>
+      </div>
     </div>
 
     <div class="grid">
@@ -235,8 +237,11 @@
   .title { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
   .realm { color: var(--el-color-primary); }
   .resources { display: flex; flex-wrap: wrap; gap: 8px; }
-  .filter-bar { display: flex; gap: 10px; margin-bottom: 10px; }
-  .fselect { width: 150px; }
+  .filter-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chips-label { font-size: 12px; color: var(--el-text-color-secondary); margin-right: 2px; }
+  .chip { border: 1px solid var(--el-border-color-lighter); border-radius: 999px; padding: 4px 12px; background: var(--el-fill-color-light); color: var(--el-text-color-primary); cursor: pointer; font-size: 12px; line-height: 1.4; }
+  .chip.on { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-weight: bold; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .card { margin: 0; }
   .head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }

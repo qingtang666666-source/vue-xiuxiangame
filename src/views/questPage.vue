@@ -9,6 +9,18 @@
         <el-tag type="warning">连续 {{ streak }} 天</el-tag>
       </div>
       <div class="hint">固定任务为里程碑；自选任务最多同时 {{ MAX_SELECTED }} 个，完成后可换。</div>
+      <div class="hint2">下方「玩法引导」覆盖全部功能模块，每项都有入口说明，新手照着点一遍即可上手。</div>
+    </div>
+
+    <div class="section-title">玩法引导 · 新手必看</div>
+    <div class="guide-list">
+      <div class="guide-row" v-for="m in guides" :key="m.key">
+        <div class="guide-n"><b>{{ m.icon }} {{ m.name }}</b><span class="sub">{{ m.desc }}</span></div>
+        <el-tag v-if="m.done === true" size="small" type="success">已体验</el-tag>
+        <el-tag v-else-if="m.done === false" size="small" type="warning">待体验</el-tag>
+        <el-tag v-else size="small" type="info">待探索</el-tag>
+        <el-button size="small" type="primary" plain @click="go(m.route)">前往</el-button>
+      </div>
     </div>
 
     <div class="section-title">固定任务</div>
@@ -73,6 +85,7 @@
     questLevel,
     questStreak
   } from '@/plugins/quest'
+  import { moduleGuides } from '@/plugins/guide'
 
   const store = useMainStore()
   const router = useRouter()
@@ -87,6 +100,8 @@
   const canSelect = computed(() => canSelectQuest(player.value))
   const questLv = computed(() => questLevel(player.value))
   const streak = computed(() => questStreak(player.value))
+  const guides = computed(() => moduleGuides(player.value))
+  const go = r => router.push(r)
 
   const rewardText = r =>
     Object.entries(r)
@@ -122,8 +137,12 @@
   .realm { color: var(--el-color-primary); }
   .resources { display: flex; gap: 8px; margin-bottom: 6px; }
   .hint { font-size: 12px; color: var(--el-text-color-secondary); }
+  .hint2 { font-size: 12px; color: var(--el-color-warning); margin-top: 4px; }
   .section-title { font-size: 15px; font-weight: bold; margin: 14px 0 8px; }
   .fixed-list, .sel-list, .pool-list { display: flex; flex-direction: column; gap: 6px; }
+  .guide-list { display: flex; flex-direction: column; gap: 6px; }
+  .guide-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--el-fill-color-light); flex-wrap: wrap; }
+  .guide-n { display: flex; flex-direction: column; flex: 1; min-width: 210px; }
   .fix-row, .sel-row, .pool-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 4px; background: var(--el-fill-color-light); }
   .fix-n, .sel-n, .pool-n { display: flex; flex-direction: column; flex: 1; }
   .sub { font-size: 12px; color: var(--el-text-color-secondary); }
