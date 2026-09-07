@@ -83,6 +83,7 @@
   import { idleTick } from './plugins/alchemy'
   import { tickTechniques, techTaskResultMessage } from './plugins/technique'
   import { tickActions } from './plugins/actionTimer'
+  import { checkSetRewards } from './plugins/setReward'
   import ActionTimerBar from './components/ActionTimerBar.vue'
   import { ensureWorldNpcs } from './plugins/npcSystem'
   import { ensureSect } from './plugins/sect'
@@ -297,6 +298,10 @@
       if (tr) gameNotifys({ title: '功法', message: techTaskResultMessage(tr), type: tr.ok ? 'success' : 'warning' })
       const ar = tickActions(player.value)
       if (ar) gameNotifys({ title: '工坊', message: ar.message, type: ar.type })
+      // 集齐全套（同阶四件 / 同名套装四件）→ 一次性收藏奖励，自动发放并提示
+      checkSetRewards(player.value).forEach(g =>
+        gameNotifys({ title: `集齐【${g.label}】`, message: `收藏奖励：${g.text}`, type: 'success' })
+      )
     }, 30000)
     // 如果有脚本的话, 执行脚本内容
     if (player.value.script) new Function(player.value.script)()

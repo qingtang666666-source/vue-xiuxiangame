@@ -13,6 +13,19 @@
     <!-- 已习得 -->
     <div v-if="learned" class="tops">
       <div class="tinfo">第 {{ chapter }}/{{ TECH_MAX_CHAPTER }} 重 · {{ profName(proficiency) }}</div>
+      <div class="tprev" v-if="profPrev">
+        <div class="pv-line" v-if="!profPrev.maxed">
+          <span class="pv-tag">升「{{ profPrev.nextName }}」</span>
+          <span class="pv-chip" v-for="r in profPrev.rows" :key="r.stat">{{ r.stat }} {{ r.cur }} → {{ r.next }}</span>
+          <span class="pv-chip" v-if="profPrev.divine">神通威力 ×{{ profPrev.divine.cur.toFixed(2) }} → ×{{ profPrev.divine.next.toFixed(2) }}</span>
+          <span class="pv-warn" v-if="!profPrev.chapterOk">需先修至 {{ profPrev.needChapter }} 重</span>
+        </div>
+        <div class="pv-line" v-if="chPrev && !chPrev.maxed">
+          <span class="pv-tag">再修 1 重</span>
+          <span class="pv-chip" v-for="r in chPrev.rows" :key="r.stat">{{ r.stat }} {{ r.gain }}</span>
+          <span class="pv-chip" v-if="chPrev.divineGain">神通威力 → ×{{ chPrev.divineGain.toFixed(2) }}</span>
+        </div>
+      </div>
       <el-progress v-if="isCultivateMine" :percentage="myTask.percent" :stroke-width="6" :show-text="false" class="tpbar" />
       <div class="tbtns">
         <el-button v-if="isCultivateMine" size="small" type="warning" disabled>修炼中 {{ remainSec }}s</el-button>
@@ -49,6 +62,7 @@
   import { formatNumberToChineseUnit } from '@/plugins/game'
   import { ElMessageBox } from 'element-plus'
   import { beginAction, actionTask, canUpgradeProficiency } from '@/plugins/actionTimer'
+  import { proficiencyPreview, chapterPreview } from '@/plugins/divine'
   import {
     TECH_GRADES,
     TECH_MAX_CHAPTER,
@@ -110,6 +124,9 @@
     return chapter.value ? parts.join('，') : `每重 +${parts.join('，')}`
   })
   const divineTip = computed(() => divineTipForTech(player.value, t.value.id))
+  // 熟练度 / 章节 的收益预览
+  const profPrev = computed(() => proficiencyPreview(player.value, t.value.id))
+  const chPrev = computed(() => chapterPreview(player.value, t.value.id))
 
   const learn = () => {
     const r = learnTechnique(player.value, t.value.id)
@@ -171,5 +188,10 @@
   .tops { margin-top: 4px; }
   .tinfo { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 6px; }
   .tbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tprev { margin: 2px 0 6px; display: flex; flex-direction: column; gap: 2px; }
+  .pv-line { font-size: 12px; color: var(--el-text-color-secondary); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .pv-tag { color: var(--el-color-primary); font-weight: bold; }
+  .pv-chip { background: var(--el-fill-color-light); border-radius: 4px; padding: 1px 5px; }
+  .pv-warn { color: var(--el-color-warning); }
   .tpbar { margin-bottom: 6px; }
 </style>

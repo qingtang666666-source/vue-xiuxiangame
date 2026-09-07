@@ -137,6 +137,23 @@
           </div>
         </div>
       </div>
+      <div class="set-collect" v-if="setRewardTotal">
+        <div class="sc-head">
+          <span class="sc-title">集齐全套奖励</span>
+          <b class="sc-count">{{ setRewardClaimed }}/{{ setRewardTotal }}</b>
+          <el-progress :percentage="setRewardPercent" :stroke-width="6" :show-text="false" class="sc-bar" />
+          <el-tag v-if="setRewardClaimable" size="small" type="warning" effect="dark">{{ setRewardClaimable }} 项待发放</el-tag>
+          <el-button size="small" text @click="rewardTipShow = !rewardTipShow">{{ rewardTipShow ? '收起' : '清单' }}</el-button>
+        </div>
+        <div class="sc-list" v-if="rewardTipShow">
+          <div class="sc-row" v-for="d in setRewardNear" :key="d.key" :class="{ done: d.done, claimed: d.claimed }">
+            <span class="sc-name">{{ d.label }}</span>
+            <span class="sc-prog">{{ d.have }}/4</span>
+            <span class="sc-reward">{{ d.rewardText }}</span>
+            <span class="sc-state">{{ d.claimed ? '已领取' : d.done ? '待发放' : '未集齐' }}</span>
+          </div>
+        </div>
+      </div>
       <div class="aptitude-banner" v-if="aptitude">
         <el-tag type="primary" effect="plain">根骨：{{ aptitude.rootBoneName }}</el-tag>
         <el-tag :type="constitutionTag" effect="plain">体质：{{ constitutionLabel }}</el-tag>
@@ -1341,6 +1358,7 @@
   import { buffStats } from '@/plugins/buffs'
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
+  import { setRewardStatus, setRewardSummary } from '@/plugins/setReward'
   import { ensureAptitude, awakenConstitution, awakenCost as awakenCostCalc } from '@/plugins/aptitude'
   import { sumStatAffixes } from '@/plugins/affix'
   import { gameDate, playerLifespan } from '@/plugins/time'
@@ -1496,6 +1514,15 @@
   })
   const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
   const setList = computed(() => setSummary(player.value))
+  // 集齐全套奖励：进度与清单（同阶四件 / 同名套装四件）
+  const rewardTipShow = ref(false)
+  const setRewardList = computed(() => setRewardStatus(player.value))
+  const setRewardSum = computed(() => setRewardSummary(player.value))
+  const setRewardClaimed = computed(() => setRewardSum.value.claimed)
+  const setRewardTotal = computed(() => setRewardSum.value.total)
+  const setRewardClaimable = computed(() => setRewardSum.value.claimable)
+  const setRewardPercent = computed(() => setRewardSum.value.percent)
+  const setRewardNear = computed(() => setRewardList.value.filter(d => d.have >= 2 || d.done).sort((a, b) => b.have - a.have || a.tier - b.tier))
   // 资质：根骨 与 体质
   const aptitude = computed(() => ensureAptitude(player.value))
   const constitutionLabel = computed(() => {
@@ -3186,6 +3213,43 @@
     font-size: 12px;
   }
 
+  .set-collect {
+    margin: 8px 0 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+  }
+  .sc-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .sc-title { font-weight: bold; color: var(--el-color-primary); }
+  .sc-count { font-variant-numeric: tabular-nums; }
+  .sc-bar { width: 110px; }
+  .sc-list {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 220px;
+    overflow: auto;
+  }
+  .sc-row {
+    display: grid;
+    grid-template-columns: 1fr 44px 1.6fr 56px;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    padding: 2px 0;
+    border-bottom: 1px dashed var(--el-border-color-lighter);
+  }
+  .sc-row.done .sc-name { color: var(--el-color-warning); }
+  .sc-row.claimed .sc-name { color: var(--el-color-success); }
+  .sc-state { text-align: right; }
   .set-banner {
     display: flex;
     flex-direction: column;

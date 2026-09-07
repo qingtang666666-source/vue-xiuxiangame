@@ -156,6 +156,51 @@ export const manorEnhanceBonus = player => {
   }
 }
 
+// 下一级收益预览：把「升一级到底多赚多少」算给玩家看，而不是只给百分比
+//   rows: [{ label, cur, next }]        建筑效果 当前 → 下一级
+//   moneyPerHour                        离线灵石 每小时估算（与 idleTick 同口径：每 10 秒 level×0.5×倍率）
+//   paybackHours                        按新增灵石产出估算的回本小时数（仅矿脉有值）
+export const manorGainPreview = (player, id) => {
+  const b = manorBuilding(id)
+  const max = manorMaxLevel(id)
+  const lv = manorLevel(player, id)
+  const next = Math.max(lv, Math.min(max, lv + 1))
+  const pct = v => `×${v.toFixed(2)}`
+  const TABLE = {
+    hall: [
+      { label: '离线修炼倍率', fmt: pct, cur: 1 + lv * 0.06, next: 1 + next * 0.06 },
+      { label: '离线上限', fmt: v => `${v} 小时`, cur: 24 + lv, next: 24 + next }
+    ],
+    mine: [{ label: '离线灵石倍率', fmt: pct, cur: 1 + lv * 0.08, next: 1 + next * 0.08 }],
+    farm: [{ label: '灵草产出', fmt: v => `${v} 株/时`, cur: lv, next }],
+    library: [{ label: '修炼速度倍率', fmt: pct, cur: 1 + lv * 0.02, next: 1 + next * 0.02 }],
+    dao: [
+      { label: '高品天赋概率', fmt: v => `${Math.round(Math.min(0.5, v) * 100)}%`, cur: lv * 0.01, next: next * 0.01 },
+      { label: '修炼速度', fmt: v => `+${Math.round(v)}%`, cur: lv, next }
+    ],
+    forge: [
+      { label: '炼器消耗', fmt: v => `-${Math.round(Math.min(0.5, v) * 100)}%`, cur: lv * 0.02, next: next * 0.02 },
+      { label: '炼器成功率', fmt: v => `+${Math.round(Math.min(0.15, v) * 100)}%`, cur: lv * 0.01, next: next * 0.01 }
+    ]
+  }
+  const rows = (TABLE[id] || []).map(r => ({ label: r.label, cur: r.fmt(r.cur), next: r.fmt(r.next) }))
+  const perHour = mult => Math.floor(180 * (player.level || 1) * mult)
+  const moneyPerHour = id === 'mine' ? { cur: perHour(1 + lv * 0.08), next: perHour(1 + next * 0.08) } : null
+  const cost = manorUpgradeCost(player, id)
+  const gain = moneyPerHour ? moneyPerHour.next - moneyPerHour.cur : 0
+  return {
+    id,
+    name: b ? b.name : '',
+    level: lv,
+    max,
+    maxed: lv >= max,
+    rows,
+    moneyPerHour,
+    paybackHours: gain > 0 ? Math.max(1, Math.ceil(cost.money / gain)) : null,
+    cost
+  }
+}
+
 // 汇总所有洞府加成，便于展示
 export const manorStats = player => {
   const bonus = manorOfflineBonus(player)

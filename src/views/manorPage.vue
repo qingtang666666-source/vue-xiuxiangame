@@ -36,6 +36,18 @@
         <div class="effects">
           <div class="effect" v-for="(e, i) in b.effectTexts" :key="i">{{ e }}</div>
         </div>
+        <div class="preview" v-if="!b.preview.maxed">
+          <div class="pv-title">升到 {{ b.preview.level + 1 }} 级</div>
+          <div class="pv-row" v-for="r in b.preview.rows" :key="r.label">
+            <span class="pv-k">{{ r.label }}</span>
+            <span class="pv-v">{{ r.cur }} → <b>{{ r.next }}</b></span>
+          </div>
+          <div class="pv-money" v-if="b.preview.moneyPerHour">
+            离线灵石 ≈ {{ formatNumberToChineseUnit(b.preview.moneyPerHour.cur) }} → {{ formatNumberToChineseUnit(b.preview.moneyPerHour.next) }} /小时
+          </div>
+          <div class="pv-back" v-if="b.preview.paybackHours">按新增产出估算，约 {{ b.preview.paybackHours }} 小时回本</div>
+        </div>
+        <div class="preview maxed" v-else>已满级 · 收益不再增长</div>
         <div class="cost" v-if="b.level < b.max">
           <el-tag size="small" type="warning">灵石 {{ formatNumberToChineseUnit(b.cost.money) }}</el-tag>
           <el-tag size="small" v-if="b.cost.stone" type="danger">炼器石 {{ b.cost.stone }}</el-tag>
@@ -70,7 +82,8 @@
     manorUpgradeCost,
     canUpgrade,
     upgradeManor,
-    manorStats
+    manorStats,
+    manorGainPreview
   } from '@/plugins/manor'
 
   const store = useMainStore()
@@ -103,7 +116,9 @@
         canUpgrade: check.ok,
         reason: check.reason,
         // 动态展示各建筑当前生效值
-        effectTexts: computeEffectText(b.id, level)
+        effectTexts: computeEffectText(b.id, level),
+        // 下一级收益（含回本估算）
+        preview: manorGainPreview(player.value, b.id)
       }
     })
   })
@@ -229,6 +244,21 @@
     color: var(--el-color-success);
   }
 
+  .preview {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--el-fill-color-light);
+    border: 1px dashed var(--el-border-color-lighter);
+    font-size: 12px;
+  }
+  .preview.maxed { color: var(--el-color-success); }
+  .pv-title { font-weight: bold; color: var(--el-color-primary); margin-bottom: 2px; }
+  .pv-row { display: flex; justify-content: space-between; gap: 8px; }
+  .pv-row .pv-k { color: var(--el-text-color-secondary); }
+  .pv-row b { color: var(--el-color-success); }
+  .pv-money { margin-top: 2px; color: var(--el-color-warning); }
+  .pv-back { color: var(--el-text-color-secondary); }
   .cost {
     display: flex;
     gap: 6px;

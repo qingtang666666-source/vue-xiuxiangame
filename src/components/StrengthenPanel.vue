@@ -13,6 +13,17 @@
         :player="store.player"
         :strengthen-info="info"
       />
+      <div class="gain-box" v-if="step && !step.maxed">
+        <div class="gain-title">强化收益预览 +{{ step.from }} → +{{ step.to }}</div>
+        <div class="gain-row" v-for="g in gainRows" :key="g.k">
+          <span class="gk">{{ g.k }}</span>
+          <span class="gv">{{ g.cur }} → <b class="up">{{ g.next }}</b><span class="delta">（{{ g.delta }}）</span></span>
+        </div>
+        <div class="gain-foot">
+          成功率 {{ (step.rate * 100).toFixed(1) }}% · 一次 {{ step.cost }} 炼器石 · 期望共 {{ formatNumberToChineseUnit(step.expectCost) }} 石
+          <span class="risk" v-if="step.risky">（+{{ step.from }} 起失败会受损，可用强化保护）</span>
+        </div>
+      </div>
       <div class="value-trend">
         当前价值 {{ formatNumberToChineseUnit(equipSellPrice(info)) }} →
         强化后约 {{ formatNumberToChineseUnit(equipSellPrice({ ...info, strengthen: (info.strengthen || 0) + 1 })) }}
@@ -42,7 +53,7 @@
 <script setup>
   import { ref, computed } from 'vue'
   import { useMainStore } from '@/plugins/store'
-  import { enhanceCost, enhanceSuccessRate, repairEnhancement } from '@/plugins/equipForge'
+  import { enhanceCost, enhanceSuccessRate, repairEnhancement, enhanceStepPreview } from '@/plugins/equipForge'
   import { beginAction, actionTask } from '@/plugins/actionTimer'
   import { equipSellPrice } from '@/plugins/market'
   import { gameNotifys, formatNumberToChineseUnit } from '@/plugins/game'
@@ -56,6 +67,27 @@
   const protect = ref(false)
   const increase = ref(false)
   const busy = computed(() => !!actionTask(store.player))
+
+  // 强化收益预览：本次成功能净增多少三维、成功率与期望消耗
+  const step = computed(() => (props.info ? enhanceStepPreview(store.player, props.info, { protect: protect.value, increase: increase.value }) : null))
+  const gainRows = computed(() => {
+    const s = step.value
+    const item = props.info
+    if (!s || !item) return []
+    const rows = [
+      { k: '攻击', cur: item.attack || 0, add: s.gain.attack },
+      { k: '防御', cur: item.defense || 0, add: s.gain.defense },
+      { k: '气血', cur: item.health || 0, add: s.gain.health }
+    ]
+    return rows
+      .filter(r => r.cur || r.add)
+      .map(r => ({
+        k: r.k,
+        cur: formatNumberToChineseUnit(r.cur),
+        next: formatNumberToChineseUnit(r.cur + r.add),
+        delta: `+${formatNumberToChineseUnit(r.add)}`
+      }))
+  })
 
   const enhance = () => {
     const item = props.info
@@ -110,6 +142,22 @@
     flex-direction: column;
     gap: 12px;
   }
+  .gain-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+  }
+  .gain-title { font-size: 13px; font-weight: bold; color: var(--el-color-primary); }
+  .gain-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+  .gain-row .gk { color: var(--el-text-color-secondary); }
+  .gain-row .up { color: var(--el-color-success); }
+  .gain-row .delta { color: var(--el-color-success); }
+  .gain-foot { font-size: 12px; color: var(--el-text-color-secondary); }
+  .gain-foot .risk { color: var(--el-color-danger); }
   .value-trend {
     margin: 8px 0;
     font-size: 13px;

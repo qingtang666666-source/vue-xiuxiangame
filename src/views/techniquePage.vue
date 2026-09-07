@@ -36,6 +36,8 @@
           <div class="divine">神通：{{ t.divine.name }}（{{ t.type === 'active' ? '主动' : '被动' }}）</div>
         </el-tooltip>
         <div v-else class="divine">神通：无（被动）</div>
+        <div class="gainline" v-if="gainLine(t)">{{ gainLine(t) }}</div>
+        <div class="gainline" v-if="gainLineNext(t)">{{ gainLineNext(t) }}</div>
         <div class="req">{{ t.rarityName }} · {{ t.type === 'active' ? '战斗使用' : '辅修增益' }}</div>
         <el-progress v-if="mineTaskType(t.id)" :percentage="taskPercentOf(t.id)" :stroke-width="6" :show-text="false" class="tpbar2" />
         <div class="ops">
@@ -88,7 +90,7 @@
     forgetTechnique,
     techniqueSellPrice
   } from '@/plugins/technique'
-  import { divineTipForTech } from '@/plugins/divine'
+  import { divineTipForTech, proficiencyPreview, chapterPreview } from '@/plugins/divine'
 
   const store = useMainStore()
   const router = useRouter()
@@ -134,6 +136,20 @@
 
   const isLearned = t => !!player.value.methods?.[t.id]
   const divineTip = t => divineTipForTech(player.value, t.id)
+  // 熟练度 / 章节 的收益预览（一行文本，避免卡片过高）
+  const gainLine = t => {
+    const p = proficiencyPreview(player.value, t.id)
+    if (!p || p.maxed) return ''
+    const bits = p.rows.map(r => `${r.stat} ${r.cur}→${r.next}`).join('，')
+    const d = p.divine ? `，神通威力 ×${p.divine.cur.toFixed(2)}→×${p.divine.next.toFixed(2)}` : ''
+    return `升「${p.nextName}」：${bits}${d}${p.chapterOk ? '' : `（需先修至 ${p.needChapter} 重）`}`
+  }
+  const gainLineNext = t => {
+    const c = chapterPreview(player.value, t.id)
+    if (!c || c.maxed) return ''
+    const bits = c.rows.map(r => `${r.stat} ${r.gain}`).join('，')
+    return `再修 1 重（→${c.next} 重）：${bits}${c.divineGain ? `，神通威力 ×${c.divineGain.toFixed(2)}` : ''}`
+  }
   const statName = s => ({ attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石' }[s] || s)
 
   const passiveText = (t, ch) => {
@@ -227,6 +243,7 @@
   .desc { font-size: 12px; color: var(--el-text-color-secondary); margin: 2px 0 6px; }
   .passive { font-size: 12px; color: var(--el-color-success); margin-bottom: 2px; }
   .divine { font-size: 12px; color: var(--el-color-warning); margin-bottom: 2px; }
+  .gainline { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 2px; }
   .req { font-size: 11px; color: var(--el-text-color-placeholder); margin-bottom: 6px; }
   .ops { display: flex; flex-wrap: wrap; gap: 6px; }
   .tpbar2 { margin-bottom: 6px; }

@@ -82,6 +82,35 @@ const enhanceBonusFor = (item, s) => {
     default: return { attack: Math.floor(b.attack * f), health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
   }
 }
+// 强化等级 s 时该装备「强化净增」的三维（用于收益预览，不改数值）
+export const enhancePreview = (item, s) => enhanceBonusFor(item, Math.max(0, s || 0))
+
+// 从 s 升到 s+1 的增量；附带失败风险与消耗，供面板一次性展示
+export const enhanceStepPreview = (player, item, opts = {}) => {
+  const s = item.strengthen || 0
+  const cur = enhanceBonusFor(item, s)
+  const nxt = enhanceBonusFor(item, Math.min(30, s + 1))
+  const rate = enhanceSuccessRate(player, item, opts)
+  const cost = enhanceCost(player, item, opts)
+  return {
+    from: s,
+    to: Math.min(30, s + 1),
+    rate,
+    cost,
+    // 期望消耗：每次成功需要 1/rate 次尝试
+    expectCost: Math.ceil(cost / Math.max(0.0006, rate)),
+    gain: {
+      attack: Math.max(0, nxt.attack - cur.attack),
+      health: Math.max(0, nxt.health - cur.health),
+      defense: Math.max(0, nxt.defense - cur.defense)
+    },
+    total: nxt,
+    maxed: s >= 30,
+    risky: s >= 10,
+    scoreGain: Math.max(0, nxt.attack + nxt.health / 100 + nxt.defense - cur.attack - cur.health / 100 - cur.defense)
+  }
+}
+
 const syncStrengthen = (item, player, s, broken) => {
   const bonus = broken ? { attack: 0, health: 0, defense: 0 } : enhanceBonusFor(item, s)
   const dA = bonus.attack - (item.attack || 0)
