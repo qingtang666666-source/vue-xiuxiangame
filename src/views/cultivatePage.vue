@@ -54,6 +54,7 @@
   import { ensureSect } from '@/plugins/sect'
   import { isTribulationLevel, tribulationOf, conductTribulation } from '@/plugins/tribulation'
   import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState } from '@/plugins/breakthroughGate'
+  import { bumpDaily } from '@/plugins/dailyGoals'
   import BreakthroughTrial from '@/components/BreakthroughTrial.vue'
   import { checkAchievements } from '@/plugins/achievementChecker'
   import { celebrate } from '@/plugins/celebrate'
@@ -337,6 +338,7 @@
         }
         player.value.taskNum = 0
         player.value.level++
+        bumpDaily(player.value, 'cultivate')
         // 寿元大增提示(跨越新大境界)
         if (realmStageOf(player.value.level) > prevStage) {
           celebrate(`突破【${levelNames(player.value.level)}】`)

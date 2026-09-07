@@ -89,6 +89,7 @@
 <script setup>
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useMainStore } from '@/plugins/store'
+  import { bumpDaily } from '@/plugins/dailyGoals'
   import { formatNumberToChineseUnit, levelNames } from '@/plugins/game'
   import {
     startBattle,
@@ -196,7 +197,7 @@
 
   const close = kind => {
     clearTimeout(enemyTimer); clearTimeout(autoTimer)
-    if (kind === 'win') emit('win', state.value?.reward || {})
+    if (kind === 'win') { bumpDaily(store.player, 'battle'); emit('win', state.value?.reward || {}) }
     else if (kind === 'lose') emit('lose')
     else if (kind === 'flee') emit('flee')
     state.value = null

@@ -19,6 +19,7 @@ import { rebirthStats } from './rebirth.js'
 import { insightMult } from './insight.js'
 import { realmCultSpeedMult } from './game.js'
 import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier } from './craft.js'
+import { bumpDaily } from './dailyGoals.js'
 import { codexBonus } from './codex.js'
 import { tierMaterial, matNameOf } from './materialDb.js'
 
@@ -365,6 +366,7 @@ export const craftPill = (player, id) => {
   const existing = player.pills.find(p => p.id === id)
   if (existing) existing.count += 1
   else player.pills.push({ id, count: 1 })
+  bumpDaily(player, 'alchemy')
   bumpCraftRank(player, 'alchemy', r.tier)
   return { ok: true, recipe: r }
 }

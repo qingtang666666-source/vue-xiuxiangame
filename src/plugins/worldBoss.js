@@ -3,6 +3,7 @@ import { effectivePlayerStats } from './setBonus.js'
 import { addTreasure, TREASURES } from './treasure.js'
 import { rollTechniqueDrop } from './technique.js'
 import { realmPower, playerPowerScore } from './breakthroughGate.js'
+import { bumpDaily } from './dailyGoals.js'
 
 // 多只 Boss 定义：tier 表示境界加成（越高越难、击杀奖励越丰厚）
 const BOSS_DEFS = [
@@ -77,6 +78,7 @@ export const fightWorldBoss = (player, id) => {
   wb.hp = Math.max(0, wb.hp - dmg - allyDmg)
   wb.damage = (wb.damage || 0) + dmg
   wb.attacks = (wb.attacks || 0) + 1
+  bumpDaily(player, 'boss')
   const small = Math.floor((player.level || 1) * 2)
   player.props.money = (player.props.money || 0) + small
   let dead = false

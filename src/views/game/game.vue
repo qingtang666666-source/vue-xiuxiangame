@@ -36,6 +36,9 @@
       <el-tab-pane name="luck" label="每日气运">
         <LuckDraw />
       </el-tab-pane>
+      <el-tab-pane name="daily" label="今日修行">
+        <DailyGoalsPanel />
+      </el-tab-pane>
     </el-tabs>
     <div class="stats">
       <div class="attribute-box">
@@ -62,6 +65,7 @@
   import DouDiZhu from './douDizhu.vue'
   import ChipShop from './chipShop.vue'
   import LuckDraw from './luckDraw.vue'
+  import DailyGoalsPanel from '@/components/DailyGoalsPanel.vue'
   import { ref, computed, onMounted } from 'vue'
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, gameNotifys } from '@/plugins/game'

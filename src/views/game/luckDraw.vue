@@ -32,6 +32,7 @@
   import { ref, computed } from 'vue'
   import { useMainStore } from '@/plugins/store'
   import { gameNotifys } from '@/plugins/game'
+  import { bumpDaily } from '@/plugins/dailyGoals'
 
   const store = useMainStore()
   const player = ref(store.player)
@@ -47,6 +48,7 @@
   const draw = () => {
     if (!canDraw.value) return
     player.value.luckDraws = (player.value.luckDraws || 0) + 1
+    bumpDaily(player.value, 'draw')
     player.value.lastLuckDate = new Date().toISOString()
 
     // 加权随机奖励（随境界缩放）
