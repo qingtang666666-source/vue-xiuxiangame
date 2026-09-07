@@ -2,7 +2,7 @@
 import { effectivePlayerStats } from './setBonus.js'
 import { addTreasure, TREASURES } from './treasure.js'
 import { rollTechniqueDrop } from './technique.js'
-import { realmPower, playerPowerScore } from './breakthroughGate.js'
+import { realmPower, playerPowerScore, enemyStatsForPower } from './breakthroughGate.js'
 import { bumpDaily } from './dailyGoals.js'
 
 // 多只 Boss 定义：tier 表示境界加成（越高越难、击杀奖励越丰厚）
@@ -71,10 +71,19 @@ export const fightWorldBoss = (player, id) => {
   if (wb.dead) return { ok: false, reason: '该 Boss 已被讨伐' }
   if ((wb.attacks || 0) >= DAILY_ATTACK_CAP) return { ok: false, reason: `该 Boss 今日已攻击 ${DAILY_ATTACK_CAP} 次，明日再来` }
   const power = effectivePlayerStats(player)
-  let dmg = Math.max(1, Math.floor(playerPowerScore(player) / 400))
-  if (Math.random() < (power.critical || 0)) dmg = Math.floor(dmg * 1.5)
+  // 回合制攻防结算：按境界生成较强Boss属性，用"攻击-防御"逐回合模型决定伤害与胜负
+  const bossLv = Math.min(144, (wb.bossStage + 1) * 9)
+  const st = enemyStatsForPower(realmPower(bossLv), 1.6)
+  const pAtk = Math.max(1, power.attack || 0)
+  const pDef = power.defense || 0
+  const pHp = Math.max(1, power.maxHealth || 1)
+  const pDps = Math.max(1, pAtk - Math.floor(st.defense * 0.7))
+  const bDps = Math.max(1, Math.floor(st.attack) - pDef)
+  const rounds = Math.max(1, Math.ceil(pHp / bDps))
+  const bossHp = Math.max(1, wb.hp || 1)
+  let dmg = Math.min(bossHp, Math.floor(pDps * rounds))
   // 道友协同伤害：若干虚拟道友一同出手，帮助削减Boss血（结算按玩家贡献）
-  const allyDmg = Math.floor(dmg * (6 + Math.random() * 4))
+  const allyDmg = Math.floor(dmg * (0.5 + Math.random() * 0.6))
   wb.hp = Math.max(0, wb.hp - dmg - allyDmg)
   wb.damage = (wb.damage || 0) + dmg
   wb.attacks = (wb.attacks || 0) + 1
