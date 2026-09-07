@@ -11,6 +11,7 @@ export const BREAKTHROUGH_CD_FAIL = 30 * 1000
 export const TRIBULATION_CD_FAIL = 60 * 1000
 // 大境界突破失败上限
 export const MAX_STAGE_FAILS = 5
+export const POWER_SCALE = 10
 
 // 境界战力标准：11阶(道祖, Lv~144)≈500万，几何递减到 Lv1≈8000
 export const STANDARD_TOP_POWER = 5000000
@@ -37,7 +38,7 @@ const STAGE_POWER = [
 export const realmPower = level => {
   const lv = Math.max(1, Math.min(144, Math.floor(level || 1)))
   const stage = Math.max(0, Math.min(15, Math.floor((lv - 1) / 9)))
-  return STAGE_POWER[stage]
+  return STAGE_POWER[stage] * POWER_SCALE
 }
 
 // 玩家正式战力（与“总体实力/装备评分”一致；不引入 equip 避免循环依赖，公式相同）
@@ -51,7 +52,7 @@ export const playerPowerScore = player => {
   // 境界基础战力(标准曲线) + 装备/加点等实际加成：正常玩家≥本境界标准，装备/加点再往上叠加
   const realmBase = realmPower(player.level || 1)
   // 基础属性战力加成加强：攻/防/暴/闪/血权重翻倍，让加点与装备更体现在战力上
-  return Math.floor(realmBase + dodge * 3.2 * 100 + attack * 4 + (health / 100) * 0.4 + defense * 2.4 + critical * 3.6 * 100)
+  return Math.floor(realmBase + (dodge * 3.2 * 100 + attack * 4 + (health / 100) * 0.4 + defense * 2.4 + critical * 3.6 * 100) * POWER_SCALE)
 }
 
 // 与 above 同权重，用于敌手评分
@@ -76,7 +77,7 @@ export const tribulationPowerNeed = lv => Math.floor(realmPower(lv) * 1.1)
 
 // 由目标战力反推“攻/防/血”三围，用于同阶对手/豪杰/渡劫敌手生成
 export const enemyStatsForPower = (targetPower, eliteMult = 1.0) => {
-  const p = Math.max(1, Math.floor(targetPower || 1))
+  const p = Math.max(1, Math.floor((targetPower || 1) / POWER_SCALE))
   const attack = Math.floor(p * 0.13 * eliteMult)
   const defense = Math.floor(p * 0.03 * eliteMult)
   const health = Math.floor(p * 0.95 * eliteMult)
