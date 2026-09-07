@@ -9,6 +9,7 @@ import { TALISMANS } from './talisman.js'
 import equip from './equip.js'
 import { MATERIALS, materialByKey } from './materialDb.js'
 import { totalGameDays } from './time.js'
+import { craftLevelOfTier } from './craft.js'
 
 export const MARKET_SCALES = [
   { idx: 0, name: '凡级', minLevel: 1, buy: 1.0, sell: 0.55, fair: 0.9, black: 1.7, auction: 1.2 },

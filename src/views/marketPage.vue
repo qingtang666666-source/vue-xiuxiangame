@@ -324,7 +324,7 @@
       .sort((a, b) => (CAT_ORDER.indexOf(a[0]) - CAT_ORDER.indexOf(b[0])) || a[1].length - b[1].length)
       .map(([cat, list]) => ({ cat, list }))
   })
-  const cat = ref('药材')
+  const cat = ref('all')
   const catOptions = computed(() => {
     const s = new Set()
     availableGroups.value.forEach(g => s.add(g.cat))
