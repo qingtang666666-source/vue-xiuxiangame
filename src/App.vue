@@ -2,14 +2,16 @@
   <div class="game-container-wrapper" draggable="true">
     <div :class="['game-container', { dark: player.dark, 'full-width': route.meta.fullWidth }]">
       <ActionTimerBar :player="player" />
-      <router-view v-slot="{ Component }">
-        <transition name="page-fade" mode="out-in">
-          <keep-alive v-if="route.meta.keepAlive">
-            <component :is="Component" :key="key" />
-          </keep-alive>
-          <component v-else :is="Component" :key="key" />
-        </transition>
-      </router-view>
+      <main class="page-viewport">
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <keep-alive v-if="route.meta.keepAlive">
+              <component :is="Component" :key="key" />
+            </keep-alive>
+            <component v-else :is="Component" :key="key" />
+          </transition>
+        </router-view>
+      </main>
     <div class="top-right">
       <div class="nav-btn" @click="router.push('/quest')">📋任务<span v-if="questBadge" class="badge">{{ questBadge }}</span></div>
       <div class="nav-btn" @click="router.push('/backpack')">🎒背包</div>
@@ -399,12 +401,14 @@
 
   .game-container {
     width: 100%;
-    max-width: 1080px;
+    max-width: 1440px;
     min-width: 0;
     min-height: 740px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px 28px 40px;
     box-sizing: border-box;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(31, 42, 55, 0.18);
     background-color: rgba(255, 255, 255, 0.5);
     text-align: center;
     position: relative;
@@ -417,6 +421,9 @@
   .game-container.full-width {
     max-width: none;
     width: 97%;
+  }
+  .page-viewport {
+    min-height: 0;
   }
 
   @media only screen and (min-width: 800px) {
@@ -469,9 +476,9 @@
   }
 
   .top-right {
-    position: fixed;
-    top: 10px;
-    right: 12px;
+    position: absolute;
+    top: 14px;
+    right: 14px;
     z-index: 30;
     display: flex;
     align-items: center;
@@ -535,6 +542,7 @@
 
   @media only screen and (max-width: 768px) {
     .top-right {
+      position: fixed;
       top: 6px;
       right: 10px;
       left: auto;
@@ -647,11 +655,25 @@
   }
 
   @media only screen and (max-width: 768px) {
+    .game-container-wrapper {
+      align-items: stretch;
+    }
     .game-container {
-      min-height: 100vh;
-      min-height: 100dvh;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 0;
       min-width: 0;
-      padding: 56px 8px calc(78px + env(safe-area-inset-bottom, 0px));
+      padding: 48px 8px calc(66px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .page-viewport {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 2px;
     }
     .credit {
       display: none;
@@ -793,6 +815,17 @@
   }
   * {
     user-select: none;
+  }
+
+  @media only screen and (max-width: 768px) {
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+    }
   }
 
   .el-tooltip__content,

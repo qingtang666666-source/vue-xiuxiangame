@@ -235,7 +235,11 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes,
   // 切换页面回到顶部，避免长页面(炼丹/符箓/阵法等)直接落在底部
-  scrollBehavior: () => ({ top: 0 })
+  scrollBehavior: () => {
+    const vp = document.querySelector('.page-viewport')
+    if (vp) vp.scrollTop = 0
+    return { top: 0 }
+  }
 })
 
 export default router

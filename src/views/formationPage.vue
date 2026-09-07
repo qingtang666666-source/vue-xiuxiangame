@@ -149,5 +149,11 @@
   .cost { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .up-btn { width: 100%; }
   .actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  @media only screen and (min-width: 1200px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media only screen and (max-width: 768px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .card-head { flex-wrap: wrap; row-gap: 4px; }
+  }
 </style>

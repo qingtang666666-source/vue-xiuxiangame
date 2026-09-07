@@ -35,16 +35,18 @@
       <span class="count">共 {{ recipes.length }} 种</span>
     </div>
     <div class="filter-bar">
-      <el-select v-model="tierFilter" size="small" class="filter-select" placeholder="品阶">
-        <el-option label="全部品阶" :value="0" />
-        <el-option v-for="t in TIERS" :key="t.t" :label="t.name" :value="t.t" />
-      </el-select>
-      <el-radio-group v-model="kindFilter" size="small">
-        <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button value="permanent">永久</el-radio-button>
-        <el-radio-button value="buff">限时</el-radio-button>
-      </el-radio-group>
-      <el-checkbox v-model="onlyReady" size="small" label="只看可炼制" border />
+      <div class="chips-row">
+        <button class="chip" :class="{ on: tierFilter === 0 }" @click="tierFilter = 0">全部品阶</button>
+        <button v-for="t in TIERS" :key="t.t" class="chip" :class="{ on: tierFilter === t.t }" @click="tierFilter = t.t">{{ t.name }}</button>
+      </div>
+      <div class="chips-row">
+        <el-radio-group v-model="kindFilter" size="small">
+          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button value="permanent">永久</el-radio-button>
+          <el-radio-button value="buff">限时</el-radio-button>
+        </el-radio-group>
+        <el-checkbox v-model="onlyReady" size="small" label="只看可炼制" border />
+      </div>
     </div>
     <div v-if="crafting" class="crafting-bar">
       正在炼制【{{ recipeById(crafting)?.name }}】...
@@ -269,14 +271,35 @@
 
   .filter-bar {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 10px;
-    flex-wrap: wrap;
+    align-items: stretch;
   }
 
-  .filter-select {
-    width: 160px;
+  .chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .chip {
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 999px;
+    padding: 3px 11px;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .chip.on {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    font-weight: bold;
   }
 
   .buffs {
@@ -452,9 +475,38 @@
     justify-content: center;
   }
 
+  @media only screen and (min-width: 1200px) {
+    .recipe-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
   @media only screen and (max-width: 768px) {
     .recipe-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .desc {
+      display: none;
+    }
+    .effect {
+      font-size: 11px;
+      margin-bottom: 6px;
+      min-height: 30px;
+      overflow: hidden;
+    }
+    .cost-row {
+      grid-template-columns: 68px 1fr auto;
+      gap: 4px;
+      font-size: 11px;
+    }
+    .cost-row .cflag {
+      display: none;
+    }
+    .verdict {
+      font-size: 11px;
+      padding: 3px 6px;
+      margin-bottom: 6px;
     }
   }
 </style>

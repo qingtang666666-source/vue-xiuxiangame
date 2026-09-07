@@ -354,3 +354,52 @@ html.dark .el-progress-bar__inner::after {
     transition-duration: 0.001ms !important;
   }
 }
+/* ---------- 7. 手机端整屏化密度层（配合底部 Dock / 锁定视口） ---------- */
+@media only screen and (max-width: 768px) {
+  .page-viewport {
+    padding: 4px 2px 6px;
+  }
+
+  .title {
+    font-size: 17px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .resources {
+    gap: 5px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .page-header,
+  .alchemy-header,
+  .forge-header,
+  .cultivation-info {
+    margin-bottom: 8px !important;
+  }
+
+  .section-title {
+    font-size: 13px !important;
+    margin: 8px 0 6px !important;
+  }
+
+  .filter-bar {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .el-card {
+    border-radius: 10px !important;
+  }
+
+  .el-card__body {
+    padding: 10px !important;
+  }
+
+  .actions {
+    margin-top: 8px !important;
+  }
+
+  .res-tag {
+    font-size: 12px !important;
+  }
+}

@@ -319,4 +319,40 @@
     font-size: 13px;
     margin-right: 12px;
   }
+
+  @media only screen and (min-width: 1100px) {
+    .form {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0 18px;
+    }
+    .form .field {
+      margin-bottom: 10px;
+    }
+    .preview-grid,
+    .cost-tags {
+      display: flex;
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    .form {
+      padding: 10px;
+    }
+    .field {
+      margin-bottom: 8px;
+    }
+    .preview-grid,
+    .cost-tags {
+      gap: 6px;
+    }
+    .preview-item {
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+    .last-cells span {
+      display: inline-block;
+      margin: 0 8px 4px 0;
+    }
+  }
 </style>

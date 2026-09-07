@@ -23,14 +23,16 @@
 
     <div class="section-title">符箓库 <span class="count">共 {{ recipes.length }} 种</span></div>
     <div class="filter-bar">
-      <el-radio-group v-model="groupFilter" size="small">
-        <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button v-for="g in TALISMAN_GROUPS" :key="g.key" :value="g.key">{{ g.name }}</el-radio-button>
-      </el-radio-group>
-      <el-select v-model="tierFilter" size="small" placeholder="品阶" class="tier-select">
-        <el-option label="全部品阶" :value="0" />
-        <el-option v-for="t in TALISMAN_TIERS" :key="t.t" :label="t.name" :value="t.t" />
-      </el-select>
+      <div class="chips-row">
+        <el-radio-group v-model="groupFilter" size="small">
+          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button v-for="g in TALISMAN_GROUPS" :key="g.key" :value="g.key">{{ g.name }}</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="chips-row">
+        <button class="chip" :class="{ on: tierFilter === 0 }" @click="tierFilter = 0">全部品阶</button>
+        <button v-for="t in TALISMAN_TIERS" :key="t.t" class="chip" :class="{ on: tierFilter === t.t }" @click="tierFilter = t.t">{{ t.name }}</button>
+      </div>
     </div>
     <div class="recipe-grid">
       <el-card v-for="r in displayRecipes" :key="r.id" class="recipe-card" shadow="hover">
@@ -162,8 +164,10 @@
   .clickable { cursor: pointer; }
   .owned-row { display: flex; align-items: center; gap: 8px; }
   .val { font-size: 12px; color: var(--el-color-warning); }
-  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .tier-select { width: 150px; }
+  .filter-bar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; align-items: stretch; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { border: 1px solid var(--el-border-color-lighter); border-radius: 999px; padding: 3px 11px; background: var(--el-fill-color-light); color: var(--el-text-color-primary); cursor: pointer; font-size: 12px; line-height: 1.4; }
+  .chip.on { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-weight: bold; }
   .recipe-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .recipe-card { margin: 0; }
   .card-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
@@ -172,5 +176,13 @@
   .cost { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .craft-btn { width: 100%; }
   .actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .recipe-grid { grid-template-columns: 1fr; } }
+  @media only screen and (min-width: 1400px) {
+    .recipe-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media only screen and (max-width: 768px) {
+    .recipe-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .desc { display: none; }
+    .effect { font-size: 11px; margin-bottom: 6px; min-height: 30px; overflow: hidden; }
+    .owned-card { width: 100%; }
+  }
 </style>
