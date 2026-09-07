@@ -86,6 +86,7 @@
       `<span style="color:#909399;font-size:13px;">${label}</span>` +
       `<span style="color:${color};font-weight:600;font-size:14px;">${value}</span></div>`
     let html = '<div style="font-size:13px;line-height:1.6;">'
+    html += '<div style="text-align:center;padding:0 0 8px;color:#5b7db1;font-size:13px;">道友，别来无恙！离线期间，天地灵气自会滋养你。</div>'
     html += '<div style="text-align:center;padding:4px 0 10px;color:#303133;font-weight:700;font-size:15px;">离线收益</div>'
     html += row('离线时长', `约 ${o.hours.toFixed(1)} 小时`, '#409EFF')
     html += row('修为', `+${fmt(o.gainedCultivation)}`, '#E6A23C')
@@ -120,8 +121,8 @@
       player.value.zc = player.value.zc ? player.value.zc : false
       // 登录时结算离线挂机收益
       const offline = settleOffline(local.player)
-      if (offline && offline.hours >= 1 / 60) {
-        ElMessageBox.alert(buildOfflineHtml(offline), '离线收益', {
+      if (offline && offline.hours >= 1 / 120) {
+        ElMessageBox.alert(buildOfflineHtml(offline), '欢迎回来', {
           dangerouslyUseHTMLString: true,
           confirmButtonText: '收下',
           customClass: 'offline-card'
