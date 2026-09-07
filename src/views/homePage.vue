@@ -97,7 +97,7 @@
           <div class="tag attribute attr-critical">
             暴击率: {{ (Math.min(0.8, effStats.critical || 0) * 100).toFixed(2) }}%
           </div>
-          <div class="tag attribute attr-score">总体实力: <b>{{ Math.round(powerScore || 0).toLocaleString('zh-CN') }}</b></div>
+          <div class="tag attribute attr-score">总体实力: <b><AnimatedNumber :value="Math.round(powerScore || 0)" /></b></div>
           <div
             class="tag attribute attr-points"
             @click="gameNotifys({ title: '获得方式', message: '每提成一次境界可以获得3点境界点' })"
@@ -1353,6 +1353,7 @@
   import { FORMATIONS, FORMATION_GROUPS } from '@/plugins/formation'
   import { equipSellPrice } from '@/plugins/market'
   import MoneyBar from '@/components/MoneyBar.vue'
+  import AnimatedNumber from '@/components/AnimatedNumber.vue'
   import { ensureBirthFamily, birthFamilyInfo } from '@/plugins/birthFamily'
   import { nextObjective } from '@/plugins/guide'
   import equipTooltip from '@/components/equipTooltip.vue'

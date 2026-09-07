@@ -21,6 +21,7 @@
       <div class="tc-arena">
         <div class="tc-side">
           <div class="tc-unit me" :class="{ dead: state.player.hp <= 0, active: isPlayerTurnV }">
+            <div v-for="f in floatsMe" :key="f.id" class="tc-float" :class="{ crit: f.crit }" :style="{ left: f.x + '%', animationDelay: f.delay + 's' }">{{ f.text }}</div>
             <div class="tc-name">{{ state.player.name }}<span class="lv">{{ levelNames(state.player.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(state.player.maxHp, state.player.hp) + '%' }" /></div>
@@ -35,6 +36,7 @@
 
         <div class="tc-side">
           <div class="tc-unit foe" :class="{ dead: foe.hp <= 0, sel: target === foe.id, active: !isPlayerTurnV && !battleOverV }" @click="target = foe.id">
+            <div v-for="f in floatsFoe" :key="f.id" class="tc-float" :class="{ crit: f.crit }" :style="{ left: f.x + '%', animationDelay: f.delay + 's' }">{{ f.text }}</div>
             <div class="tc-name">{{ foe.name }}<span class="lv">{{ levelNames(foe.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(foe.maxHp, foe.hp) + '%' }" /></div>
@@ -115,6 +117,29 @@
   let enemyTimer = null
   let autoTimer = null
   const tcLog = ref(null)
+  const floatsMe = ref([])
+  const floatsFoe = ref([])
+  let floatId = 0
+  const addFloat = (arr, dmg, crit) => {
+    const id = ++floatId
+    arr.value.push({ id, text: dmg, crit, x: 28 + Math.random() * 44, delay: Math.random() * 0.06 })
+    setTimeout(() => { arr.value = arr.value.filter(f => f.id !== id) }, 1050)
+  }
+  watch(
+    () => state.value?.log?.length || 0,
+    () => {
+      const log = state.value?.log
+      if (!log || !log.length) return
+      const e = log[log.length - 1]
+      if (!/点伤害/.test(e.text || '')) return
+      const dm = (e.text || '').match(/<b>(\d+)<\/b>\s*点伤害/)
+      if (!dm) return
+      const dmg = Number(dm[1])
+      const crit = /暴击/.test(e.text)
+      if (/你对|你挥出攻击|你施展/.test(e.text)) addFloat(floatsFoe, dmg, crit)
+      else if (/对你造成|向你扑来|对你/.test(e.text)) addFloat(floatsMe, dmg, crit)
+    }
+  )
 
   const foe = computed(() => (state.value ? state.value.enemies[0] : null))
   const abilities = computed(() => (state.value ? getPlayerAbilities(store.player) : []))
@@ -211,6 +236,25 @@
   .tc-portrait.foe-p { background: radial-gradient(circle at 35% 30%, #d77, #7a1f1f); box-shadow: 0 0 20px rgba(255, 90, 90, 0.5), inset 0 0 0 2px rgba(255, 255, 255, 0.2); }
   .tc-name { font-size: 21px; font-weight: 800; color: #fff; margin-bottom: 10px; text-align: center; }
   .tc-name .lv { font-size: 13px; color: #ffe082; margin-left: 8px; font-weight: 600; }
+  .tc-float {
+    position: absolute;
+    z-index: 6;
+    top: -8px;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
+    animation: tcFloat 1s ease-out forwards;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .tc-float.crit { color: #ffd24a; font-size: 24px; }
+  @keyframes tcFloat {
+    0% { opacity: 0; transform: translate(-50%, 8px) scale(0.6); }
+    25% { opacity: 1; transform: translate(-50%, -2px) scale(1.12); }
+    100% { opacity: 0; transform: translate(-50%, -34px) scale(1); }
+  }
   .tc-bars { display: flex; flex-direction: column; gap: 8px; }
   .tc-bar { height: 16px; border-radius: 8px; background: rgba(0, 0, 0, 0.35); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
   .tc-bar span { display: block; height: 100%; transition: width 0.35s; border-radius: 8px; }

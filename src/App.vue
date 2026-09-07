@@ -45,6 +45,7 @@
     <div class="credit">创作者：青棠</div>
     <transition name="celebrate">
       <div v-if="celebrateState.show" class="celebrate-overlay">
+        <span v-for="(c, i) in confetti" :key="i" class="confetti" :style="c.style" />
         <div class="celebrate-text">{{ celebrateState.text }}</div>
       </div>
     </transition>
@@ -107,6 +108,7 @@
   import MoneyBar from './components/MoneyBar.vue'
 
   const player = ref({})
+  const confetti = ref([])
   const route = useRoute()
   const router = useRouter()
   const key = computed(() => route.path)
@@ -127,6 +129,19 @@
   watch(
     () => celebrateState.key,
     () => {
+      confetti.value = Array.from({ length: 46 }, (_, i) => {
+        const size = 6 + Math.random() * 9
+        return {
+          style: {
+            left: (Math.random() * 100) + 'vw',
+            width: size + 'px',
+            height: (size * 1.7) + 'px',
+            background: ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#d45dff', '#ff9f45', '#2ec4b6'][i % 7],
+            animationDelay: (Math.random() * 0.7) + 's',
+            animationDuration: (1.5 + Math.random() * 1.3) + 's'
+          }
+        }
+      })
       setTimeout(() => {
         celebrateState.show = false
       }, 1800)
@@ -519,6 +534,21 @@
     25% { transform: scale(1.2); opacity: 1; }
     55% { transform: scale(1); opacity: 1; }
     100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  .confetti {
+    position: absolute;
+    top: -14px;
+    border-radius: 2px;
+    opacity: 0.95;
+    animation-name: confettiFall;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+    pointer-events: none;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(112vh) rotate(640deg); opacity: 0.55; }
   }
 
   .celebrate-enter-active,
