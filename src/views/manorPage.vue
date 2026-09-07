@@ -22,7 +22,7 @@
     </div>
 
     <div class="building-grid">
-      <el-card v-for="b in builds" :key="b.id" class="building-card" shadow="hover">
+      <el-card v-for="b in builds" :key="b.id" class="building-card" shadow="hover" :style="cardStyle">
         <template #header>
           <div class="card-head">
             <span class="icon">{{ b.icon }}</span>
@@ -85,10 +85,12 @@
     manorStats,
     manorGainPreview
   } from '@/plugins/manor'
+  import manorBg from '@/assets/images/manor-card-bg.png'
 
   const store = useMainStore()
   const router = useRouter()
   const player = ref(store.player)
+  const cardStyle = { '--card-bg': `url(${manorBg})` }
 
   const stats = computed(() => manorStats(player.value))
 
@@ -211,6 +213,7 @@
 
   .building-card {
     margin: 0;
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.94)), var(--card-bg) center / cover no-repeat;
   }
 
   .card-head {
@@ -276,6 +279,7 @@
   }
 
   @media only screen and (max-width: 768px) {
+  html.dark .building-card { background: linear-gradient(rgba(18, 22, 28, 0.88), rgba(12, 16, 22, 0.92)), var(--card-bg) center / cover no-repeat; }
     .building-grid {
       grid-template-columns: 1fr;
     }

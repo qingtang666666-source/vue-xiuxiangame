@@ -1,6 +1,6 @@
 <template>
   <div class="index">
-    <div class="hero">
+    <div class="hero" :style="heroStyle">
       <div class="hero-glow" />
       <h1 class="hero-title">我的文字修仙全靠刷</h1>
       <p class="hero-sub">一念成道 · 万法归心　|　离线单机文字修仙</p>
@@ -76,12 +76,14 @@
   import { useMainStore } from '@/plugins/store'
   import { ElNotification, ElMessageBox } from 'element-plus'
   import { settleOffline } from '@/plugins/offline'
+  import heroBg from '@/assets/images/hero-open.png'
 
   const router = useRouter()
   const local = useMainStore()
   const player = ref({})
   const activeName = ref('')
   const dialogVisible = ref(true)
+  const heroStyle = { '--hero-img': `url(${heroBg})` }
 
   const fmt = n => (n || 0).toLocaleString('zh-CN')
 
@@ -165,6 +167,15 @@
   @keyframes heroDrift {
     from { transform: translate3d(-6%, 0, 0) scale(1); }
     to { transform: translate3d(6%, 4%, 0) scale(1.06); }
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--hero-img) center / cover no-repeat;
+    opacity: 0.34;
+    pointer-events: none;
   }
 
   .hero-title {

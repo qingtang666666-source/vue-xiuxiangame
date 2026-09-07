@@ -46,7 +46,7 @@
     <div class="wm_bg_2" v-if="!player.dark" />
     <div class="credit">创作者：青棠</div>
     <transition name="celebrate">
-      <div v-if="celebrateState.show" class="celebrate-overlay">
+      <div v-if="celebrateState.show" class="celebrate-overlay" :style="celebrateStyle">
         <span v-for="(c, i) in confetti" :key="i" class="confetti" :style="c.style" />
         <div class="celebrate-text">{{ celebrateState.text }}</div>
       </div>
@@ -102,6 +102,7 @@
   import { autoIdleTick } from './plugins/autoIdle'
   import { ElMessageBox } from 'element-plus'
   import { celebrateState } from './plugins/celebrate'
+  import bannerImg from '@/assets/images/breakthrough-banner.png'
   import { ensureTravelingMerchant, buyTravItem, openBlindBox } from './plugins/travelingMerchant'
   import { MATERIALS } from './plugins/materialDb'
   import { RECIPES } from './plugins/alchemy'
@@ -112,6 +113,7 @@
 
   const player = ref({})
   const confetti = ref([])
+  const celebrateStyle = { '--celebrate-img': `url(${bannerImg})` }
   const route = useRoute()
   const router = useRouter()
   const key = computed(() => route.path)
@@ -523,7 +525,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, rgba(230, 230, 255, 0.6), rgba(0, 0, 0, 0.25));
+    background: linear-gradient(rgba(10, 14, 22, 0.58), rgba(10, 14, 22, 0.75)), var(--celebrate-img) center / cover no-repeat;
     pointer-events: none;
   }
 

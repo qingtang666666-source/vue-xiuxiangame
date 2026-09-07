@@ -9,7 +9,7 @@
 
     <div class="section-title">秘境列表 <span class="hint">进入需入场费，概率获天材地宝</span></div>
     <div class="realm-grid">
-      <el-card v-for="r in REALMS" :key="r.id" class="card" shadow="hover">
+      <el-card v-for="r in REALMS" :key="r.id" class="card" shadow="hover" :style="cardStyle">
         <template #header>
           <div class="head">
             <span class="name">{{ r.name }}</span>
@@ -78,6 +78,7 @@
   import TurnCombat from '@/components/TurnCombat.vue'
   import { TREASURES, treasureCount, useTreasure, treasureById } from '@/plugins/treasure'
   import itemInfo from '@/components/itemInfo.vue'
+  import realmBg from '@/assets/images/realm-card-bg.png'
 
   const store = useMainStore()
   const router = useRouter()
@@ -88,6 +89,7 @@
   const turnKind = ref('')
   const infoShow = ref(false)
   const infoData = ref(null)
+  const cardStyle = { '--card-bg': `url(${realmBg})` }
 
   const ownedTreasures = computed(() =>
     TREASURES.map(t => ({ ...t, count: treasureCount(player.value, t.key) })).filter(t => t.count > 0)
@@ -163,7 +165,8 @@
   .section-title { font-size: 15px; font-weight: bold; margin: 12px 0 8px; }
   .hint { font-size: 12px; font-weight: normal; color: var(--el-text-color-secondary); margin-left: 8px; }
   .realm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .card { margin: 0; }
+  .card { margin: 0; background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.94)), var(--card-bg) center / cover no-repeat; }
+  html.dark .card { background: linear-gradient(rgba(18, 22, 28, 0.88), rgba(12, 16, 22, 0.92)), var(--card-bg) center / cover no-repeat; }
   .head { display: flex; justify-content: space-between; align-items: center; }
   .name { font-size: 15px; font-weight: bold; }
   .theme { font-size: 12px; color: var(--el-text-color-secondary); margin: 2px 0 6px; min-height: 18px; }
