@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'dist')
 const host = process.env.HOST || '0.0.0.0'
-const port = Number(process.env.PORT || 5173)
+const port = Number(process.env.PORT || 5799)
 const lanIP = (() => {
   const nets = os.networkInterfaces()
   for (const name of Object.keys(nets)) {
@@ -63,9 +63,18 @@ const server = http.createServer((req, res) => {
   })
 })
 
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    console.log(`端口 ${port} 被占用，自动切换可用端口…`)
+    server.listen(0, host)
+  } else {
+    throw e
+  }
+})
 server.listen(port, host, () => {
-  const local = `http://127.0.0.1:${port}`
-  const lan = `http://${lanIP}:${port}`
+  const actualPort = server.address().port
+  const local = `http://127.0.0.1:${actualPort}`
+  const lan = `http://${lanIP}:${actualPort}`
   console.log(`本命修仙 · 本机访问：${local}`)
   if (host === '0.0.0.0') console.log(`局域网（分享给朋友）：${lan}`)
   console.log('（关闭本窗口即可停止）\n提示：若朋友访问不了，请在系统防火墙允许 node 或放行该端口。')
