@@ -33,6 +33,9 @@
       <el-tab-pane name="chipshop" label="筹码商店">
         <ChipShop />
       </el-tab-pane>
+      <el-tab-pane name="luck" label="每日气运">
+        <LuckDraw />
+      </el-tab-pane>
     </el-tabs>
     <div class="stats">
       <div class="attribute-box">
@@ -58,6 +61,7 @@
   import TexasPoker from './texasPoker.vue'
   import DouDiZhu from './douDizhu.vue'
   import ChipShop from './chipShop.vue'
+  import LuckDraw from './luckDraw.vue'
   import { ref, computed, onMounted } from 'vue'
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, gameNotifys } from '@/plugins/game'
