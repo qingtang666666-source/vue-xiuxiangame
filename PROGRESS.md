@@ -75,8 +75,16 @@
 45. 分享 & 手机端：`serve-dist.mjs` 默认绑定 `0.0.0.0` 并打印**局域网访问地址**（同 Wi‑Fi 朋友可玩），本地仍开 `127.0.0.1`；战斗弹窗 `TurnCombat` 宽度改 `min(940px,94vw)` 手机自适应；确认 PWA（manifest+图标+SW）已就绪，手机可“添加到主屏”安装；顶部导航已有移动端 media 适配。
 46. GitHub Pages 公网部署：`vite.config` 已用 `base:'./'`（相对路径，任意子路径可跑）；新增 `.github/workflows/gh-pages.yml`（push 到 main 自动 build 并 deploy 到 Pages）；PWA manifest 图标改为相对路径（删除静态 `public/manifest.webmanifest`，由 VitePWA 生成）；旧 Docker workflow 改为仅 `workflow_dispatch` 手动触发。已有自定义域名 `xiuxian.wenzi.games`（`public/CNAME`，配了 DNS 则用该域名；否则删 CNAME 用 `setube.github.io/vue-xiuxiangame/`）。仓库 `setube/vue-xiuxiangame`。
 
+47. **炼丹材料标注**（需求 5）：`craft.js` 新增通用 `costRows/costShortfallText`；`alchemy.js` 新增 `recipeCostList/recipeNeedLevel/recipeShortfall`；丹方卡逐项显示「已有 / 需要」+ 进度条 + 红绿标注与缺失汇总（含境界不足），并加「只看可炼制」筛选。
+48. **神通悬停介绍**（需求 6）：新增 `plugins/divine.js`（`divineAbilityInfo/divineTipText/divineTipForTech/proficiencyPreview/chapterPreview`）；`battleEngine.getPlayerAbilities` 改为同源生成（威力/耗灵/触发率/章节加成完全一致，附带 techName/kind/stunChance）；`TurnCombat`/`battlePage` 技能按钮、`TechniqueCard`/`techniquePage` 神通行统一悬浮：类型、威力与重数加成、耗灵力、自动触发率、效果与结算公式、控制系定身几率、回复系预计量、熟练度倍率，战斗中再补「预计伤害/回复（含境界压制）」；修好 `.el-popper.el-tooltip` 多行换行。
+49. **拉大大境界间 阵/符/装/丹 差距**（需求 7）：`craft.js` 统一曲线与节奏——品阶解锁等级改为**与大境界边界对齐**（黄=炼气1 / 玄=金丹19 / 地=元婴28 / 天=炼虚46 / 仙=合体55 / 帝=大乘64 / 神=渡劫82 / 灵=真仙91 / 皇=金仙109 / 圣=太乙118 / 道=道祖136）；`TIER_FLAT`(×1.9，道阶 611)、`TIER_PCT`(沿用 100)、`TIER_BUFF`(×1.75，269) 三条曲线分别用于数值型/丹药百分比/符箓限时增益；符箓新增 `talismanBuffCap`(攻/防/修 1.2→3.36、暴/闪/特效 0.25→0.40 按阶放宽) 与 `talismanMinutes`(20→172 分钟)，界面显示=实际生效；阵法 `FORMATION_MULT` 道阶 80(原 38)、消耗只按 `pow(mult,0.72)`、`formationStats` CAPS 放宽；装备与词条基础值 ×`gearRealmMult=1.09^大境界`(道祖≈3.6 倍)，品质倍率上段抬高(神12/灵16/皇21/圣28/道38)；为留上升空间 `PCT_CAP` 2.5→3.6、`PCT_ABS_CAP` 4.0→5.2。详见 DEV_NOTES 第十节 + `tools/check-gap.mjs`。
+50. **可视化收益 & 集齐全套奖励**（需求 8，E 剩余）：功法卡/功法阁显示「升下一档熟练度」与「再修 1 重」的逐项净增（含神通威力）；`equipForge.enhanceStepPreview` + 强化面板显示 +s→+s+1 的攻/防/血净增、成功率、单次与期望炼器石、失败受损提示；`manor.manorGainPreview` + 洞府页显示每个建筑「升到 N+1 级」的效果区间、离线灵石/小时与回本小时数；新增 `plugins/setReward.js`：同品阶穿戴四件 / 同名套装四件（含两款宝箱套装，共 33 项）一次性收藏奖励，额度挂 `realmPower`，30s 后台自动结算发放，首页显示收集进度条与清单。
+51. **UI 美化（配色/动效）**（需求 9）：新增全局 `src/styles/theme.css`（在 element-plus 之后引入，构建产物已核对覆盖顺序）——玄青/鎏金/朱砂/玉白品牌色板 + `color-mix` 重映射 EP 四色全色阶（light/dark 双套）；页面底色改为分层雾蓝-暖金渐变并叠加 SVG 远山纹；卡片/按钮/标签/弹窗抽屉质感与阴影层级统一；EP 进度条加流光、页面切换 `<transition name="page-fade">`、网格逐个浮起、战斗动作键悬浮发光+按下回弹、导航按钮悬浮辉光、炼丹/工坊计时条呼吸光、滚动条与选中色；开场页升级为水墨题图（渐变标题 + 漂移光晕 + 朱印）；全部动效受 `prefers-reduced-motion` 保护。**位图素材（生图）未做**：本会话没有内置 image_gen 工具且环境未设 `OPENAI_API_KEY`，需要用户提供后再走 imagegen 技能的 CLI 回退。
+
 ## 已知 / 待办
 - 第 6 点未做：战斗路线分支 + 正邪/道心（突破心魔、选择影响剧情/结局）——用户暂缓
 - 盲盒宝箱机制用户**明确不改**（尊重 5%/70%/25% + 888 保底）
 - 端游后期数值可为千万~亿级（受控不溢出；用户要求精确到个位展示，未改）
-- 继续开发：先 `npm run build` 验证，再双击 start-game.cmd 体感
+- **需求 9 的「生图」未完成**：需 `OPENAI_API_KEY`（或带内置 image_gen 的环境）才能出位图素材；当前以 SVG/CSS 完成视觉层，若拿到 key 可补：开场页主视觉、境界突破庆祝横幅、秘境/洞府场景卡底图、PWA 图标套组
+- 符箓/丹药/阵法数值变陡后，突破与豪杰榜会明显变易（门槛仍按 `STAGE_POWER×1.25`）；如需回收难度，优先回调 `TIER_FLAT` 与 `GEAR_STAGE_RATIO`
+- 继续开发：先 `npm run build` 验证，再双击 start-game.cmd 体感；数值核对可用 `node --import ./tools/preload.mjs tools/check-gap.mjs`

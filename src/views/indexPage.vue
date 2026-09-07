@@ -1,5 +1,11 @@
 <template>
   <div class="index">
+    <div class="hero">
+      <div class="hero-glow" />
+      <h1 class="hero-title">我的文字修仙全靠刷</h1>
+      <p class="hero-sub">一念成道 · 万法归心　|　离线单机文字修仙</p>
+      <div class="hero-seal">修</div>
+    </div>
     <div class="index2">
       <el-button class="button" @click="goHome">开始游戏</el-button>
       <el-button class="button" @click="dialogVisible = true">隐私政策</el-button>
@@ -137,6 +143,72 @@
   .index {
     position: relative;
     min-height: 574px;
+  }
+
+  .hero {
+    position: relative;
+    padding: 54px 16px 26px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    inset: -40% -20% auto;
+    height: 320px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--el-color-primary) 26%, transparent), transparent 72%);
+    filter: blur(6px);
+    animation: heroDrift 9s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes heroDrift {
+    from { transform: translate3d(-6%, 0, 0) scale(1); }
+    to { transform: translate3d(6%, 4%, 0) scale(1.06); }
+  }
+
+  .hero-title {
+    position: relative;
+    margin: 0 0 8px;
+    font-size: clamp(26px, 6vw, 42px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(180deg, var(--el-text-color-primary), color-mix(in srgb, var(--el-color-primary) 72%, var(--el-text-color-primary)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: heroRise 0.7s ease both;
+  }
+
+  .hero-sub {
+    position: relative;
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--el-text-color-secondary);
+    animation: heroRise 0.7s 0.12s ease both;
+  }
+
+  .hero-seal {
+    position: absolute;
+    right: 18px;
+    top: 26px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(160deg, #c25548, #a03a30);
+    box-shadow: 0 4px 14px rgba(194, 85, 72, 0.4);
+    transform: rotate(-8deg);
+    opacity: 0.92;
+  }
+
+  @keyframes heroRise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @media only screen and (max-width: 768px) {

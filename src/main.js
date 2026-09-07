@@ -7,6 +7,8 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import ElementPlus from 'element-plus'
 import { useMainStore } from '@/plugins/store'
 import { setupPersistence } from '@/plugins/persistence'
+// 主题层放在最后引入，保证配色/动效覆盖组件内的默认样式
+import '@/styles/theme.css'
 
 const app = createApp(App)
 

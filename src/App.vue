@@ -3,10 +3,12 @@
     <div :class="['game-container', { dark: player.dark, 'full-width': route.meta.fullWidth }]">
       <ActionTimerBar :player="player" />
       <router-view v-slot="{ Component }">
-        <keep-alive v-if="route.meta.keepAlive">
-          <component :is="Component" :key="key" />
-        </keep-alive>
-        <component v-if="!route.meta.keepAlive" :is="Component" :key="key" />
+        <transition name="page-fade" mode="out-in">
+          <keep-alive v-if="route.meta.keepAlive">
+            <component :is="Component" :key="key" />
+          </keep-alive>
+          <component v-else :is="Component" :key="key" />
+        </transition>
       </router-view>
     <div class="top-right">
       <div class="nav-btn" @click="router.push('/quest')">📋任务<span v-if="questBadge" class="badge">{{ questBadge }}</span></div>
