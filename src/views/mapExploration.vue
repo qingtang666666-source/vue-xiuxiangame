@@ -199,6 +199,7 @@
   // 怪物
   import monster from '@/plugins/monster'
   import { currentRegion } from '@/plugins/regionDb'
+  import { exploreEnemy, territoryEnemy } from '@/plugins/enemyScale'
   import { useRouter } from 'vue-router'
   import { ref, computed, onUnmounted, onMounted, nextTick } from 'vue'
   import { useMainStore } from '@/plugins/store'
@@ -698,23 +699,8 @@
       // 怪物难度根据玩家最高境界 + 转生次数
       const regionBonus = 1 + ((currentRegion(player.value)?.idx) || 0) * 0.2
       const monsterLv = Math.floor((level * player.value.reincarnation + level) * regionBonus)
-      // 添加怪物数据
-      store.monster = {
-        // 等级（境界压制/难度依据；此前缺失会导致探索战压制计算为 NaN）
-        level: monsterLv,
-        // 名称
-        name: monster.monster_Names(monsterLv),
-        // 气血
-        health: monster.monster_Health(monsterLv),
-        // 攻击
-        attack: monster.monster_Attack(monsterLv),
-        // 防御
-        defense: monster.monster_Defense(monsterLv),
-        // 闪避率
-        dodge: monster.monster_Criticalhitrate(monsterLv),
-        // 暴击
-        critical: monster.monster_Criticalhitrate(monsterLv)
-      }
+      // 添加怪物数据（统一按玩家战力锚定，见 enemyScale.exploreEnemy）
+      store.monster = exploreEnemy(player.value, monsterLv, currentRegion(player.value)?.idx)
       // 跳转对战
       router.push('/explore')
     }
@@ -833,15 +819,7 @@
       // 按当前大世界区域加难度：越高级界域，领地怪越强
       const regionBonus = 1 + ((currentRegion(player.value)?.idx) || 0) * 0.2
       const monsterLv = Math.floor((level * player.value.reincarnation + level) * regionBonus)
-      store.monster = {
-        level: monsterLv,
-        name: monster.monster_Names(monsterLv),
-        health: monster.monster_Health(monsterLv),
-        attack: monster.monster_Attack(monsterLv),
-        defense: monster.monster_Defense(monsterLv),
-        dodge: monster.monster_Criticalhitrate(monsterLv),
-        critical: monster.monster_Criticalhitrate(monsterLv)
-      }
+      store.monster = territoryEnemy(player.value, monsterLv, currentRegion(player.value)?.idx)
       grid.value[index] = { his: '', type: 'empty' }
       gameNotifys({ title: '遭遇！', message: `你踏入了${store.monster.name}的领地！`, position: 'top-left', type: 'warning' })
       router.push('/explore')

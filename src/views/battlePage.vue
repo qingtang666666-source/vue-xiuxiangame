@@ -143,10 +143,10 @@
   const player = computed(() => store.player)
 
   const difficulties = [
-    { key: 'easy', name: '风平浪静', desc: '敌境界低于你，实力碾压', levelOffset: -9 },
-    { key: 'normal', name: '势均力敌', desc: '与我方境界相称', levelOffset: 0 },
-    { key: 'hard', name: '凶险莫测', desc: '敌境界略高，需以巧取胜', levelOffset: 9 },
-    { key: 'boss', name: '秘境首领', desc: '高境界首领，掉落丰厚', levelOffset: 18, boss: true }
+    { key: 'easy', name: '风平浪静', desc: '约你六成战力，境界低你一层', levelOffset: -9, mult: 0.6 },
+    { key: 'normal', name: '势均力敌', desc: '与你同等战力，需手法与神通', levelOffset: 0, mult: 1.0 },
+    { key: 'hard', name: '凶险莫测', desc: '高出你四成战力，境界也压你一头', levelOffset: 9, mult: 1.4 },
+    { key: 'boss', name: '秘境首领', desc: '战力与境界双重压制，掉落丰厚', levelOffset: 18, mult: 1.4, boss: true }
   ]
   const diff = ref('normal')
   const count = ref(1)
@@ -218,7 +218,8 @@
       count: count.value,
       boss: !!d.boss,
       levelOffset: d.levelOffset || 0,
-      reincarnation: player.value.reincarnation || 0
+      reincarnation: player.value.reincarnation || 0,
+      mult: d.mult || 1
     })
     state.value = reactive(startBattle(player.value, enemies))
     target.value = state.value.enemies[0]?.id || null

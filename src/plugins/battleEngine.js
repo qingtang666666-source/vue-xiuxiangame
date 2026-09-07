@@ -12,11 +12,10 @@
 import { effectivePlayerStats } from './setBonus.js'
 import { techniqueById } from './technique.js'
 import { divineAbilityInfo } from './divine.js'
+import { ladderEnemies } from './enemyScale.js'
 import { realmSuppressionMult } from './game.js'
 import { applyDotDamage, isStunned, clearStun, aggregatePlayerEffects, resolveHitEffects, applyLifesteal } from './effectCombat.js'
-import monsters from './monster.js'
 
-const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const clamp0 = v => Math.max(0, v)
 const clamp01 = v => Math.min(1, Math.max(0, v))
 
@@ -72,58 +71,12 @@ export const getPlayerAbilities = player => {
   return list
 }
 
-// 由怪物数值生成敌人实体
-const makeEnemy = (lv, idx) => {
-  const name = monsters.monster_Names ? monsters.monster_Names(lv) : monsters.n(lv) || '妖'
-  const health = monsters.monster_Health ? monsters.monster_Health(lv) : 100
-  const attack = monsters.monster_Attack ? monsters.monster_Attack(lv) : 10
-  const defense = monsters.monster_Defense ? monsters.monster_Defense(lv) : 1
-  const crit = monsters.monster_Criticalhitrate ? monsters.monster_Criticalhitrate(lv) : 0.01
-  return {
-    id: `e-${idx}`,
-    isPlayer: false,
-    name,
-    level: lv,
-    hp: health,
-    maxHp: health,
-    mp: Math.floor(health * 0.25),
-    maxMp: Math.floor(health * 0.25),
-    atk: attack,
-    def: defense,
-    spd: 8 + idx * 1.5 + lv * 0.05,
-    crit: clamp01(crit),
-    dodge: 0.02 * 0.4,
-    critDmg: 1.5,
-    accuracy: 0,
-    armorPen: 0,
-    effects: { paralyze: 0, freeze: 0, stun: 0, poison: 0, burn: 0, lifesteal: 0 },
-    _stunned: false, _dot: {}, _defending: false
-  }
-}
 
-// 生成一批敌人：敌人按**自身等级**用现有 monster 表独立成长，不随玩家战力缩放。
-// levelOffset 决定敌人境界相对玩家高/低几级——高境界打低境界是碾压，反之被碾压（由境界压制口径体现）。
-export const buildEnemies = (player, { count = 1, boss = false, levelOffset = 0, reincarnation = 0 } = {}) => {
-  const pLv = Math.max(1, player.level || 1)
-  const out = []
-  const n = Math.max(1, count)
-  for (let i = 0; i < n; i++) {
-    let lv = Math.max(1, pLv + levelOffset + randInt(-2, 2))
-    const e = makeEnemy(lv, i)
-    if (boss) {
-      const m = 2.0 + reincarnation * 0.2
-      e.maxHp = Math.floor(e.maxHp * m)
-      e.hp = e.maxHp
-      e.atk = Math.floor(e.atk * 1.5)
-      e.def = Math.floor(e.def * 1.6)
-      e.crit = Math.min(0.3, e.crit * 1.5 + 0.08)
-      e.mp = Math.floor(e.maxHp * 0.5)
-      e.maxMp = e.mp
-      e.name = (monsters.monster_Names ? monsters.monster_Names(lv) : '秘境之主') + '·首领'
-    }
-    out.push(e)
-  }
-  return out
+// 生成一批敌人：统一走 enemyScale（以挑战者自己的战力为锚 × 难度倍率）。
+// 旧实现直接吃 monster 表裸数值，玩家穿两件装备就能越一个大境界碾压，已废弃。
+// levelOffset 仍决定敌人境界（影响境界压制展示），mult 决定强度。
+export const buildEnemies = (player, { count = 1, boss = false, levelOffset = 0, reincarnation = 0, mult = 1 } = {}) => {
+  return ladderEnemies(player, { count, boss, levelOffset, reincarnation, mult }).map((m, i) => monsterToEntity(m, i))
 }
 
 // 按速度排序行动顺序
@@ -134,7 +87,7 @@ const buildOrder = st => {
     .map(e => e.id)
 }
 
-export const startBattle = (player, enemies = buildEnemies(player.level || 1, {}), opts = {}) => {
+export const startBattle = (player, enemies = buildEnemies(player, {}), opts = {}) => {
   const st = {
     player: createPlayerEntity(player),
     realPlayer: player,

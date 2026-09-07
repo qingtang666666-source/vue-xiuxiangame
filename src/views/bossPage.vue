@@ -36,6 +36,7 @@
 
 <script setup>
   import boss from '@/plugins/boss'
+  import { worldBossEnemy } from '@/plugins/enemyScale'
   import TurnCombat from '@/components/TurnCombat.vue'
   import { aggregatePlayerEffects, resolveHitEffects, applyDotDamage, applyLifesteal, isStunned, clearStun } from '@/plugins/effectCombat'
   import { effectivePlayerStats, effectiveBackpackCap } from '@/plugins/setBonus'
@@ -276,13 +277,13 @@
       // 如果boss还有血量，允许玩家挑战
       if (time >= 5) {
         // boss没有血量但时间大于等于5分钟，重新生成boss
-        store.boss = boss.drawPrize(bossLv)
+        store.boss = worldBossEnemy(player.value, { reincarnation: player.value.reincarnation || 0 })
       }
       // 如果boss没有血量
     } else {
       if (time >= 5 || store.boss.time == 0) {
         // boss没有血量但时间大于等于5分钟，重新生成boss
-        store.boss = boss.drawPrize(bossLv)
+        store.boss = worldBossEnemy(player.value, { reincarnation: player.value.reincarnation || 0 })
       } else {
         isEnd.value = true
         texts.value.push('BOSS还未刷新，请等待5分钟后再次挑战')

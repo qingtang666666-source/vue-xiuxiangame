@@ -71,6 +71,7 @@
   import equip from '@/plugins/equip'
   // 怪物
   import monsters from '@/plugins/monster'
+  import { towerFloorEnemy, towerReward } from '@/plugins/enemyScale'
   import TurnCombat from '@/components/TurnCombat.vue'
   import combatSystem from '@/plugins/combat'
   import { ElMessageBox } from 'element-plus'
@@ -211,31 +212,12 @@
     return num >= 70 ? 'success' : num >= 30 ? 'warning' : 'exception'
   }
 
-  // 生成当前层的怪物
+  // 生成当前层的怪物：以玩家自己的战力为锚，按层数无限加压
+  // （旧口径 level = 层数×2 且吃 monster 裸数值，越级如切菜；72 层后又一次跳 480 倍）
   const generateMonster = () => {
-    // 根据当前层数计算怪物等级
-    const level = currentFloor.value * 2
-    const health = monsters.monster_Health(level)
-    monster.value = {
-      // 名称
-      name: monsters.monster_Names(level),
-      // 等级
-      level,
-      // 闪避率
-      dodge: monsters.monster_Criticalhitrate(level),
-      // 攻击
-      attack: monsters.monster_Attack(level),
-      // 气血
-      health: health,
-      // 防御
-      defense: monsters.monster_Defense(level),
-      // 最大气血
-      maxHealth: health,
-      // 暴击率
-      critical: monsters.monster_Criticalhitrate(level)
-    }
-    // 日志
-    battleLogs.value.push(`你遇到了本层的守护者: ${monster.value.name}`)
+    monster.value = towerFloorEnemy(currentFloor.value, player.value)
+    const eliteTip = monster.value.elite > 1 ? '（精英/首领层）' : ''
+    battleLogs.value.push(`你遇到了第 ${currentFloor.value} 层守护者: ${monster.value.name}${eliteTip}，战力约 ${formatNumberToChineseUnit(monster.value.power)}`)
   }
   // 打开双方信息弹窗
   const openInfo = type => {
@@ -317,26 +299,29 @@
 
   // 处理怪物被击败的情况
   const handleMonsterDefeat = () => {
-    // 修为
-    const expGain = Math.floor(monster.value.level * 30 * expMult(player.value))
-    // 灵石
-    const moneyGain = Math.floor(monster.value.level * 2)
-    // 增加修为
+    // 奖励按“层数”成长（旧口径按怪物等级，144 级后不再成长，塔后期等于白打）
+    const rw = towerReward(currentFloor.value, player.value)
+    const expGain = Math.floor(rw.exp * expMult(player.value))
+    const moneyGain = rw.money
     player.value.cultivation += expGain
-    // 增加灵石
     player.value.props.money += moneyGain
-    // 日志
+    player.value.props.cultivateDan += rw.dan
+    player.value.props.spiritHerb += rw.herb
+    player.value.props.strengtheningStone += rw.stone
     battleLogs.value.push(`你击败了 ${monster.value.name}！`)
-    battleLogs.value.push(`获得了 ${expGain}点修为和 ${moneyGain}灵石`)
+    battleLogs.value.push(`获得了 ${formatNumberToChineseUnit(expGain)}点修为、${formatNumberToChineseUnit(moneyGain)}灵石、培养丹×${rw.dan}、灵草×${rw.herb}、炼器石×${rw.stone}`)
     // 随机获得装备
     getRandomEquipment()
     // 增加层数
     currentFloor.value++
     // 检查是否是10的倍数层，且之前没有获得过该层的奖励
     if (currentFloor.value % 5 === 0 && !player.value.rewardedTowerFloors.includes(currentFloor.value)) {
-      player.value.props.cultivateDan += 500
+      // 里程碑奖励随层数成长，后期不再是“500 培养丹”的毛毛雨
+      const milestone = 500 + currentFloor.value * 60
+      player.value.props.cultivateDan += milestone
+      player.value.props.currency = (player.value.props.currency || 0) + (currentFloor.value % 50 === 0 ? 3 : 0)
       player.value.rewardedTowerFloors.push(currentFloor.value)
-      battleLogs.value.push(`恭喜你通过第 ${currentFloor.value} 层，获得额外奖励：500培养丹！`)
+      battleLogs.value.push(`恭喜你通过第 ${currentFloor.value} 层，获得额外奖励：培养丹×${milestone}${currentFloor.value % 50 === 0 ? '、混沌石×3' : ''}！`)
     }
     // 如果当前层数大于最高层数
     if (currentFloor.value > player.value.highestTowerFloor) player.value.highestTowerFloor = currentFloor.value
@@ -454,10 +439,10 @@
 
   // 扫荡战斗
   const sweepFight = () => {
-    // 根据当前层数计算获得经验值
-    const expGain = Math.floor(currentFloor.value * 3 * expMult(player.value))
-    // 根据当前层数计算获得灵石
-    const moneyGain = Math.floor(currentFloor.value * 10)
+    // 扫荡按当前层的“实战奖励”折算 15%，保持“扫荡明显弱于动手打”的原有定位
+    const rw = towerReward(currentFloor.value, player.value)
+    const expGain = Math.floor(rw.exp * 0.15 * expMult(player.value))
+    const moneyGain = Math.floor(rw.money * 0.15)
     // 增加玩家修为
     player.value.cultivation += expGain
     // 增加玩家灵石

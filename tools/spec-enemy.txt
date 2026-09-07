@@ -1,0 +1,30 @@
+### FILE src/plugins/enemyScale.js
+<<< FROM
+import monsters from './monster.js'
+import { realmPower, enemyPowerForLevel, enemyStatsForPower, stageOfLevelForPower } from './breakthroughGate.js'
+=== TO
+import monsters from './monster.js'
+import { realmPower, enemyPowerForLevel, enemyStatsForPower } from './breakthroughGate.js'
+import { stageOfLevel } from './craft.js'
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+  const stage = stageOfLevelForPower(level)
+=== TO
+  const stage = stageOfLevel(level)
+>>>
+### FILE src/plugins/breakthroughGate.js
+<<< FROM
+// 与 above 同权重，用于敌手评分
+=== TO
+// 144 级以上（无尽塔深层 / 历战高层）继续沿用境界战力标准做几何外推，
+// 避免旧 monster 表在 145 级处一次跳 480 倍——那会让“无尽塔”到 72 层就实质封顶。
+export const OVERLEVEL_GROWTH = 1.06
+export const enemyPowerForLevel = level => {
+  const lv = Math.max(1, Math.floor(level || 1))
+  if (lv <= 144) return realmPower(lv)
+  return Math.floor(realmPower(144) * Math.pow(OVERLEVEL_GROWTH, lv - 144))
+}
+
+// 与 above 同权重，用于敌手评分
+>>>

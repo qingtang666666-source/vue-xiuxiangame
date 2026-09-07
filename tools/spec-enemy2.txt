@@ -1,0 +1,78 @@
+### FILE src/plugins/enemyScale.js
+<<< FROM
+// —— 历战（回合制竞技场）——
+=== TO
+// 反秒杀保护：敌人单刀攻击不超过挑战者气血的一定比例，
+// 否则早期玩家（真实属性远低于境界标准战力）会被一回合带走。
+const guardOneShot = (e, player, ratio = 0.42) => {
+  const hp = Math.max(1, player?.maxHealth || player?.health || 0)
+  if (hp > 1) e.attack = Math.max(1, Math.min(e.attack, Math.floor(hp * ratio)))
+  return e
+}
+
+// —— 历战（回合制竞技场）——
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+    const power = ref * mult * split * elite
+    out.push(enemyFromPower(lv, power, { eliteTag: boss, extra: { idx: i } }))
+=== TO
+    const power = ref * mult * split * elite
+    out.push(guardOneShot(enemyFromPower(lv, power, { eliteTag: boss, extra: { idx: i } }), player))
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+export const towerFloorGrowth = floor => 0.4 + (Math.max(1, floor) - 1) * 0.07
+=== TO
+export const towerFloorGrowth = floor => 0.25 + (Math.max(1, floor) - 1) * 0.065
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+  const m = enemyFromPower(lv, power, { eliteTag: elite > 1, extra: { floor: f, elite } })
+  if (elite >= 1.4) m.name = `${m.name}·塔${f}`
+  return m
+}
+=== TO
+  const m = guardOneShot(enemyFromPower(lv, power, { eliteTag: elite > 1, extra: { floor: f, elite } }), player)
+  if (elite >= 1.4) m.name = `${m.name}·塔${f}`
+  return m
+}
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+  const mult = clamp(0.42 + (Number(regionIdx) || 0) * 0.11, 0.3, 1.15)
+  return enemyFromPower(level, ref * mult)
+}
+=== TO
+  const mult = clamp(0.42 + (Number(regionIdx) || 0) * 0.11, 0.3, 1.15)
+  return guardOneShot(enemyFromPower(level, ref * mult), player)
+}
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+  const mult = clamp(0.75 + (Number(regionIdx) || 0) * 0.16, 0.6, 1.9)
+  return enemyFromPower(level, ref * mult, { eliteTag: true })
+}
+=== TO
+  const mult = clamp(0.75 + (Number(regionIdx) || 0) * 0.16, 0.6, 1.9)
+  return guardOneShot(enemyFromPower(level, ref * mult, { eliteTag: true }), player)
+}
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+  const names = monsters.monster_Names(144)
+  return enemyFromPower(144, power, {
+=== TO
+  const names = monsters.monster_Names(Math.min(144, player?.level || 144))
+  return guardOneShot(enemyFromPower(144, power, {
+>>>
+### FILE src/plugins/enemyScale.js
+<<< FROM
+    extra: { desc: '上古凶兽，横行四海', text: '斩杀可得高阶装备与稀有材料' }
+  })
+}
+=== TO
+    extra: { desc: '上古凶兽，横行四海', text: '斩杀可得高阶装备与稀有材料' }
+  }), player, 0.5)
+}
+>>>

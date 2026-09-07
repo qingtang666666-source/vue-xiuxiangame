@@ -55,6 +55,15 @@ export const playerPowerScore = player => {
   return Math.floor(realmBase + (dodge * 3.2 * 100 + attack * 4 + (health / 100) * 0.4 + defense * 2.4 + critical * 3.6 * 100) * POWER_SCALE)
 }
 
+// 144 级以上（无尽塔深层 / 历战高层）继续沿用境界战力标准做几何外推，
+// 避免旧 monster 表在 145 级处一次跳 480 倍——那会让“无尽塔”到 72 层就实质封顶。
+export const OVERLEVEL_GROWTH = 1.06
+export const enemyPowerForLevel = level => {
+  const lv = Math.max(1, Math.floor(level || 1))
+  if (lv <= 144) return realmPower(lv)
+  return Math.floor(realmPower(144) * Math.pow(OVERLEVEL_GROWTH, lv - 144))
+}
+
 // 与 above 同权重，用于敌手评分
 const scoreOfStats = (atk, hp, def, crit, dodge) =>
   Math.floor(dodge * 1.6 * 100 + atk * 2 + (hp / 100) * 0.2 + def * 1.2 + crit * 1.8 * 100)
