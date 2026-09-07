@@ -176,9 +176,9 @@ export const effectivePlayerStats = player => {
   const baseAtk = player.attack || 0
   const baseDef = player.defense || 0
   // 百分比加成上限，防止套装/阵法/符箓/丹药叠出天文数字
-  const PCT_CAP = 2.5
+  const PCT_CAP = 3.6
   // 攻/防百分比总上限：套装+阵法(2.5) 之上，界域与转世商店仍可再叠加，但总百分比必须封顶，避免长期膨胀
-  const PCT_ABS_CAP = 4.0
+  const PCT_ABS_CAP = 5.2
   const atkPct = Math.min(PCT_CAP, (b.attack || 0) + (f.attack || 0))
   const defPct = Math.min(PCT_CAP, (b.defense || 0) + (f.defense || 0))
   const atkTotal = Math.min(PCT_ABS_CAP, atkPct + (realm.attack || 0) + rb.attack)

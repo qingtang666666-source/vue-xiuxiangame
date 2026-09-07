@@ -1,0 +1,49 @@
+### FILE src/plugins/talisman.js
+<<< FROM
+// 符箓持续时间：黄符 20 分钟 → 道符 约 172 分钟
+export const talismanMinutes = tier => Math.round(12 + 8 * Math.pow(Math.max(1, tier || 1), 1.25))
+=== TO
+// 符箓持续时间：黄符 20 分钟 → 道符 约 172 分钟
+export const talismanMinutes = tier => Math.round(12 + 8 * Math.pow(Math.max(1, tier || 1), 1.25))
+
+// 符箓增益的生效上限按品阶放宽：
+//   攻/防/修/财/离线 1.2 → 3.36（道阶）
+//   暴击/闪避/特效   0.25 → 0.40（道阶，这类本就受 80% 总封顶，只小幅放宽）
+// 这是「高阶符一定比上一个大境界的符更强」的关键——否则五阶以后全部撞同一个天花板。
+export const talismanBuffCap = (key, tier) => {
+  const t = Math.max(1, Math.min(11, Math.round(tier || 1)))
+  const soft = key === 'critical' || key === 'dodge' || key === 'effectBoost'
+  return soft ? 0.25 * (1 + (t - 1) * 0.06) : 1.2 * tierCapBoost(t)
+}
+
+// 把配方算出的增益裁到该品阶上限内，保证「界面显示 = 实际生效」
+const clampBuff = (eff, tier) => {
+  const out = {}
+  Object.keys(eff).forEach(k => {
+    out[k] = k === 'minutes' ? eff[k] : Math.min(eff[k], talismanBuffCap(k, tier))
+  })
+  return out
+}
+>>>
+### FILE src/plugins/talisman.js
+<<< FROM
+    // 高品阶符箓三处同时拉开：增益倍率(tierBuff)、增益上限(tierCapBoost)、持续时间
+    recipe.buff = { ...cat.eff(m, tierBuff(tier.t), cb), minutes: talismanMinutes(tier.t) }
+=== TO
+    // 高品阶符箓三处同时拉开：增益倍率(tierBuff)、增益上限(talismanBuffCap)、持续时间
+    recipe.buff = { ...clampBuff(cat.eff(m, tierBuff(tier.t), cb), tier.t), minutes: talismanMinutes(tier.t) }
+>>>
+### FILE src/plugins/talisman.js
+<<< FROM
+    const eff = {}
+    Object.keys(r.buff).forEach(k => {
+      // 削弱符箓增益上限：暴击/闪避/特效 0.25，攻防修 1.2，避免中高阶符箓堆到顶
+      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, k === 'critical' || k === 'dodge' || k === 'effectBoost' ? 0.25 : 1.2)
+    })
+=== TO
+    const eff = {}
+    // 上限已按品阶写在配方里（见 talismanBuffCap），这里只做兜底裁剪
+    Object.keys(r.buff).forEach(k => {
+      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, talismanBuffCap(k, r.tier))
+    })
+>>>

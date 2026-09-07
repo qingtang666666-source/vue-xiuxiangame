@@ -1,5 +1,7 @@
 // 装备词条系统 —— 数值型 + 特效型（网游风格），含概率上限与冷却
 
+import { gearRealmMult } from '@/plugins/craft'
+
 // 品质权重：高品质装备更容易出/出更多词条
 export const affixQualityMultiplier = {
   info: 1, // 凡阶
@@ -76,13 +78,13 @@ export const rollStatValue = (stat, level, quality) => {
   let base = 0
   switch (stat) {
     case 'attack':
-      base = (5 + Math.floor(Math.random() * 20)) * level * 0.5
+      base = (5 + Math.floor(Math.random() * 20)) * level * 0.5 * gearRealmMult(level)
       break
     case 'defense':
-      base = (4 + Math.floor(Math.random() * 15)) * level * 0.4
+      base = (4 + Math.floor(Math.random() * 15)) * level * 0.4 * gearRealmMult(level)
       break
     case 'health':
-      base = (25 + Math.floor(Math.random() * 100)) * level
+      base = (25 + Math.floor(Math.random() * 100)) * level * gearRealmMult(level)
       break
     case 'critical':
     case 'dodge':

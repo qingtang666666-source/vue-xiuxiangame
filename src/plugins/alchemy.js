@@ -18,25 +18,27 @@ import { realmBonus } from './ascension.js'
 import { rebirthStats } from './rebirth.js'
 import { insightMult } from './insight.js'
 import { realmCultSpeedMult } from './game.js'
-import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier, costRows, costShortfallText } from './craft.js'
+import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier, costRows, costShortfallText, tierFlat, tierPct } from './craft.js'
 import { bumpDaily } from './dailyGoals.js'
 import { codexBonus } from './codex.js'
 import { tierMaterial, matNameOf } from './materialDb.js'
 
 // ---- 品阶表：数值倍率逐阶递增，颜色与稀有度对应 ----
-export const TIERS = [
-  { t: 1, name: '黄阶', q: 'info', mult: 1 },
-  { t: 2, name: '玄阶', q: 'success', mult: 1.7 },
-  { t: 3, name: '地阶', q: 'primary', mult: 2.8 },
-  { t: 4, name: '天阶', q: 'purple', mult: 4.5 },
-  { t: 5, name: '仙阶', q: 'pink', mult: 7 },
-  { t: 6, name: '帝阶', q: 'warning', mult: 11 },
-  { t: 7, name: '神阶', q: 'danger', mult: 17 },
-  { t: 8, name: '灵阶', q: 'cyan', mult: 26 },
-  { t: 9, name: '皇阶', q: 'orange', mult: 40 },
-  { t: 10, name: '圣阶', q: 'gold', mult: 62 },
-  { t: 11, name: '道阶', q: 'legendary', mult: 100 }
+// mult = 数值型倍率（攻/防/气血、炼制消耗），pct = 百分比型倍率（暴/闪/修炼/收益）
+const TIER_META = [
+  { t: 1, name: '黄阶', q: 'info' },
+  { t: 2, name: '玄阶', q: 'success' },
+  { t: 3, name: '地阶', q: 'primary' },
+  { t: 4, name: '天阶', q: 'purple' },
+  { t: 5, name: '仙阶', q: 'pink' },
+  { t: 6, name: '帝阶', q: 'warning' },
+  { t: 7, name: '神阶', q: 'danger' },
+  { t: 8, name: '灵阶', q: 'cyan' },
+  { t: 9, name: '皇阶', q: 'orange' },
+  { t: 10, name: '圣阶', q: 'gold' },
+  { t: 11, name: '道阶', q: 'legendary' }
 ]
+export const TIERS = TIER_META.map(m => ({ ...m, mult: tierFlat(m.t), pct: tierPct(m.t) }))
 
 // ---- 效果类别：每类 10 个专属炼名，组合后名称唯一 ----
 const CATEGORIES = [
@@ -46,7 +48,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '固本培元，灵气淬体',
     stems: ['聚气', '凝神', '洗髓', '悟道', '融灵', '炼心', '明性', '化气', '归元', '合道'],
-    effect: m => ({ cultivationSpeed: 0.02 * m })
+    effect: (m, p) => ({ cultivationSpeed: 0.02 * p })
   },
   {
     key: 'health',
@@ -78,7 +80,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '眼到手到，招招致命',
     stems: ['锐眼', '入微', '点睛', '杀意', '锋芒', '战意', '贯日', '屠龙', '九击', '灭世'],
-    effect: m => ({ critical: 0.0015 * m })
+    effect: (m, p) => ({ critical: 0.0015 * p })
   },
   {
     key: 'dodge',
@@ -86,7 +88,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '身法飘渺，难以捉摸',
     stems: ['轻身', '飘渺', '影遁', '惊鸿', '凌波', '踏风', '瞬影', '幻身', '无影', '无形'],
-    effect: m => ({ dodge: 0.0015 * m })
+    effect: (m, p) => ({ dodge: 0.0015 * p })
   },
   {
     key: 'econ',
@@ -94,7 +96,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '聚财纳福，灵石渐丰',
     stems: ['聚宝', '金池', '招财', '厚土', '矿精', '龙涎', '聚灵', '纳福', '财帛', '天地'],
-    effect: m => ({ moneyMult: 1 + 0.01 * m })
+    effect: (m, p) => ({ moneyMult: 1 + 0.01 * p })
   },
   {
     key: 'offl',
@@ -102,7 +104,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '养精蓄锐，闭关收益更丰',
     stems: ['定神', '安眠', '入定', '无忧', '长息', '抱元', '守一', '养神', '坐忘', '大定'],
-    effect: m => ({ offlineMult: 1 + 0.01 * m })
+    effect: (m, p) => ({ offlineMult: 1 + 0.01 * p })
   },
   {
     key: 'bcult',
@@ -111,7 +113,7 @@ const CATEGORIES = [
     minutes: 30,
     descBase: '灵感涌现，修行提速',
     stems: ['顿悟', '灵感', '入神', '焚香', '坐照', '观想', '明心', '再燃', '通明', '慧心'],
-    effect: m => ({ cultivation: Math.min(3, 0.02 * m) })
+    effect: (m, p) => ({ cultivation: Math.min(3, 0.02 * p) })
   },
   {
     key: 'becon',
@@ -120,7 +122,7 @@ const CATEGORIES = [
     minutes: 30,
     descBase: '财气汇聚，灵石滚滚而来',
     stems: ['财来', '进宝', '运旺', '纳财', '添丁', '广进', '聚泉', '流水', '雨金', '如山'],
-    effect: m => ({ moneyMult: Math.min(3, 0.02 * m) })
+    effect: (m, p) => ({ moneyMult: Math.min(3, 0.02 * p) })
   },
   {
     key: 'boffl',
@@ -129,7 +131,7 @@ const CATEGORIES = [
     minutes: 60,
     descBase: '静心安神，离线收益大增',
     stems: ['长梦', '酣眠', '大睡', '安神', '足眠', '养精', '藏锋', '蓄锐', '隐世', '太极'],
-    effect: m => ({ offlineMult: Math.min(3, 0.02 * m) })
+    effect: (m, p) => ({ offlineMult: Math.min(3, 0.02 * p) })
   },
   {
     key: 'compound',
@@ -153,7 +155,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '怒意滔天，攻伐皆裂',
     stems: ['怒啸', '焚心', '狂战', '暴血', '凶威', '扬威', '破浪', '裂岳', '霸体', '辟易'],
-    effect: m => ({ attack: Math.round(7 * m), critical: 0.0008 * m })
+    effect: (m, p) => ({ attack: Math.round(7 * m), critical: 0.0008 * p })
   },
   {
     key: 'ironwall',
@@ -169,7 +171,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '身随风动，招招难避',
     stems: ['疾风', '惊鸿', '掠影', '残影', '瞬影', '踏月', '追云', '无影', '化风', '折光'],
-    effect: m => ({ dodge: 0.0008 * m, critical: 0.0008 * m })
+    effect: (m, p) => ({ dodge: 0.0008 * p, critical: 0.0008 * p })
   },
   {
     key: 'sagacity',
@@ -177,7 +179,7 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '慧光内照，道行渐深',
     stems: ['通玄', '见性', '明心', '坐照', '观澜', '照见', '忘机', '洗心', '凝神', '守元'],
-    effect: m => ({ cultivationSpeed: 0.008 * m, lifespan: Math.round(2 * m) })
+    effect: (m, p) => ({ cultivationSpeed: 0.008 * p, lifespan: Math.round(2 * m) })
   },
   {
     key: 'fortuna',
@@ -185,13 +187,14 @@ const CATEGORIES = [
     suffix: '丹',
     descBase: '福泽加身，财运亨通',
     stems: ['鸿运', '天赐', '紫气', '纳福', '万福', '聚宝', '迎祥', '瑞气', '呈祥', '招财'],
-    effect: m => ({ moneyMult: 1 + 0.004 * m, health: Math.round(20 * m) })
+    effect: (m, p) => ({ moneyMult: 1 + 0.004 * p, health: Math.round(20 * m) })
   }
 ]
 
 // 生成一条丹方
 const buildRecipe = (tier, cat) => {
   const m = tier.mult
+  const p = tier.pct
   const stem = cat.stems[(tier.t - 1) % cat.stems.length]
   const recipe = {
     id: `${tier.t}-${cat.key}`,
@@ -210,9 +213,9 @@ const buildRecipe = (tier, cat) => {
     }
   }
   if (cat.kind === 'buff') {
-    recipe.buff = { ...cat.effect(m), minutes: cat.minutes }
+    recipe.buff = { ...cat.effect(m, p), minutes: cat.minutes }
   } else {
-    recipe.permanent = cat.effect(m)
+    recipe.permanent = cat.effect(m, p)
   }
   recipe.effectText = effectTextOf(recipe)
   return recipe

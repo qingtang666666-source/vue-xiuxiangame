@@ -10,21 +10,25 @@
 //   moneyMult/offlineMult 灵石/离线 加法百分比（0.25 = +25%）
 //   effectBoost      特效触发百分点
 
-import { bumpCraftRank } from './craft.js'
+import { bumpCraftRank, craftLevelOfTier } from './craft.js'
 
-export const FORMATION_TIERS = [
-  { t: 1, name: '黄阶', q: 'info', mult: 1, minLevel: 1 },
-  { t: 2, name: '玄阶', q: 'success', mult: 1.7, minLevel: 6 },
-  { t: 3, name: '地阶', q: 'primary', mult: 2.8, minLevel: 12 },
-  { t: 4, name: '天阶', q: 'purple', mult: 4.5, minLevel: 20 },
-  { t: 5, name: '仙阶', q: 'pink', mult: 6.2, minLevel: 28 },
-  { t: 6, name: '帝阶', q: 'warning', mult: 9, minLevel: 36 },
-  { t: 7, name: '神阶', q: 'danger', mult: 13, minLevel: 45 },
-  { t: 8, name: '灵阶', q: 'cyan', mult: 18, minLevel: 55 },
-  { t: 9, name: '皇阶', q: 'orange', mult: 24, minLevel: 70 },
-  { t: 10, name: '圣阶', q: 'gold', mult: 31, minLevel: 90 },
-  { t: 11, name: '道阶', q: 'legendary', mult: 38, minLevel: 110 }
+// 阵法是百分比增益，故用「逐阶 ×1.55」的陡曲线（道阶 80，原 38），
+// 且解锁等级与大境界边界对齐：跨一个大境界就能凝聚更高一档的阵。
+const FORMATION_MULT = [1, 1.55, 2.4, 3.72, 5.77, 8.94, 13.9, 21.5, 33.3, 51.6, 80]
+const FORMATION_META = [
+  { t: 1, name: '黄阶', q: 'info' },
+  { t: 2, name: '玄阶', q: 'success' },
+  { t: 3, name: '地阶', q: 'primary' },
+  { t: 4, name: '天阶', q: 'purple' },
+  { t: 5, name: '仙阶', q: 'pink' },
+  { t: 6, name: '帝阶', q: 'warning' },
+  { t: 7, name: '神阶', q: 'danger' },
+  { t: 8, name: '灵阶', q: 'cyan' },
+  { t: 9, name: '皇阶', q: 'orange' },
+  { t: 10, name: '圣阶', q: 'gold' },
+  { t: 11, name: '道阶', q: 'legendary' }
 ]
+export const FORMATION_TIERS = FORMATION_META.map(m => ({ ...m, mult: FORMATION_MULT[m.t - 1], minLevel: craftLevelOfTier(m.t) }))
 
 export const FORMATION_GROUPS = [
   { key: 'combat', name: '战斗', icon: '⚔️', desc: '以杀伐之阵，主攻城拔寨。', costBase: 900, stems: ['荧惑杀', '五雷诛邪', '烈焰焚', '罡风裂', '庚金斩', '九霄雷', '万剑归宗', '焚天', '破军', '斩龙', '灭世'], effect: lv => ({ attack: 0.006 * lv, critical: 0.0012 * lv }) },
@@ -61,7 +65,8 @@ export const FORMATIONS = (() => {
         tierName: tier.name,
         minLevel: tier.minLevel,
         maxLevel: 20,
-        costBase: Math.floor(g.costBase * tier.mult),
+        // 消耗只按倍率的 0.72 次方增长：高阶更强，但不至于强到买不起
+        costBase: Math.floor(g.costBase * Math.pow(tier.mult, 0.72)),
         desc: g.desc,
         effect: lv => mulEffect(g.effect(lv), tier.mult)
       })
@@ -132,7 +137,7 @@ export const formationStats = player => {
     })
   })
   // 阵法加成上限，避免 66 阵叠出天文数字
-  const CAPS = { attack: 3, defense: 3, critical: 0.5, dodge: 0.5, cultivationSpeed: 2, moneyMult: 2, offlineMult: 2, effectBoost: 0.5 }
+  const CAPS = { attack: 4, defense: 4, critical: 0.5, dodge: 0.5, cultivationSpeed: 2.5, moneyMult: 2.5, offlineMult: 2.5, effectBoost: 0.6 }
   Object.keys(acc).forEach(k => {
     if (CAPS[k] != null) acc[k] = Math.min(CAPS[k], acc[k])
   })

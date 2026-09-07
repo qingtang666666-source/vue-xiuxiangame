@@ -1,0 +1,32 @@
+### FILE src/plugins/craft.js
+<<< FROM
+export const tierFlat = tier => TIER_FLAT[clampTier(tier) - 1]
+export const tierPct = tier => TIER_PCT[clampTier(tier) - 1]
+=== TO
+export const tierFlat = tier => TIER_FLAT[clampTier(tier) - 1]
+export const tierPct = tier => TIER_PCT[clampTier(tier) - 1]
+// 限时增益专用（符箓 buff）：逐阶 ×1.75，道阶 269 —— 让高阶符不只是“撞同一个上限”，
+// 而是真的比上一个大境界的符强一档（最终仍受 setBonus 的攻/防百分比总封顶约束）
+export const TIER_BUFF = [1, 1.75, 3.06, 5.36, 9.38, 16.4, 28.7, 50.3, 88, 154, 269]
+export const tierBuff = tier => TIER_BUFF[clampTier(tier) - 1]
+>>>
+### FILE src/plugins/talisman.js
+<<< FROM
+import { bumpCraftRank, craftLevelOfTier, tierFlat, tierPct, tierCapBoost } from './craft.js'
+=== TO
+import { bumpCraftRank, craftLevelOfTier, tierFlat, tierPct, tierBuff, tierCapBoost } from './craft.js'
+>>>
+### FILE src/plugins/talisman.js
+<<< FROM
+    // 高品阶符箓不仅数值更高，持续时间也更长（跨大境界的体感差距）
+    recipe.buff = { ...cat.eff(m, p, cb), minutes: talismanMinutes(tier.t) }
+=== TO
+    // 高品阶符箓三处同时拉开：增益倍率(tierBuff)、增益上限(tierCapBoost)、持续时间
+    recipe.buff = { ...cat.eff(m, tierBuff(tier.t), cb), minutes: talismanMinutes(tier.t) }
+>>>
+### FILE src/plugins/talisman.js
+<<< FROM
+// 符箓持续时间：黄符 20 分钟 → 道符 约 140 分钟
+=== TO
+// 符箓持续时间：黄符 20 分钟 → 道符 约 172 分钟
+>>>

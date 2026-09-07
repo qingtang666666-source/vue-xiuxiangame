@@ -1,0 +1,182 @@
+### FILE src/plugins/craft.js
+<<< FROM
+// 炼制等级上限：境界允许的品级 + 可越级(默认+2)
+export const craftTierByLevel = level => Math.min(11, Math.max(1, Math.floor((level || 1) / 13) + 1))
+export const craftTierMax = (player, over = 2) => Math.min(11, craftTierByLevel(player.level) + over)
+
+// 品级(1~11) → 所需修为等级：低阶低、道阶高(≈144)
+export const craftLevelOfTier = tier => Math.min(144, Math.max(1, 1 + (tier - 1) * 14))
+=== TO
+// ---- 大境界节奏：16 个大境界 × 每境界 9 级 = 1~144 ----
+export const REALM_STAGES = 16
+export const LEVELS_PER_STAGE = 9
+export const stageOfLevel = level => Math.max(0, Math.min(REALM_STAGES - 1, Math.floor(((level || 1) - 1) / LEVELS_PER_STAGE)))
+export const stageStartLevel = stage => stage * LEVELS_PER_STAGE + 1
+
+// 11 品阶各自解锁的大境界，正好落在境界边界上：跨一个大境界 = 换一个档位
+//   黄=炼气 玄=金丹 地=元婴 天=炼虚 仙=合体 帝=大乘 神=渡劫 灵=真仙 皇=金仙 圣=大罗金仙 道=道祖
+const TIER_STAGE = [0, 2, 3, 5, 6, 7, 9, 10, 12, 13, 15]
+const clampTier = tier => Math.max(1, Math.min(11, Math.round(tier || 1)))
+
+// 品级(1~11) → 解锁所需修为等级（按大境界边界对齐）
+export const craftLevelOfTier = tier => stageStartLevel(TIER_STAGE[clampTier(tier) - 1])
+
+// 当前境界对应的品阶（用于技艺阶位展示与炼制上限）
+export const craftTierByLevel = level => {
+  const lv = Math.max(1, level || 1)
+  let tier = 1
+  for (let i = 1; i <= 11; i++) if (craftLevelOfTier(i) <= lv) tier = i
+  return tier
+}
+export const craftTierMax = (player, over = 2) => Math.min(11, craftTierByLevel(player.level) + over)
+
+// ---- 品阶效果曲线：拉大「大境界之间」的 丹/符/阵/装 差距 ----
+// 数值型（攻/防/气血等直接加值）：逐阶 ×1.9，道阶 611（原 100）
+export const TIER_FLAT = [1, 2, 4, 8, 13, 25, 47, 89, 169, 322, 611]
+// 百分比型（暴/闪/修炼速度/收益等本就受封顶约束）：沿用原曲线，不轻易顶满 80% 上限
+export const TIER_PCT = [1, 1.7, 2.8, 4.5, 7, 11, 17, 26, 40, 62, 100]
+export const tierFlat = tier => TIER_FLAT[clampTier(tier) - 1]
+export const tierPct = tier => TIER_PCT[clampTier(tier) - 1]
+
+// 装备基础值的境界超线性增长：每上一个大境界 ×1.09（同等级道祖装 ≈ 炼气装的 3.6 倍）
+export const GEAR_STAGE_RATIO = 1.09
+export const gearRealmMult = level => Math.pow(GEAR_STAGE_RATIO, stageOfLevel(level))
+
+// 高品阶限时增益的百分比上限按阶放宽，保证「高阶一定强于低阶」而不是早早撞顶
+export const tierCapBoost = tier => 1 + (clampTier(tier) - 1) * 0.18
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier, costRows, costShortfallText } from './craft.js'
+=== TO
+import { bumpCraftRank, TIER_CRAFT_SUCCESS, craftLevelOfTier, costRows, costShortfallText, tierFlat, tierPct } from './craft.js'
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+export const TIERS = [
+  { t: 1, name: '黄阶', q: 'info', mult: 1 },
+  { t: 2, name: '玄阶', q: 'success', mult: 1.7 },
+  { t: 3, name: '地阶', q: 'primary', mult: 2.8 },
+  { t: 4, name: '天阶', q: 'purple', mult: 4.5 },
+  { t: 5, name: '仙阶', q: 'pink', mult: 7 },
+  { t: 6, name: '帝阶', q: 'warning', mult: 11 },
+  { t: 7, name: '神阶', q: 'danger', mult: 17 },
+  { t: 8, name: '灵阶', q: 'cyan', mult: 26 },
+  { t: 9, name: '皇阶', q: 'orange', mult: 40 },
+  { t: 10, name: '圣阶', q: 'gold', mult: 62 },
+  { t: 11, name: '道阶', q: 'legendary', mult: 100 }
+]
+=== TO
+// mult = 数值型倍率（攻/防/气血、炼制消耗），pct = 百分比型倍率（暴/闪/修炼/收益）
+const TIER_META = [
+  { t: 1, name: '黄阶', q: 'info' },
+  { t: 2, name: '玄阶', q: 'success' },
+  { t: 3, name: '地阶', q: 'primary' },
+  { t: 4, name: '天阶', q: 'purple' },
+  { t: 5, name: '仙阶', q: 'pink' },
+  { t: 6, name: '帝阶', q: 'warning' },
+  { t: 7, name: '神阶', q: 'danger' },
+  { t: 8, name: '灵阶', q: 'cyan' },
+  { t: 9, name: '皇阶', q: 'orange' },
+  { t: 10, name: '圣阶', q: 'gold' },
+  { t: 11, name: '道阶', q: 'legendary' }
+]
+export const TIERS = TIER_META.map(m => ({ ...m, mult: tierFlat(m.t), pct: tierPct(m.t) }))
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ cultivationSpeed: 0.02 * m })
+=== TO
+    effect: (m, p) => ({ cultivationSpeed: 0.02 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ critical: 0.0015 * m })
+=== TO
+    effect: (m, p) => ({ critical: 0.0015 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ dodge: 0.0015 * m })
+=== TO
+    effect: (m, p) => ({ dodge: 0.0015 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ moneyMult: 1 + 0.01 * m })
+=== TO
+    effect: (m, p) => ({ moneyMult: 1 + 0.01 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ offlineMult: 1 + 0.01 * m })
+=== TO
+    effect: (m, p) => ({ offlineMult: 1 + 0.01 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ cultivation: Math.min(3, 0.02 * m) })
+=== TO
+    effect: (m, p) => ({ cultivation: Math.min(3, 0.02 * p) })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ moneyMult: Math.min(3, 0.02 * m) })
+=== TO
+    effect: (m, p) => ({ moneyMult: Math.min(3, 0.02 * p) })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ offlineMult: Math.min(3, 0.02 * m) })
+=== TO
+    effect: (m, p) => ({ offlineMult: Math.min(3, 0.02 * p) })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ attack: Math.round(7 * m), critical: 0.0008 * m })
+=== TO
+    effect: (m, p) => ({ attack: Math.round(7 * m), critical: 0.0008 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ dodge: 0.0008 * m, critical: 0.0008 * m })
+=== TO
+    effect: (m, p) => ({ dodge: 0.0008 * p, critical: 0.0008 * p })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ cultivationSpeed: 0.008 * m, lifespan: Math.round(2 * m) })
+=== TO
+    effect: (m, p) => ({ cultivationSpeed: 0.008 * p, lifespan: Math.round(2 * m) })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+    effect: m => ({ moneyMult: 1 + 0.004 * m, health: Math.round(20 * m) })
+=== TO
+    effect: (m, p) => ({ moneyMult: 1 + 0.004 * p, health: Math.round(20 * m) })
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+const buildRecipe = (tier, cat) => {
+  const m = tier.mult
+  const stem = cat.stems[(tier.t - 1) % cat.stems.length]
+=== TO
+const buildRecipe = (tier, cat) => {
+  const m = tier.mult
+  const p = tier.pct
+  const stem = cat.stems[(tier.t - 1) % cat.stems.length]
+>>>
+### FILE src/plugins/alchemy.js
+<<< FROM
+  if (cat.kind === 'buff') {
+    recipe.buff = { ...cat.effect(m), minutes: cat.minutes }
+  } else {
+    recipe.permanent = cat.effect(m)
+  }
+=== TO
+  if (cat.kind === 'buff') {
+    recipe.buff = { ...cat.effect(m, p), minutes: cat.minutes }
+  } else {
+    recipe.permanent = cat.effect(m, p)
+  }
+>>>

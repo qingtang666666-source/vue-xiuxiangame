@@ -5,40 +5,42 @@
 //   增益类：攻伐(攻击%)/御守(防御%)/锐目(暴击)/幻身(闪避)/悟道(修炼)/聚财(灵石)/养神(离线)/破邪(特效)/混元(复合)
 
 import { addBuff } from './buffs.js'
-import { bumpCraftRank, craftLevelOfTier } from './craft.js'
+import { bumpCraftRank, craftLevelOfTier, tierFlat, tierPct, tierBuff, tierCapBoost } from './craft.js'
 import { tierMaterial, matNameOf } from './materialDb.js'
 
-export const TALISMAN_TIERS = [
-  { t: 1, name: '黄符', q: 'info', mult: 1 },
-  { t: 2, name: '玄符', q: 'success', mult: 1.7 },
-  { t: 3, name: '地符', q: 'primary', mult: 2.8 },
-  { t: 4, name: '天符', q: 'purple', mult: 4.5 },
-  { t: 5, name: '仙符', q: 'pink', mult: 7 },
-  { t: 6, name: '帝符', q: 'warning', mult: 11 },
-  { t: 7, name: '神符', q: 'danger', mult: 17 },
-  { t: 8, name: '灵符', q: 'cyan', mult: 26 },
-  { t: 9, name: '皇符', q: 'orange', mult: 40 },
-  { t: 10, name: '圣符', q: 'gold', mult: 62 },
-  { t: 11, name: '道符', q: 'legendary', mult: 100 }
+// mult = 数值型倍率（化财等直接得灵石、炼制消耗），pct = 百分比型倍率（攻/防/暴/闪/修炼/收益）
+const TALISMAN_META = [
+  { t: 1, name: '黄符', q: 'info' },
+  { t: 2, name: '玄符', q: 'success' },
+  { t: 3, name: '地符', q: 'primary' },
+  { t: 4, name: '天符', q: 'purple' },
+  { t: 5, name: '仙符', q: 'pink' },
+  { t: 6, name: '帝符', q: 'warning' },
+  { t: 7, name: '神符', q: 'danger' },
+  { t: 8, name: '灵符', q: 'cyan' },
+  { t: 9, name: '皇符', q: 'orange' },
+  { t: 10, name: '圣符', q: 'gold' },
+  { t: 11, name: '道符', q: 'legendary' }
 ]
+export const TALISMAN_TIERS = TALISMAN_META.map(m => ({ ...m, mult: tierFlat(m.t), pct: tierPct(m.t) }))
 
 const CATEGORIES = [
-  { key: 'heal', kind: 'instant', type: 'heal', desc: '朱砂书就，回天续命。', stems: ['回春', '续命', '活络', '生肌', '固本', '培元'], eff: m => ({ value: 0.05 * m }) },
-  { key: 'cultivate', kind: 'instant', type: 'cultivation', desc: '聚灵成符，修为暴涨。', stems: ['聚气', '凝元', '吐纳', '化灵', '汇海', '归一'], eff: m => ({ value: 0.05 * m }) },
+  { key: 'heal', kind: 'instant', type: 'heal', desc: '朱砂书就，回天续命。', stems: ['回春', '续命', '活络', '生肌', '固本', '培元'], eff: (m, p) => ({ value: 0.05 * p }) },
+  { key: 'cultivate', kind: 'instant', type: 'cultivation', desc: '聚灵成符，修为暴涨。', stems: ['聚气', '凝元', '吐纳', '化灵', '汇海', '归一'], eff: (m, p) => ({ value: 0.05 * p }) },
   { key: 'money', kind: 'instant', type: 'money', desc: '点石成金，财源滚滚。', stems: ['点石', '聚宝', '招财', '纳福', '金雨', '富甲'], eff: m => ({ value: m }) },
-  { key: 'atkbuff', kind: 'buff', desc: '加持攻伐，战意昂扬。', stems: ['破军', '裂山', '斩龙', '碎星', '镇岳', '开天'], eff: m => ({ attack: Math.min(3, 0.03 * m) }) },
-  { key: 'defbuff', kind: 'buff', desc: '金刚护体，外邪难侵。', stems: ['金刚', '铁壁', '御岳', '磐石', '玄龟', '不动'], eff: m => ({ defense: Math.min(3, 0.03 * m) }) },
-  { key: 'critbuff', kind: 'buff', desc: '锐目洞微，招招致命。', stems: ['锐眼', '入微', '点睛', '贯日', '屠龙', '灭世'], eff: m => ({ critical: Math.min(0.5, 0.01 * m) }) },
-  { key: 'dodgebuff', kind: 'buff', desc: '幻身无影，难以捉摸。', stems: ['轻身', '飘渺', '凌波', '踏风', '无影', '无形'], eff: m => ({ dodge: Math.min(0.5, 0.01 * m) }) },
-  { key: 'cultbuff', kind: 'buff', desc: '悟道加持，修行如飞。', stems: ['顿悟', '灵感', '入神', '坐照', '明心', '慧心'], eff: m => ({ cultivation: Math.min(3, 0.03 * m) }) },
-  { key: 'moneybuff', kind: 'buff', desc: '财气附体，灵石如雨。', stems: ['财来', '进宝', '运旺', '纳财', '广进', '如山'], eff: m => ({ moneyMult: Math.min(3, 0.03 * m) }) },
-  { key: 'offlbuff', kind: 'buff', desc: '养神安魂，离线亦有得。', stems: ['安神', '长息', '坐忘', '抱元', '大定', '养精'], eff: m => ({ offlineMult: Math.min(3, 0.03 * m) }) },
-  { key: 'effectbuff', kind: 'buff', desc: '破邪祛魅，特效频出。', stems: ['破邪', '镇煞', '驱魔', '诛邪', '荡寇', '净世'], eff: m => ({ effectBoost: Math.min(0.2, 0.008 * m) }) },
-  { key: 'compoundbuff', kind: 'buff', desc: '混元一气，全面加持。', stems: ['混元', '太一', '紫府', '周天', '先天', '无极'], eff: m => ({ attack: Math.min(2, 0.02 * m), defense: Math.min(2, 0.02 * m), cultivation: Math.min(2, 0.02 * m) }) },
-  { key: 'dual', kind: 'buff', desc: '攻守兼备，进退自如。', stems: ['兼修', '刚柔', '两仪', '太极', '乾坤', '阴阳'], eff: m => ({ attack: Math.min(2, 0.015 * m), defense: Math.min(2, 0.015 * m) }) },
-  { key: 'finesse', kind: 'buff', desc: '灵犀一点，身随意动。', stems: ['灵犀', '神行', '妙法', '入微', '意动', '心随'], eff: m => ({ critical: Math.min(0.4, 0.008 * m), dodge: Math.min(0.4, 0.008 * m) }) },
-  { key: 'harvest', kind: 'buff', desc: '机缘连连，诸运汇聚。', stems: ['机缘', '天缘', '福运', '鸿运', '文运', '武运'], eff: m => ({ cultivation: Math.min(2, 0.02 * m), moneyMult: Math.min(2, 0.02 * m), offlineMult: Math.min(2, 0.02 * m) }) },
-  { key: 'maim', kind: 'buff', desc: '一念破敌，锐不可当。', stems: ['破敌', '诛心', '裂胆', '碎魂', '斩念', '灭志'], eff: m => ({ attack: Math.min(2, 0.02 * m), critical: Math.min(0.3, 0.006 * m) }) }
+  { key: 'atkbuff', kind: 'buff', desc: '加持攻伐，战意昂扬。', stems: ['破军', '裂山', '斩龙', '碎星', '镇岳', '开天'], eff: (m, p, cb) => ({ attack: Math.min(3 * cb, 0.03 * p) }) },
+  { key: 'defbuff', kind: 'buff', desc: '金刚护体，外邪难侵。', stems: ['金刚', '铁壁', '御岳', '磐石', '玄龟', '不动'], eff: (m, p, cb) => ({ defense: Math.min(3 * cb, 0.03 * p) }) },
+  { key: 'critbuff', kind: 'buff', desc: '锐目洞微，招招致命。', stems: ['锐眼', '入微', '点睛', '贯日', '屠龙', '灭世'], eff: (m, p, cb) => ({ critical: Math.min(0.5 * cb, 0.01 * p) }) },
+  { key: 'dodgebuff', kind: 'buff', desc: '幻身无影，难以捉摸。', stems: ['轻身', '飘渺', '凌波', '踏风', '无影', '无形'], eff: (m, p, cb) => ({ dodge: Math.min(0.5 * cb, 0.01 * p) }) },
+  { key: 'cultbuff', kind: 'buff', desc: '悟道加持，修行如飞。', stems: ['顿悟', '灵感', '入神', '坐照', '明心', '慧心'], eff: (m, p, cb) => ({ cultivation: Math.min(3 * cb, 0.03 * p) }) },
+  { key: 'moneybuff', kind: 'buff', desc: '财气附体，灵石如雨。', stems: ['财来', '进宝', '运旺', '纳财', '广进', '如山'], eff: (m, p, cb) => ({ moneyMult: Math.min(3 * cb, 0.03 * p) }) },
+  { key: 'offlbuff', kind: 'buff', desc: '养神安魂，离线亦有得。', stems: ['安神', '长息', '坐忘', '抱元', '大定', '养精'], eff: (m, p, cb) => ({ offlineMult: Math.min(3 * cb, 0.03 * p) }) },
+  { key: 'effectbuff', kind: 'buff', desc: '破邪祛魅，特效频出。', stems: ['破邪', '镇煞', '驱魔', '诛邪', '荡寇', '净世'], eff: (m, p, cb) => ({ effectBoost: Math.min(0.2 * cb, 0.008 * p) }) },
+  { key: 'compoundbuff', kind: 'buff', desc: '混元一气，全面加持。', stems: ['混元', '太一', '紫府', '周天', '先天', '无极'], eff: (m, p, cb) => ({ attack: Math.min(2 * cb, 0.02 * p), defense: Math.min(2 * cb, 0.02 * p), cultivation: Math.min(2 * cb, 0.02 * p) }) },
+  { key: 'dual', kind: 'buff', desc: '攻守兼备，进退自如。', stems: ['兼修', '刚柔', '两仪', '太极', '乾坤', '阴阳'], eff: (m, p, cb) => ({ attack: Math.min(2 * cb, 0.015 * p), defense: Math.min(2 * cb, 0.015 * p) }) },
+  { key: 'finesse', kind: 'buff', desc: '灵犀一点，身随意动。', stems: ['灵犀', '神行', '妙法', '入微', '意动', '心随'], eff: (m, p, cb) => ({ critical: Math.min(0.4 * cb, 0.008 * p), dodge: Math.min(0.4 * cb, 0.008 * p) }) },
+  { key: 'harvest', kind: 'buff', desc: '机缘连连，诸运汇聚。', stems: ['机缘', '天缘', '福运', '鸿运', '文运', '武运'], eff: (m, p, cb) => ({ cultivation: Math.min(2 * cb, 0.02 * p), moneyMult: Math.min(2 * cb, 0.02 * p), offlineMult: Math.min(2 * cb, 0.02 * p) }) },
+  { key: 'maim', kind: 'buff', desc: '一念破敌，锐不可当。', stems: ['破敌', '诛心', '裂胆', '碎魂', '斩念', '灭志'], eff: (m, p, cb) => ({ attack: Math.min(2 * cb, 0.02 * p), critical: Math.min(0.3 * cb, 0.006 * p) }) }
 ]
 
 // 符箓类型表（战斗/防御/控制/修炼/经济/辅助），用于界面筛选
@@ -72,6 +74,8 @@ const GROUP_BY_CAT = {
 
 const buildTalisman = (tier, cat) => {
   const m = tier.mult
+  const p = tier.pct
+  const cb = tierCapBoost(tier.t)
   const stem = cat.stems[(tier.t - 1) % cat.stems.length]
   const recipe = {
     id: `${tier.t}-${cat.key}`,
@@ -92,18 +96,41 @@ const buildTalisman = (tier, cat) => {
     }
   }
   if (cat.kind === 'instant') {
-    recipe.instant = cat.eff(m)
-    recipe.effectText = instantText(cat.type, m)
+    recipe.instant = cat.eff(m, p)
+    recipe.effectText = instantText(cat.type, recipe.instant.value)
   } else {
-    recipe.buff = { ...cat.eff(m), minutes: 20 + tier.t * 4 }
+    // 高品阶符箓三处同时拉开：增益倍率(tierBuff)、增益上限(talismanBuffCap)、持续时间
+    recipe.buff = { ...clampBuff(cat.eff(m, tierBuff(tier.t), cb), tier.t), minutes: talismanMinutes(tier.t) }
     recipe.effectText = buffText(recipe.buff)
   }
   return recipe
 }
 
+// 符箓持续时间：黄符 20 分钟 → 道符 约 172 分钟
+export const talismanMinutes = tier => Math.round(12 + 8 * Math.pow(Math.max(1, tier || 1), 1.25))
+
+// 符箓增益的生效上限按品阶放宽：
+//   攻/防/修/财/离线 1.2 → 3.36（道阶）
+//   暴击/闪避/特效   0.25 → 0.40（道阶，这类本就受 80% 总封顶，只小幅放宽）
+// 这是「高阶符一定比上一个大境界的符更强」的关键——否则五阶以后全部撞同一个天花板。
+export const talismanBuffCap = (key, tier) => {
+  const t = Math.max(1, Math.min(11, Math.round(tier || 1)))
+  const soft = key === 'critical' || key === 'dodge' || key === 'effectBoost'
+  return soft ? 0.25 * (1 + (t - 1) * 0.06) : 1.2 * tierCapBoost(t)
+}
+
+// 把配方算出的增益裁到该品阶上限内，保证「界面显示 = 实际生效」
+const clampBuff = (eff, tier) => {
+  const out = {}
+  Object.keys(eff).forEach(k => {
+    out[k] = k === 'minutes' ? eff[k] : Math.min(eff[k], talismanBuffCap(k, tier))
+  })
+  return out
+}
+
 const instantText = (type, m) => {
-  if (type === 'heal') return `恢复气血 ${Math.round(0.05 * m * 100)}%`
-  if (type === 'cultivation') return `获得修为 ${Math.round(0.05 * m * 100)}%`
+  if (type === 'heal') return `恢复气血 ${Math.round(m * 100)}%`
+  if (type === 'cultivation') return `获得修为 ${Math.round(m * 100)}%`
   return `获得灵石（按境界 & 品阶）`
 }
 
@@ -175,9 +202,9 @@ export const useTalisman = (player, id) => {
     applyInstant(player, r)
   } else {
     const eff = {}
+    // 上限已按品阶写在配方里（见 talismanBuffCap），这里只做兜底裁剪
     Object.keys(r.buff).forEach(k => {
-      // 削弱符箓增益上限：暴击/闪避/特效 0.25，攻防修 1.2，避免中高阶符箓堆到顶
-      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, k === 'critical' || k === 'dodge' || k === 'effectBoost' ? 0.25 : 1.2)
+      if (k !== 'minutes') eff[k] = Math.min(r.buff[k] || 0, talismanBuffCap(k, r.tier))
     })
     addBuff(player, {
       name: r.name,

@@ -1,6 +1,7 @@
 import { gradeMultiplier, gradeNames } from '@/plugins/game'
 import { rollAffixes, sumStatAffixes } from '@/plugins/affix'
 import { pickSetForQuality, pieceName } from './equipSetDb.js'
+import { gearRealmMult } from '@/plugins/craft'
 
 const equips = {
   drawPrize(lv, type, names_a, names_b, names_c, names_d, names_e, names_f, isNewbie, forceQuality) {
@@ -37,11 +38,11 @@ const equips = {
           purple: 5,
           pink: 6.5,
           warning: 8.5,
-          danger: 11,
-          cyan: 14,
-          orange: 18,
-          gold: 23,
-          legendary: 30
+          danger: 12,
+          cyan: 16,
+          orange: 21,
+          gold: 28,
+          legendary: 38
         }
         // 大品级倍率 × 细分级系数：下品~绝品，逐级增强
         const baseMultiplier = qualityMultiplier[quality]
@@ -207,11 +208,13 @@ const equips = {
     ]
     return this.drawPrize(lv, 'sutra', names_a, names_b, names_c, names_d, names_e, names_f, isNewbie, forceQuality)
   },
+  // 基础值 = 随机系数 × 装备等级 × 境界倍率（每上大境界 ×1.09），
+  // 让「下一个大境界的装备」明显强于当前境界，而不是只多几个百分点
   equip_Attack(lv) {
-    return this.getRandomInt(4, 20) * lv
+    return Math.floor(this.getRandomInt(4, 20) * lv * gearRealmMult(lv))
   },
   equip_Health(lv) {
-    return this.getRandomInt(40, 200) * lv
+    return Math.floor(this.getRandomInt(40, 200) * lv * gearRealmMult(lv))
   },
   equip_Criticalhitrate() {
     return this.getRandomFloatInRange(0.01, 0.05)
