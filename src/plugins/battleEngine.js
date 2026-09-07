@@ -297,7 +297,7 @@ export const playerAttack = (st, enemyId, ability) => {
           const ls = applyLifesteal(p, r.dmg, 0.35)
           if (ls > 0) addLog(st, `<span class="ok">你吸取 ${ls} 点气血。</span>`, 'heal')
         } else if (ability.kind === 'control') {
-          const stunChance = Math.min(0.5, (ability.chance ?? 0.1) * 0.6)
+          const stunChance = Math.min(0.3, (ability.chance ?? 0.1) * 0.35)
           if (Math.random() < stunChance) {
             target._stunned = true
             addLog(st, `<span class="warn">${target.name}被${ability.name}所缚，无法行动！</span>`, 'debuff')

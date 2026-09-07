@@ -60,7 +60,7 @@ export const STAT_AFFIXES = [
 ]
 
 // 上限规则：单个玩家所有控制特效的累加触发概率封顶，避免无限控
-export const CONTROL_PROB_CAP = 0.25 // 麻痹+冰冻+眩晕 总触发上限 25%
+export const CONTROL_PROB_CAP = 0.15 // 麻痹+冰冻+眩晕 总触发上限 15%
 export const MAX_POISON_STACKS = 3 // 中毒/灼烧最多叠加 3 跳
 
 // 计算一条特效词条实际的触发概率：按装备品质缩放，并受总控制率上限约束

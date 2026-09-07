@@ -81,12 +81,14 @@
           </div>
           <div class="tag attribute attr-attack">
             攻击: <b>{{ formatNumberToChineseUnit(effStats.attack) }}</b>
+            <span v-if="buffBonus.attack" class="attr-temp"> (临时 +{{ formatNumberToChineseUnit(buffBonus.attack) }})</span>
             <el-icon v-if="player.points > 0" @click="attributePoints('attack')">
               <CirclePlus />
             </el-icon>
           </div>
           <div class="tag attribute attr-defense">
             防御: <b>{{ formatNumberToChineseUnit(effStats.defense) }}</b>
+            <span v-if="buffBonus.defense" class="attr-temp"> (临时 +{{ formatNumberToChineseUnit(buffBonus.defense) }})</span>
             <el-icon v-if="player.points > 0" @click="attributePoints('defense')">
               <CirclePlus />
             </el-icon>
@@ -1336,6 +1338,7 @@
   import { TALENTS, TALENT_QUALITY } from '@/plugins/talent'
   import { manorEnhanceBonus } from '@/plugins/manor'
   import { activeBuffs } from '@/plugins/alchemy'
+  import { buffStats } from '@/plugins/buffs'
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
   import { ensureAptitude, awakenConstitution, awakenCost as awakenCostCalc } from '@/plugins/aptitude'
@@ -1481,6 +1484,16 @@
   const actionGroups = ref([])
   // 当前生效的限时增益
   const activeBuffsList = computed(() => activeBuffs(player.value))
+  // 临时(丹药/符箓)加成，显示在基础属性后的括号
+  const buffBonus = computed(() => {
+    const b = buffStats(player.value)
+    return {
+      attack: Math.round((player.value.attack || 0) * (b.attack || 0)),
+      defense: Math.round((player.value.defense || 0) * (b.defense || 0)),
+      critical: ((player.value.critical || 0) * (b.critical || 0) * 100).toFixed(1) + '%',
+      dodge: ((player.value.dodge || 0) * (b.dodge || 0) * 100).toFixed(1) + '%'
+    }
+  })
   const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
   const setList = computed(() => setSummary(player.value))
   // 资质：根骨 与 体质
@@ -3122,6 +3135,7 @@
 
   .attr-health, .attr-cult { background: rgba(103, 194, 58, 0.13); color: var(--attr-c-health); border-color: var(--attr-c-health); }
   .attr-attack { background: rgba(230, 162, 60, 0.13); color: var(--attr-c-attack); border-color: var(--attr-c-attack); }
+  .attr-temp { font-size: 12px; font-weight: 700; color: #67c23a; }
   .attr-defense, .attr-realm { background: rgba(64, 158, 255, 0.15); color: var(--attr-c-defense); border-color: var(--attr-c-defense); }
   .attr-dodge { background: rgba(0, 176, 176, 0.14); color: var(--attr-c-dodge); border-color: var(--attr-c-dodge); }
   .attr-critical, .attr-collect, .attr-fate { background: rgba(178, 109, 240, 0.13); color: var(--attr-c-critical); border-color: var(--attr-c-critical); }
