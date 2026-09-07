@@ -156,7 +156,7 @@ export const tickActions = player => {
           message = '强化等级已满'
           type = 'info'
         } else if (r.status === 'fail') {
-          message = r.drop ? '强化失败，装备跌回 +0' : '强化失败'
+          message = r.broke ? '强化失败！装备受损，请花【灵石/炼器石】修复' : '强化失败'
           type = 'warning'
         }
       }

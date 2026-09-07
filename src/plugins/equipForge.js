@@ -2,6 +2,7 @@
 import { manorEnhanceBonus } from './manor.js'
 import { sumStatAffixes } from './affix.js'
 import equip from './equip.js'
+import { scoreTierBoost } from './equip.js'
 import { applyPlayerAttribute } from './playerAttr.js'
 import { gradeNames } from './game.js'
 
@@ -16,7 +17,11 @@ export const enhanceCost = (player, item, { protect = false, increase = false } 
 // 炼器成功率
 export const enhanceSuccessRate = (player, item, { increase = false } = {}) => {
   const { successBonus } = manorEnhanceBonus(player)
-  return Math.min(0.99, 1 - (item.strengthen * 0.03 - (increase ? 0.1 : 0)) + successBonus)
+  const s = item.strengthen || 0
+  // 分段陡降：0~10 (95%→52%)；10~30 (50%×0.7^n → +30 ≈0.04%)，+30 上限被钳到 <0.1%
+  let c = s <= 10 ? 0.95 - s * 0.043 : 0.5 * Math.pow(0.7, s - 10)
+  c += successBonus + (increase ? 0.08 : 0)
+  return Math.max(0.0006, Math.min(0.99, c))
 }
 
 // 成功时：词条按 0.2 比例增强，累加到装备并从 player 面板同步
@@ -58,8 +63,72 @@ const applyAffixBoost = (item, player) => {
 
 // 执行一次炼器：roll 为 0..1 判定值，返回结构化结果供 UI 通知
 // 返回：{ status: 'success'|'fail'|'max', gradeUp, gradeName, drop }
+// 强化累计加成系数：0.08/级 + 0.02 递增，后期每级加成极高
+const cumFactor = s => (s <= 0 ? 0 : 0.08 * s + 0.02 * s * (s + 1) / 2)
+const baseStats = item => {
+  const a = sumStatAffixes(item.affixes)
+  return {
+    attack: (item.initial?.attack || 0) + (a.attack || 0),
+    health: (item.initial?.health || 0) + (a.health || 0),
+    defense: (item.initial?.defense || 0) + (a.defense || 0)
+  }
+}
+const enhanceBonusFor = (item, s) => {
+  const f = cumFactor(s)
+  const b = baseStats(item)
+  switch (item.type) {
+    case 'weapon': return { attack: Math.floor(b.attack * f), health: 0, defense: 0 }
+    case 'armor': return { attack: 0, health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
+    default: return { attack: Math.floor(b.attack * f), health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
+  }
+}
+const syncStrengthen = (item, player, s, broken) => {
+  const bonus = broken ? { attack: 0, health: 0, defense: 0 } : enhanceBonusFor(item, s)
+  const dA = bonus.attack - (item.attack || 0)
+  const dH = bonus.health - (item.health || 0)
+  const dD = bonus.defense - (item.defense || 0)
+  applyPlayerAttribute(player, 0, dA, dH, 0, dD)
+  item.attack = bonus.attack
+  item.health = bonus.health
+  item.defense = bonus.defense
+  item.score = equip.calculateEquipmentScore(item.dodge, item.attack, item.health, item.critical, item.defense, scoreTierBoost(item.quality))
+}
+
+export const enhanceRepairCost = (player, item) => ({
+  money: Math.floor((item.level || 1) * 6 + (item.strengthen || 0) * 90),
+  stone: Math.max(1, Math.floor((item.strengthen || 0) / 4))
+})
+
+export const repairEnhancement = (player, item) => {
+  if (!item.broken) return { ok: false, reason: '装备未受损' }
+  const c = enhanceRepairCost(player, item)
+  if ((player.props?.money || 0) < c.money) return { ok: false, reason: '灵石不足' }
+  if ((player.props?.strengtheningStone || 0) < c.stone) return { ok: false, reason: '炼器石不足' }
+  player.props.money = (player.props.money || 0) - c.money
+  player.props.strengtheningStone = (player.props.strengtheningStone || 0) - c.stone
+  item.broken = false
+  syncStrengthen(item, player, item.strengthen || 0, false)
+  return { ok: true, cost: c }
+}
+
 export const resolveEnhancement = (player, item, { protect = false, increase = false, roll = Math.random() } = {}) => {
   if ((item.strengthen || 0) >= 30) return { status: 'max' }
+  const s = item.strengthen || 0
+  if (roll <= enhanceSuccessRate(player, item, { increase })) {
+    item.strengthen = s + 1
+    syncStrengthen(item, player, s + 1, false)
+    const prevGrade = item.grade || 1
+    const newGrade = Math.min(5, 1 + Math.floor(item.strengthen / 5))
+    item.grade = newGrade
+    item.gradeName = gradeNames[newGrade - 1]
+    return { status: 'success', gradeUp: newGrade > prevGrade, gradeName: item.gradeName }
+  }
+  if (s >= 10) {
+    item.broken = true
+    syncStrengthen(item, player, s, true)
+    return { status: 'fail', broke: true }
+  }
+  return { status: 'fail', broke: false }
   // 判定成功
   if (roll <= enhanceSuccessRate(player, item, { increase })) {
     const attack = Math.floor((item.initial?.attack || 0) * 0.2)

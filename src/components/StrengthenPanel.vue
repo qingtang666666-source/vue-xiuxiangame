@@ -17,7 +17,11 @@
         当前价值 {{ formatNumberToChineseUnit(equipSellPrice(info)) }} →
         强化后约 {{ formatNumberToChineseUnit(equipSellPrice({ ...info, strengthen: (info.strengthen || 0) + 1 })) }}
       </div>
-      <div class="click-box">
+      <div v-if="info.broken" class="repair-box">
+        <div class="repair-tip">⚠ 该装备已受损，强化加成暂时失效。花【灵石 / 炼器石】修复即可恢复。</div>
+        <el-button type="warning" @click="repairItem" :disabled="busy">修复装备</el-button>
+      </div>
+      <div v-else class="click-box">
         <el-checkbox v-model="protect" label="强化保护" />
         <el-checkbox v-model="increase" label="强化增幅" />
         <el-popover
@@ -38,7 +42,7 @@
 <script setup>
   import { ref, computed } from 'vue'
   import { useMainStore } from '@/plugins/store'
-  import { enhanceCost, enhanceSuccessRate } from '@/plugins/equipForge'
+  import { enhanceCost, enhanceSuccessRate, repairEnhancement } from '@/plugins/equipForge'
   import { beginAction, actionTask } from '@/plugins/actionTimer'
   import { equipSellPrice } from '@/plugins/market'
   import { gameNotifys, formatNumberToChineseUnit } from '@/plugins/game'
@@ -90,6 +94,14 @@
       })
       .catch(() => {})
   }
+
+  const repairItem = () => {
+    const item = props.info
+    if (!item) return
+    const r = repairEnhancement(store.player, item)
+    if (r.ok) gameNotifys({ title: '修复完成', message: `装备已修复，强化加成恢复！`, position: 'top-left', type: 'success' })
+    else gameNotifys({ title: '修复提示', message: r.reason, position: 'top-left', type: 'warning' })
+  }
 </script>
 
 <style scoped>
@@ -109,4 +121,14 @@
     gap: 12px;
     flex-wrap: wrap;
   }
+  .repair-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(214, 69, 69, 0.12);
+  }
+  .repair-tip { font-size: 13px; color: var(--el-color-danger); }
 </style>

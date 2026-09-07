@@ -71,7 +71,7 @@ const equips = {
           level: lv, // 装备等级
           setId: set ? set.id : null, // 专属套装
           setName,
-          score: this.calculateEquipmentScore(dodge, attack, health, critical, defense), // 装备评分
+          score: this.calculateEquipmentScore(dodge, attack, health, critical, defense, scoreTierBoost(quality)), // 装备评分
           dodge, // 闪避率
           attack: attack + Math.floor(statSum.attack), // 攻击力
           health: health + Math.floor(statSum.health), // 血量
@@ -234,7 +234,7 @@ const equips = {
     return Math.random() * (max - min) + min
   },
   // 计算装备评分
-  calculateEquipmentScore(dodge = 0, attack = 0, health = 0, critical = 0, defense = 0) {
+  calculateEquipmentScore(dodge = 0, attack = 0, health = 0, critical = 0, defense = 0, tierBoost = 0) {
     // 评分权重
     const weights = {
       attack: 1.5, // 攻击
@@ -250,7 +250,10 @@ const equips = {
       (health / 100) * weights.health +
       defense * weights.defense +
       critical * weights.critRate * 100
-    return Math.floor(score)
+    return Math.floor(score * (1 + (tierBoost || 0)))
   }
 }
 export default equips
+
+const TIER_IDX = { info: 0, success: 1, primary: 2, purple: 3, pink: 4, warning: 5, danger: 6, cyan: 7, orange: 8, gold: 9, legendary: 10 }
+export const scoreTierBoost = quality => (TIER_IDX[quality] == null ? 0 : Math.pow(1.75, TIER_IDX[quality]))
