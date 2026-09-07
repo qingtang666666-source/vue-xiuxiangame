@@ -54,6 +54,9 @@ const autoBreakthrough = player => {
   const nextLv = (player.level || 0) + 1
   if (nextLv > 143) return false
   if ((player.cultivation || 0) < (player.maxCultivation || 100)) return false
+  // 每 3 小段 / 大境界的"试炼门槛"(含战力校验)必须手动完成，自动不绕过——
+  // 避免 历战/无尽塔/探索 刷修为后自动挂机直接突破
+  if ((player.level || 0) >= 9 && ((player.level || 0) + 1) % 3 === 1) return false
   if (isTribulationLevel(nextLv) && !(player.passedTribulation || []).includes(nextLv)) return false
   const prevStage = realmStageOf(player.level || 1)
   const targetStage = realmStageOf(nextLv)

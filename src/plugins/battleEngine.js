@@ -498,7 +498,7 @@ const awardVictory = st => {
   if (st.award === false) {
     // 仅计算奖励用于展示，不发放（探索/BOSS 有自己的奖励结算）
     st.reward = { exp: 0, money: 0, dan: 0, herb: 0, stone: 0, enemies: st.enemies.length }
-    st.reward.exp = st.enemies.reduce((s, e) => s + Math.floor(e.level * e.level * 3), 0)
+    st.reward.exp = st.enemies.reduce((s, e) => s + Math.floor(e.level * e.level * 1), 0)
     st.reward.money = st.enemies.reduce((s, e) => s + Math.floor(e.maxHp * 0.6), 0)
     st.reward.dan = st.enemies.reduce((s, e) => s + Math.max(1, Math.floor(e.level / 30)), 0)
     st.reward.herb = st.enemies.reduce((s, e) => s + Math.max(1, Math.floor(e.level / 15)), 0)

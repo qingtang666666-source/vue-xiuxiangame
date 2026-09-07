@@ -81,6 +81,7 @@
   import TurnCombat from '@/components/TurnCombat.vue'
   import { aggregatePlayerEffects, resolveHitEffects, applyDotDamage, applyLifesteal, isStunned, clearStun } from '@/plugins/effectCombat'
   import { effectivePlayerStats, expMult, effectiveBackpackCap } from '@/plugins/setBonus'
+  import { playerPowerScore, breakthroughPowerNeed } from '@/plugins/breakthroughGate'
   import { methodStats } from '@/plugins/technique'
   import { resolvePlayerFoeRound } from '@/plugins/battle'
   import { realmSuppressionMult, realmSuppressionPct, realmSuppressionLabel } from '@/plugins/game'
@@ -346,6 +347,9 @@
           // 清空已击杀敌人
           player.value.taskNum = 0
           // 增加境界
+          // 探索/寻宝不再绕过突破门槛：试炼门槛与战力不满足则提示去修炼
+          if (player.value.level >= 9 && (player.value.level + 1) % 3 === 1) { texts.value.push('境界门槛需前往「修炼」完成突破试炼'); return }
+          if (playerPowerScore(player.value) < breakthroughPowerNeed(player.value.level)) { texts.value.push('战力不足，无法在此突破，请前往修炼提升战力'); return }
           player.value.level++
           // 增加点数
           player.value.points += 3

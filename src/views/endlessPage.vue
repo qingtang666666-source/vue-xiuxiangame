@@ -318,7 +318,7 @@
   // 处理怪物被击败的情况
   const handleMonsterDefeat = () => {
     // 修为
-    const expGain = Math.floor(monster.value.level * 100 * expMult(player.value))
+    const expGain = Math.floor(monster.value.level * 30 * expMult(player.value))
     // 灵石
     const moneyGain = Math.floor(monster.value.level * 2)
     // 增加修为
@@ -455,7 +455,7 @@
   // 扫荡战斗
   const sweepFight = () => {
     // 根据当前层数计算获得经验值
-    const expGain = Math.floor(currentFloor.value * 10 * expMult(player.value))
+    const expGain = Math.floor(currentFloor.value * 3 * expMult(player.value))
     // 根据当前层数计算获得灵石
     const moneyGain = Math.floor(currentFloor.value * 10)
     // 增加玩家修为
