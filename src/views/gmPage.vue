@@ -89,7 +89,7 @@
 
       <el-collapse-item title="折腾 / 备份" name="misc">
         <div class="row"><el-button @click="clearBag">清空背包</el-button><el-button type="danger" @click="clearAll">清空全部(重开)</el-button></div>
-        <div class="row"><el-button @click="exportSave">导出存档(JSON)</el-button></div>
+        <div class="row"><el-button @click="exportSave">导出存档(加密)</el-button></div>
       </el-collapse-item>
 
       <el-collapse-item title="更多功能" name="more">
@@ -117,6 +117,7 @@
 <script setup>
   import { ref, reactive } from 'vue'
   import { useMainStore } from '@/plugins/store'
+  import { flushPersistence, wipeSave, exportSaveText } from '@/plugins/persistence'
   import { formatNumberToChineseUnit, gameNotifys, computeMaxCultivation, gradeNames, levelNames } from '@/plugins/game'
   import { drawTalentForPlayer } from '@/plugins/talent'
   import { RECIPES } from '@/plugins/alchemy'
@@ -272,8 +273,21 @@
     note('游商已进一批新货（回首页冒险→游商查看）')
   }
   const clearBag = () => { player.value.inventory = []; player.value.equipment = { sutra: {}, armor: {}, weapon: {}, accessory: {} }; note('背包已清空') }
-  const clearAll = () => { localStorage.removeItem('vuex'); location.reload(1) }
-  const exportSave = () => { const blob = new Blob([JSON.stringify(player.value)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'xiuxian-save.json'; a.click(); URL.revokeObjectURL(url) }
+  const clearAll = () => { wipeSave(store); setTimeout(() => location.reload(), 300) }
+  const exportSave = () => {
+    try {
+      flushPersistence(store)
+    } catch (e) {
+      /* ignore */
+    }
+    const blob = new Blob([exportSaveText(store.boss, player.value)], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `xiuxian-save-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 </script>
 
 <style scoped>

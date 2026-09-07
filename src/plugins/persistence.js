@@ -4,10 +4,25 @@
 // 而是：变更则打脏标记 → 800ms 空闲后保存；持续变更则每 5s 强制保存一次；
 // 切后台/关页面时立即落盘，避免丢档。
 
-import crypto from './crypto.js'
 import { ElNotification } from 'element-plus'
+import { seal, open, writeVault, readVault, backupSave, wipeVault, restoreBackup, listBackups, dropBackups, exportSaveText, importSaveText, auditPlayer, SAVE_KEY } from './saveVault.js'
 
-export const SAVE_KEY = 'vuex'
+export const SAVE_VERSION = 2
+export {
+  seal,
+  open,
+  readVault,
+  backupSave,
+  wipeVault,
+  restoreBackup,
+  listBackups,
+  dropBackups,
+  exportSaveText,
+  importSaveText,
+  auditPlayer,
+  writeVault,
+  SAVE_KEY
+}
 const SAVE_DELAY = 800
 const MAX_WAIT = 5000
 // 序列化后接近浏览器单源存储上限(约 5MB)时提前预警，避免满量后静默丢档
@@ -18,9 +33,11 @@ let maxTimer = null
 let dirty = false
 let quotaWarned = false
 let lastSaveWarn = 0
+// 删档后置为 true：阻止卸载钩子/订阅回调把“已删除的存档”又写回去（旧版删档后会复活）
+let dead = false
 
-const encryptState = store =>
-  JSON.stringify({ boss: crypto.encryption(store.boss), player: crypto.encryption(store.player) })
+// 存档体：签名封装（加密 + HMAC + 内嵌摘要），见 saveVault.js
+const encryptState = store => writeVault(store.boss, store.player)
 
 const warnSaveIssue = nearQuota => {
   const now = Date.now()
@@ -38,6 +55,7 @@ const warnSaveIssue = nearQuota => {
 }
 
 const persistNow = store => {
+  if (dead) return
   try {
     let raw
     try {
@@ -49,7 +67,6 @@ const persistNow = store => {
       quotaWarned = true
       warnSaveIssue(true)
     }
-    localStorage.setItem(SAVE_KEY, raw)
   } catch (e) {
     // 容量超限等异常不阻断游戏，但给出提示避免玩家误以为已保存
     warnSaveIssue(false)
@@ -67,6 +84,7 @@ const persistNow = store => {
 
 // 立即落盘（切后台 / 关页面前调用）
 export const flushPersistence = store => {
+  if (dead) return
   if (saveTimer) {
     clearTimeout(saveTimer)
     saveTimer = null
@@ -79,6 +97,7 @@ export const flushPersistence = store => {
 }
 
 const scheduleSave = store => {
+  if (dead) return
   dirty = true
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
@@ -100,21 +119,63 @@ const scheduleSave = store => {
 }
 
 const loadState = () => {
+  let data
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
-    if (!raw) return null
-    const state = JSON.parse(raw)
-    const boss = crypto.decryption(state.boss)
-    const player = crypto.decryption(state.player)
-    // 老存档背包容量兜底到 1000（避免改默认值后老玩家仍是 50）
-    if (player && typeof player === 'object') {
-      player.backpackCapacity = Math.max(player.backpackCapacity || 0, 1000)
-    }
-    return { boss, player: migratePlayer(player) }
+    data = readVault()
   } catch (e) {
+    // 验签失败：不覆盖原档（readVault 已把它另存为 corrupt 副本 + 自动备份），提示后可回滚
+    const msg = String((e && e.message) || e)
+    console.warn('[persistence] 存档校验未通过', msg)
+    try {
+      backupSave('corrupt')
+      ElNotification.closeAll()
+      ElNotification({
+        title: '存档校验未通过',
+        message: '本地存档疑似被修改或已损坏，本次已按新档启动。原文件保留在浏览器里，可在“游戏设置 → 存档备份”回滚上一个自动备份。',
+        type: 'error',
+        duration: 12000
+      })
+    } catch (err) {
+      /* 通知失败不影响启动 */
+    }
     return null
   }
+  if (!data) return null
+  const player = data.player
+  // 老存档背包容量兜底到 1000（避免改默认值后老玩家仍是 50）
+  if (player && typeof player === 'object') {
+    player.backpackCapacity = Math.max(player.backpackCapacity || 0, 1000)
+  }
+  return { boss: data.boss, player: migratePlayer(player) }
 }
+
+// 停止一切落盘（导入/删档前调用，防止自动保存或卸载钩子把旧状态倒灌回去）
+export const stopPersistence = () => {
+  dead = true
+  dirty = false
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  if (maxTimer) {
+    clearTimeout(maxTimer)
+    maxTimer = null
+  }
+}
+
+// 彻底停表 + 删档：先停表，再留一份可回滚备份，最后清 key（调用方负责刷新）
+export const wipeSave = store => {
+  stopPersistence()
+  try {
+    if (store && store.player) backupSave('last')
+  } catch (e) {
+    /* 备份失败也要继续删 */
+  }
+  wipeVault()
+}
+
+// 当前是否有未落盘的改动（导出前先 flush 用）
+export const isDirty = () => dirty
 
 // —— 数值减半迁移（旧档 version<0.9）：仅战斗属性（攻/防/气血/评分）减半，暴闪等概率不动 ——
 const halve = v => Math.floor((v || 0) / 2)

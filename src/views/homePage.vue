@@ -1020,17 +1020,31 @@
     <el-dialog v-model="show" :lock-scroll="false" title="游戏设置" width="350px">
       <div class="dialog-footer">
         <el-divider>存档相关</el-divider>
-        <el-button type="info" class="dialog-footer-button" @click="exportData">导出存档</el-button>
+        <div class="save-hint">存档已加密并带完整性校验（改一个数字就验签失败），导入前会自动备份当前进度。</div>
+        <el-button type="info" class="dialog-footer-button" @click="exportData">导出存档（加密）</el-button>
         <el-upload
           action="#"
           class="dialog-upload"
           :http-request="importData"
           :show-file-list="false"
-          accept="application/json"
+          accept=".json,application/json,text/plain"
         >
           <el-button type="warning" class="dialog-footer-button">导入存档</el-button>
         </el-upload>
+        <el-button type="primary" plain class="dialog-footer-button" @click="backupNow">立即备份</el-button>
         <el-button type="danger" class="dialog-footer-button" @click="deleteData">删除存档</el-button>
+        <div class="bk-box">
+          <div class="bk-title">
+            <span>存档备份（{{ saveBackups.length }}）</span>
+            <el-button size="small" text @click="refreshBackups">刷新</el-button>
+          </div>
+          <div class="bk-row" v-for="b in saveBackups" :key="b.key">
+            <span class="bk-name">{{ b.label }}</span>
+            <el-button size="small" text type="primary" @click="doRestore(b)">回滚</el-button>
+          </div>
+          <div class="bk-empty" v-if="!saveBackups.length">暂无备份 · 导出/导入/删档时会自动留档（最多 5 份）</div>
+          <el-button size="small" plain v-if="saveBackups.length" @click="doDropBackups">清空备份</el-button>
+        </div>
         <el-button type="danger" class="dialog-footer-button" @click="restartGame">进入下一世轮回</el-button>
         <div class="dialog-footer-button mode-row">
           轮回模式：重开新世（清空本世，保留永久传承）
@@ -1359,6 +1373,18 @@
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
   import { setRewardStatus, setRewardSummary } from '@/plugins/setReward'
+  import {
+    flushPersistence,
+    stopPersistence,
+    wipeSave,
+    backupSave,
+    listBackups,
+    restoreBackup,
+    dropBackups,
+    exportSaveText,
+    importSaveText,
+    writeVault
+  } from '@/plugins/persistence'
   import { ensureAptitude, awakenConstitution, awakenCost as awakenCostCalc } from '@/plugins/aptitude'
   import { sumStatAffixes } from '@/plugins/affix'
   import { gameDate, playerLifespan } from '@/plugins/time'
@@ -1962,19 +1988,19 @@
     gameNotifys({ title: '提示', message: '刷新成功' })
   }
 
-  // 删档
+  // 删档：先停表再删，避免刷新前自动保存把档写回来（旧版“删了又活过来”的根因）
   const deleteData = () => {
-    ElMessageBox.confirm('你确定要删除存档吗?建议数据出问题的时候再删除', '数据删除提示', {
+    ElMessageBox.confirm('将删除本地存档并回到新档状态。删除前会自动留一份可回滚备份，可在「存档备份」里恢复。确定继续？', '数据删除提示', {
       center: true,
       cancelButtonText: '我点错了',
-      confirmButtonText: '确定以及肯定'
+      confirmButtonText: '确定以及肯定',
+      type: 'warning'
     })
       .then(() => {
-        gameNotifys({ title: '提示', message: '存档删除成功' })
-        // 清空存档
-        localStorage.removeItem('vuex')
-        // 刷新页面
-        location.reload(1)
+        wipeSave(store)
+        refreshBackups()
+        gameNotifys({ title: '存档已删除', message: '如需找回：游戏设置 → 存档备份 → 回滚', type: 'success' })
+        setTimeout(() => location.reload(), 600)
       })
       .catch(() => {})
   }
@@ -2062,42 +2088,101 @@
     }
   }
 
-  // 电脑导入存档
+  // 导入存档：先验签 + 数值体检，通过才落盘；导入前自动备份当前档，失败绝不覆盖进度
   const importData = data => {
     const file = data.file
     const reader = new FileReader()
     reader.onload = e => {
-      try {
-        // 导入存档
-        localStorage.setItem('vuex', e.target.result)
-        // 刷新页面
-        location.reload(1)
-      } catch (err) {
-        err.value = err
-        errBox.value = true
-        gameNotifys({
-          title: '脚本导入失败',
-          message: '复制错误信息到QQ群内'
-        })
+      const res = importSaveText(e.target.result)
+      if (!res.ok) {
+        gameNotifys({ title: '导入失败', message: `${res.reason || '存档无效'}（当前进度未被改动）`, type: 'error', duration: 9000 })
+        return
       }
+      stopPersistence()
+      backupSave('before-import')
+      writeVault(res.boss || store.boss, res.player)
+      gameNotifys({ title: '导入成功', message: `${res.legacy ? '已读取旧版存档并升级格式，' : ''}进度已载入，原档已备份，即将刷新`, type: 'success' })
+      setTimeout(() => location.reload(), 900)
     }
+    reader.onerror = () => gameNotifys({ title: '导入失败', message: '文件读取失败，请确认存档文件完整', type: 'error' })
     reader.readAsText(file)
   }
 
-  // 导出存档
-  const exportData = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const hours = String(today.getHours()).padStart(2, '0')
-    const minutes = String(today.getMinutes()).padStart(2, '0')
-    const seconds = String(today.getSeconds()).padStart(2, '0')
-    const blob = new Blob([localStorage.getItem('vuex')], {
-      type: 'application/json;charset=utf-8'
+  const stampNow = () => {
+    const t = new Date()
+    const p = n => String(n).padStart(2, '0')
+    return `${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}${p(t.getHours())}${p(t.getMinutes())}${p(t.getSeconds())}`
+  }
+
+  // 存档备份（导出/导入/删档时自动生成，可回滚）
+  const saveBackups = ref([])
+  const refreshBackups = () => {
+    saveBackups.value = listBackups()
+      .map(b => {
+        const rest = b.key.replace(/^vuex\.bak-/, '')
+        const tag = rest.replace(/-\d{13}$/, '')
+        const time = b.at ? new Date(b.at).toLocaleString('zh-CN', { hour12: false }) : ''
+        return { key: b.key, label: `${tag} · ${time}` }
+      })
+      .reverse()
+  }
+  const backupNow = () => {
+    try {
+      flushPersistence(store)
+    } catch (e) {
+      /* 落盘失败也照样备份当前可读物 */
+    }
+    const key = backupSave('manual')
+    refreshBackups()
+    gameNotifys(
+      key
+        ? { title: '已备份', message: '当前进度已存入备份列表', type: 'success' }
+        : { title: '备份失败', message: '浏览器存储空间不足，请先清空旧备份', type: 'error' }
+    )
+  }
+  const doRestore = b => {
+    ElMessageBox.confirm(`回滚到「${b.label}」？当前进度会先自动备份一份。`, '回滚存档', {
+      confirmButtonText: '回滚',
+      cancelButtonText: '取消',
+      type: 'warning'
     })
-    const name = `我的文字修仙全靠刷-${year}${month}${day}${hours}${minutes}${seconds}-${ver.value}.json`
+      .then(() => {
+        const r = restoreBackup(b.key)
+        if (!r.ok) {
+          gameNotifys({ title: '回滚失败', message: r.reason, type: 'error' })
+          return
+        }
+        stopPersistence()
+        gameNotifys({ title: '已回滚', message: '即将以备份档进入', type: 'success' })
+        setTimeout(() => location.reload(), 700)
+      })
+      .catch(() => {})
+  }
+  const doDropBackups = () => {
+    ElMessageBox.confirm('将删除全部备份副本（不影响当前存档），确定？', '清空备份', { type: 'warning', confirmButtonText: '清空', cancelButtonText: '取消' })
+      .then(() => {
+        dropBackups()
+        refreshBackups()
+        gameNotifys({ title: '已清空备份', message: '备份副本已全部删除', type: 'success' })
+      })
+      .catch(() => {})
+  }
+  watch(show, v => {
+    if (v) refreshBackups()
+  })
+
+  // 导出存档：先把内存里的最新进度落盘（旧版直接读 localStorage，会导出到“上一次自动保存”的旧档）
+  const exportData = () => {
+    try {
+      flushPersistence(store)
+    } catch (e) {
+      /* 落盘失败则直接按当前状态导出 */
+    }
+    const text = exportSaveText(store.boss, player.value)
+    const blob = new Blob([text], { type: 'application/json;charset=utf-8' })
+    const name = `我的文字修仙全靠刷-${stampNow()}-${ver.value}.json`
     saveAs(blob, name)
+    gameNotifys({ title: '导出成功', message: '存档已加密导出，可用于换设备/换浏览器继续玩', type: 'success' })
   }
 
   // 批量分解装备弹窗
@@ -3213,6 +3298,44 @@
     font-size: 12px;
   }
 
+  .save-hint {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 8px;
+  }
+  .bk-box {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+  }
+  .bk-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .bk-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    padding: 2px 0;
+    border-bottom: 1px dashed var(--el-border-color-lighter);
+  }
+  .bk-name {
+    color: var(--el-text-color-secondary);
+    word-break: break-all;
+  }
+  .bk-empty {
+    font-size: 12px;
+    color: var(--el-text-color-placeholder);
+  }
   .set-collect {
     margin: 8px 0 0;
     padding: 6px 10px;
