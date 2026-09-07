@@ -41,6 +41,29 @@
         </el-switch>
         <button v-if="!isHome" class="back-btn" @click="router.push('/home')">← 返回</button>
       </div>
+    <!-- 手机端底部游戏化导航：固定 Dock，免滚动找功能 -->
+    <nav class="m-dock">
+      <button class="m-dock-item" :class="{ on: isHome }" @click="go('/home')"><span class="m-ico">🏠</span><span>首页</span></button>
+      <button class="m-dock-item" :class="{ on: route.path === '/cultivate' }" @click="go('/cultivate')"><span class="m-ico">🌀</span><span>修炼</span></button>
+      <button class="m-dock-item" :class="{ on: route.path === '/battle' }" @click="go('/battle')"><span class="m-ico">⚔️</span><span>历战</span></button>
+      <button class="m-dock-item" :class="{ on: route.path === '/manor' }" @click="go('/manor')"><span class="m-ico">🏡</span><span>洞府</span></button>
+      <button class="m-dock-item" :class="{ on: mMenu }" @click="mMenu = true"><span class="m-ico">🗂️</span><span>更多</span><i v-if="questBadge || travNew" class="m-dot"></i></button>
+    </nav>
+
+    <!-- 手机端全功能面板：点开即达，不靠滚动找入口 -->
+    <transition name="m-fade">
+      <div v-if="mMenu" class="m-mask" @click.self="mMenu = false">
+        <div class="m-sheet">
+          <div class="m-sheet-head"><span>全部功能</span><button class="m-close" @click="mMenu = false">✕</button></div>
+          <div class="m-grid">
+            <button class="m-cell" v-for="m in mobileModules" :key="m.name" @click="m.action ? m.action() : go(m.route)">
+              <span class="m-cell-icon">{{ m.icon }}</span>
+              <span class="m-cell-name">{{ m.name }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
     </div>
     <div class="wm_bg_1" v-if="!player.dark" />
     <div class="wm_bg_2" v-if="!player.dark" />
@@ -118,6 +141,32 @@
   const router = useRouter()
   const key = computed(() => route.path)
   const isHome = computed(() => ['/', '/home'].includes(route.path))
+  const mMenu = ref(false)
+  const go = path => { mMenu.value = false; router.push(path) }
+  const mobileModules = [
+    { icon: '📜', name: '任务', route: '/quest' },
+    { icon: '🎒', name: '背包', route: '/backpack' },
+    { icon: '📖', name: '功法', route: '/home' },
+    { icon: '🏯', name: '宗门', route: '/sect' },
+    { icon: '🗺️', name: '大地图', route: '/worldmap' },
+    { icon: '🚶', name: '探索', route: '/explore' },
+    { icon: '🌌', name: '秘境', route: '/realm' },
+    { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
+    { icon: '☠️', name: '世界Boss', route: '/boss' },
+    { icon: '🏝️', name: '洞天', route: '/map' },
+    { icon: '💊', name: '炼丹', route: '/alchemy' },
+    { icon: '🔨', name: '炼器', route: '/forge' },
+    { icon: '📜', name: '制符', route: '/talisman' },
+    { icon: '⛩️', name: '阵法', route: '/formation' },
+    { icon: '👥', name: '仙盟', route: '/guild' },
+    { icon: '👤', name: 'NPC', route: '/npc' },
+    { icon: '🧧', name: '坊市', route: '/market' },
+    { icon: '🎲', name: '休闲', route: '/game' },
+    { icon: '🗿', name: '游商', action: () => openTrav() },
+    { icon: '✨', name: '飞升', route: '/ascension' },
+    { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+  ]
+  watch(() => route.path, () => { mMenu.value = false })
   const questBadge = computed(() => {
     const f = fixedQuests(player.value).filter(x => x.done && !x.claimed).length
     const s = selectableQuests(player.value).filter(x => x.selected && x.progress >= x.target).length
@@ -487,16 +536,16 @@
   @media only screen and (max-width: 768px) {
     .top-right {
       top: 6px;
-      left: 6px;
-      right: 6px;
+      right: 10px;
+      left: auto;
+      width: auto;
       gap: 5px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
     }
-    .nav-btn {
-      padding: 5px 8px;
-      font-size: 12px;
-      flex: none;
+    .top-right .nav-btn {
+      display: none;
+    }
+    .top-right .back-btn {
+      display: none;
     }
   }
 
@@ -584,11 +633,143 @@
     background-color: #141414;
   }
 
+  .m-dock {
+    display: none;
+  }
+
+  .m-fade-enter-active,
+  .m-fade-leave-active {
+    transition: opacity 0.2s ease;
+  }
+  .m-fade-enter-from,
+  .m-fade-leave-to {
+    opacity: 0;
+  }
+
   @media only screen and (max-width: 768px) {
     .game-container {
-      min-height: 574px;
-      min-width: 356px;
-      padding: 80px 8px 24px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-width: 0;
+      padding: 56px 8px calc(78px + env(safe-area-inset-bottom, 0px));
+    }
+    .credit {
+      display: none;
+    }
+
+    .m-dock {
+      display: flex;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      height: calc(58px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(255, 255, 255, 0.94);
+      border-top: 1px solid var(--el-border-color-lighter);
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .dark .m-dock {
+      background: rgba(20, 20, 20, 0.94);
+    }
+    .m-dock-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: none;
+      background: none;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      padding: 0;
+    }
+    .m-dock-item.on {
+      color: var(--el-color-primary);
+      font-weight: bold;
+    }
+    .m-dock-item .m-ico {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .m-dock-item .m-dot {
+      position: absolute;
+      top: 5px;
+      right: calc(50% - 18px);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f56c6c;
+    }
+
+    .m-mask {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(15, 20, 25, 0.45);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .m-sheet {
+      width: 100%;
+      max-width: 600px;
+      background: var(--el-bg-color);
+      border-radius: 18px 18px 0 0;
+      padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+      max-height: 88dvh;
+      overflow: auto;
+    }
+    .m-sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 10px;
+      padding: 0 4px;
+      color: var(--el-text-color-primary);
+    }
+    .m-close {
+      border: none;
+      background: none;
+      font-size: 18px;
+      color: var(--el-text-color-secondary);
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .m-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .m-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 2px 10px;
+      background: var(--el-fill-color-light);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .m-cell:active {
+      transform: scale(0.96);
+      background: var(--el-fill-color);
+    }
+    .m-cell-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .m-cell-name {
+      font-size: 12px;
+      color: var(--el-text-color-primary);
     }
   }
 </style>
