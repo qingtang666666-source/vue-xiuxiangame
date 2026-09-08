@@ -2,6 +2,8 @@
 
 > 本文件用于跨会话接续。若重新开始开发，先读这里，可快速恢复上下文。
 
+> **当前发布状态（2026-09-08 收尾）：** 玩法功能已齐（见下方第 1~54 条）。线上仅走 GitHub Actions（`gh-pages.yml` → `dist` → 默认 Pages 地址 `qingtang666666-source.github.io/vue-xiuxiangame/`）；已移除旧的自定义域名 `xiuxian.wenzi.games` 与遗留 `docs/`、`dev-dist/` 构建产物。
+
 ## 项目信息
 - 位置：`D:\MirServer\project-candidates\vue-xiuxiangame`
 - 技术栈：Vue 3 + Pinia + Element Plus + Vite + vite-plugin-pwa（混淆开启）
