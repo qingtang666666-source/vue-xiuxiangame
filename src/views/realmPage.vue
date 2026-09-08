@@ -183,5 +183,5 @@
   .tinfo { display: flex; flex-direction: column; flex: 1; }
   .tdesc { font-size: 12px; color: var(--el-text-color-secondary); }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .realm-grid { grid-template-columns: 1fr; } }
+  @media only screen and (max-width: 768px) { .realm-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 </style>

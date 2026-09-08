@@ -402,4 +402,30 @@ html.dark .el-progress-bar__inner::after {
   .res-tag {
     font-size: 12px !important;
   }
+
+  /* 页签不再左右翻页：隐藏箭头，所有页签一行自适应均分 */
+  .el-tabs__nav-prev,
+  .el-tabs__nav-next {
+    display: none !important;
+  }
+
+  .el-tabs__nav-scroll {
+    overflow: hidden !important;
+  }
+
+  .el-tabs__nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    white-space: normal !important;
+  }
+
+  .el-tabs__item {
+    flex: 0 0 auto;
+    padding: 0 8px !important;
+    white-space: nowrap;
+  }
+
+  .el-tabs--border-card .el-tabs__item {
+    flex: 0 0 auto !important;
+  }
 }

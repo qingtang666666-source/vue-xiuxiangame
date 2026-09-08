@@ -347,5 +347,5 @@
   .dsel { width: 200px; }
   .ex-name { font-size: 13px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .exchange-grid { grid-template-columns: 1fr; } }
+  @media only screen and (max-width: 768px) { .exchange-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

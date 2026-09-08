@@ -374,7 +374,7 @@
   .shop-name { font-size: 14px; }
   .stock { font-size: 12px; color: var(--el-text-color-secondary); margin-left: 6px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  @media only screen and (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
   .scout-cd {
     font-size: 11px;
     color: var(--el-text-color-secondary);
