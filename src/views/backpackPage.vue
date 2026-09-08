@@ -34,7 +34,7 @@
           <el-button size="small" type="warning" plain :disabled="!player.inventory.length" @click="batchSellEquip">批量出售全部</el-button>
         </div>
         <div class="grid">
-          <div class="cell" v-for="it in player.inventory" :key="it.id">
+          <div class="cell" v-for="it in invItems" :key="it.id">
             <el-tooltip :content="eqTip(it)" placement="top" :hide-after="0">
               <tag :type="it.quality" @click="showItem(it)">{{ it.name }}</tag>
             </el-tooltip>
@@ -50,10 +50,11 @@
           </div>
           <el-empty v-if="!player.inventory.length" description="背包空空如也" :image-size="60" />
         </div>
+        <PageNav :page="invPage" :total="invTotal" @change="setInvPage" />
       </el-tab-pane>
       <el-tab-pane label="道具" name="prop">
         <div class="grid">
-          <div class="cell" v-for="p in props" :key="p.key">
+          <div class="cell" v-for="p in propItems" :key="p.key">
             <el-tooltip :content="propTip(p)" placement="top" :hide-after="0">
               <div class="pname clickable" @click="showProp(p)">{{ propItemNames[p.key]?.name || p.key }}</div>
             </el-tooltip>
@@ -65,10 +66,11 @@
           </div>
           <el-empty v-if="!props.length" description="暂无道具" :image-size="60" />
         </div>
+        <PageNav :page="propPage" :total="propTotal" @change="setPropPage" />
       </el-tab-pane>
       <el-tab-pane label="丹药" name="pill">
         <div class="grid">
-          <div class="cell" v-for="p in pillList" :key="p.id">
+          <div class="cell" v-for="p in pillItems" :key="p.id">
             <el-tooltip :content="pillTip(p)" placement="top" :hide-after="0">
               <tag :type="p.recipe.quality" @click="showPillInfo(p)">{{ p.recipe.name }}</tag>
             </el-tooltip>
@@ -82,10 +84,11 @@
           </div>
           <el-empty v-if="!pillList.length" description="暂无丹药" :image-size="60" />
         </div>
+        <PageNav :page="pillPage" :total="pillTotal" @change="setPillPage" />
       </el-tab-pane>
       <el-tab-pane label="符箓" name="tal">
         <div class="grid">
-          <div class="cell" v-for="t in talList" :key="t.id">
+          <div class="cell" v-for="t in talItems" :key="t.id">
             <el-tooltip :content="talTip(t)" placement="top" :hide-after="0">
               <tag :type="t.recipe.quality" @click="showTalInfo(t)">{{ t.recipe.name }}</tag>
             </el-tooltip>
@@ -99,24 +102,27 @@
           </div>
           <el-empty v-if="!talList.length" description="暂无符箓" :image-size="60" />
         </div>
+        <PageNav :page="talPage" :total="talTotal" @change="setTalPage" />
       </el-tab-pane>
       <el-tab-pane label="灵宠" name="pet">
         <div class="grid">
-          <div class="cell" v-for="(p, i) in player.pets" :key="i">
+          <div class="cell" v-for="(p, i) in petItems" :key="i">
             <div class="pname">{{ p.name }}</div>
             <div class="sub">{{ levelNames(p.level) }}</div>
           </div>
           <el-empty v-if="!player.pets.length" description="暂无灵宠" :image-size="60" />
         </div>
+        <PageNav :page="petPage" :total="petTotal" @change="setPetPage" />
       </el-tab-pane>
       <el-tab-pane label="道侣" name="wife">
         <div class="grid">
-          <div class="cell" v-for="(w, i) in player.wifes" :key="i">
+          <div class="cell" v-for="(w, i) in wifeItems" :key="i">
             <div class="pname">{{ w.name }}</div>
             <div class="sub">{{ levelNames(w.level) }}</div>
           </div>
           <el-empty v-if="!player.wifes.length" description="暂无道侣" :image-size="60" />
         </div>
+        <PageNav :page="wifePage" :total="wifeTotal" @change="setWifePage" />
       </el-tab-pane>
     </el-tabs>
 
@@ -142,6 +148,8 @@
   import MoneyBar from '@/components/MoneyBar.vue'
   import { setById } from '@/plugins/equipSetDb'
   import { rerollCost, enchantCost, canAfford, payCost, rerollItemAffixes, enchantItemAffix, affixCap } from '@/plugins/affixForge'
+  import { usePager, useViewportPageSize } from '@/plugins/pager'
+  import PageNav from '@/components/PageNav.vue'
 
   const store = useMainStore()
   const router = useRouter()
@@ -393,6 +401,16 @@
 
   const pillList = computed(() => (player.value.pills || []).map(p => ({ ...p, recipe: recipeById(p.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
   const talList = computed(() => (player.value.talismans || []).map(x => ({ ...x, recipe: talismanById(x.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
+  const invList = computed(() => player.value.inventory || [])
+  const petList = computed(() => player.value.pets || [])
+  const wifeList = computed(() => player.value.wifes || [])
+  const bpSize = useViewportPageSize(100, 4)
+  const { page: invPage, total: invTotal, pageItems: invItems, setPage: setInvPage } = usePager(invList, bpSize)
+  const { page: propPage, total: propTotal, pageItems: propItems, setPage: setPropPage } = usePager(props, bpSize)
+  const { page: pillPage, total: pillTotal, pageItems: pillItems, setPage: setPillPage } = usePager(pillList, bpSize)
+  const { page: talPage, total: talTotal, pageItems: talItems, setPage: setTalPage } = usePager(talList, bpSize)
+  const { page: petPage, total: petTotal, pageItems: petItems, setPage: setPetPage } = usePager(petList, bpSize)
+  const { page: wifePage, total: wifeTotal, pageItems: wifeItems, setPage: setWifePage } = usePager(wifeList, bpSize)
   const takePill = p => {
     const r = usePillFn(player.value, p.id)
     if (r.ok) gameNotifys({ title: '服用', message: `服下【${p.recipe.name}】${r.reason || ''}`, type: 'success' })
@@ -499,4 +517,20 @@
   .pname { font-weight: bold; }
   .clickable { cursor: pointer; color: var(--el-color-primary); }
   .hint { margin-top: 14px; font-size: 12px; color: var(--el-text-color-secondary); }
+
+  @media only screen and (max-width: 768px) {
+    .back { height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 0 2px; }
+    .page-header { flex: 0 0 auto; margin-bottom: 6px; }
+    .title { font-size: 17px; margin-bottom: 4px; }
+    .resources { gap: 4px; margin-bottom: 4px; }
+    .eq-section, .hint { display: none; }
+    .back :deep(.el-tabs) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .back :deep(.el-tabs__header) { margin: 0; }
+    .back :deep(.el-tabs__content) { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .back :deep(.el-tab-pane) { height: 100%; }
+    .grid { gap: 6px; }
+    .cell { padding: 6px 8px; gap: 3px; }
+    .cell .ops { flex-wrap: wrap; }
+    .batch-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  }
 </style>

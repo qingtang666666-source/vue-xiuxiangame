@@ -36,155 +36,166 @@
       </el-select>
     </div>
 
-    <el-tabs v-model="tab">
+    <el-tabs v-model="tab" class="mk-root">
       <el-tab-pane label="交易坊市" name="market" v-if="hasVenue('market')">
-        <div class="section-title">购买（标准价）</div>
-        <div class="rows">
-          <div v-for="grp in visibleAvailable" :key="grp.cat" class="cat-group">
-            <div class="cat-head">{{ grp.cat }}</div>
-            <div class="row" v-for="i in grp.list" :key="i.key">
-              <div class="info">
-                <b>{{ i.name }}</b><span class="sub">{{ i.desc }}</span>
-                <span class="price">{{ buyPrice(i.key) }}灵石/个</span>
-              </div>
-              <div class="ops qty-ops">
-                <el-input-number :model-value="qtyOf(i.key)" :min="1" :max="9999" :step="10" size="small" class="qty-input" @update:model-value="v => setQty(i.key, v)" />
-                <el-slider :model-value="qtyOf(i.key)" :min="1" :max="200" :step="10" size="small" style="width: 110px" @update:model-value="v => setQty(i.key, v)" />
-                <span class="qty-tip" v-if="qtyOf(i.key) >= 10">大宗×{{ qtyOf(i.key) }}</span>
-                <el-button size="small" type="primary" @click="buyCust(i.key)">购买</el-button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="section-title">出售（折价）</div>
-        <div class="rows">
-          <div class="row" v-for="i in ownedItems" :key="i.key">
-            <div class="info">
-              <b>{{ i.name }}</b><span class="sub">持有 {{ player.props[i.key] || 0 }} · 卖价 {{ sellPrice(i.key) }}灵石/个</span>
-            </div>
-              <div class="ops qty-ops">
-                <el-input-number :model-value="sQtyOf(i.key)" :min="1" :max="Math.max(1, player.props[i.key] || 0)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty(i.key, v)" />
-                <el-slider :model-value="sQtyOf(i.key)" :min="1" :max="Math.max(1, player.props[i.key] || 0)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty(i.key, v)" />
-                <el-button size="small" type="warning" plain @click="sell(i.key, sQtyOf(i.key))">出售{{ sQtyOf(i.key) > 1 ? '×' + sQtyOf(i.key) : '' }}</el-button>
-              </div>
-          </div>
-        </div>
-        <div class="section-title">寄售丹药 / 符箓 / 灵器</div>
-        <div class="rows">
-          <div class="row" v-for="(p, i) in ownedPills" :key="'p'+i">
-            <div class="info">
-              <tag :type="p.quality">{{ p.name }}</tag><span class="sub">持有 {{ p.count }} · 寄售价 {{ p.sellPrice }}灵石/个（市场 {{ p.mval }}）</span>
-            </div>
-            <div class="ops qty-ops">
-              <el-input-number :model-value="sQtyOf('p_' + p.id)" :min="1" :max="Math.max(1, p.count || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty('p_' + p.id, v)" />
-              <el-slider :model-value="sQtyOf('p_' + p.id)" :min="1" :max="Math.max(1, p.count || 1)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty('p_' + p.id, v)" />
-              <el-button size="small" type="warning" plain @click="sellP(p, sQtyOf('p_' + p.id))">寄售{{ sQtyOf('p_' + p.id) > 1 ? '×' + sQtyOf('p_' + p.id) : '' }}</el-button>
-            </div>
-          </div>
-          <div class="row" v-for="(t, i) in ownedTalismans" :key="'t'+i">
-            <div class="info">
-              <tag :type="t.quality">{{ t.name }}</tag><span class="sub">持有 {{ t.count }} · 寄售价 {{ t.sellPrice }}灵石/个（市场 {{ t.mval }}）</span>
-            </div>
-            <div class="ops qty-ops">
-              <el-input-number :model-value="sQtyOf('t_' + t.id)" :min="1" :max="Math.max(1, t.count || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty('t_' + t.id, v)" />
-              <el-slider :model-value="sQtyOf('t_' + t.id)" :min="1" :max="Math.max(1, t.count || 1)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty('t_' + t.id, v)" />
-              <el-button size="small" type="warning" plain @click="sellT(t, sQtyOf('t_' + t.id))">寄售{{ sQtyOf('t_' + t.id) > 1 ? '×' + sQtyOf('t_' + t.id) : '' }}</el-button>
-            </div>
-          </div>
-          <div class="row" v-for="(e, i) in ownedEquips" :key="'e'+i">
-            <div class="info">
-              <tag :type="e.quality">{{ e.name }}</tag><span class="sub">{{ e.gradeName }}{{ levelNames(e.level) }} · 寄售价 {{ e.sellPrice }}灵石（市场 {{ e.mval }}）</span>
-            </div>
-            <div class="ops"><el-button size="small" type="warning" plain @click="sellE(e)">寄售</el-button></div>
-          </div>
-        </div>
-        <div class="section-title">奇珍阁（丹药 / 符箓 / 灵器）</div>
-        <div class="rows">
-          <div v-for="grp in visibleCraft" :key="grp.cat" class="cat-group">
-            <div class="cat-head">{{ grp.cat }}</div>
-            <div class="row" v-for="c in grp.list" :key="c.name + c.price">
-              <el-tooltip :content="itemTip(c)" placement="top" :hide-after="0">
+        <el-tabs v-model="marketSub" size="small" class="mk-sub">
+          <el-tab-pane label="购买" name="buy">
+            <div class="section-title">购买（标准价）</div>
+            <div class="rows">
+              <div class="row" v-for="r in avItems" :key="'mk_' + r.cat + '_' + r.it.key">
                 <div class="info">
-                  <tag :type="c.quality">{{ c.name }}</tag>
-                  <span class="sub">{{ kindName(c.kind) }} · {{ c.price }}灵石</span>
+                  <span class="mini-cat">{{ r.cat }}</span>
+                  <b>{{ r.it.name }}</b><span class="sub">{{ r.it.desc }}</span>
+                  <span class="price">{{ buyPrice(r.it.key) }}灵石/个</span>
                 </div>
-              </el-tooltip>
-              <div class="ops qty-ops" v-if="c.kind !== 'equip'">
-                <el-input-number :model-value="qtyOf('c_' + c.refId)" :min="1" :max="999" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('c_' + c.refId, v)" />
-                <el-button size="small" type="primary" @click="buyCraft(c, qtyOf('c_' + c.refId))">购买×{{ qtyOf('c_' + c.refId) }}</el-button>
+                <div class="ops qty-ops">
+                  <el-input-number :model-value="qtyOf(r.it.key)" :min="1" :max="9999" :step="10" size="small" class="qty-input" @update:model-value="v => setQty(r.it.key, v)" />
+                  <el-slider :model-value="qtyOf(r.it.key)" :min="1" :max="200" :step="10" size="small" style="width: 110px" @update:model-value="v => setQty(r.it.key, v)" />
+                  <span class="qty-tip" v-if="qtyOf(r.it.key) >= 10">大宗×{{ qtyOf(r.it.key) }}</span>
+                  <el-button size="small" type="primary" @click="buyCust(r.it.key)">购买</el-button>
+                </div>
               </div>
-              <div class="ops" v-else><el-button size="small" type="primary" @click="buyCraft(c, 1)">买1</el-button></div>
+              <el-empty v-if="!flatAV.length" description="暂无货品" :image-size="60" />
             </div>
-          </div>
-        </div>
-      </el-tab-pane>
+            <PageNav :page="avPage" :total="avTotal" @change="setAvPage" />
+          </el-tab-pane>
 
+          <el-tab-pane label="出售" name="sell">
+            <div class="section-title">出售（折价）</div>
+            <div class="rows">
+              <div class="row" v-for="i in oiItems" :key="i.key">
+                <div class="info">
+                  <b>{{ i.name }}</b><span class="sub">持有 {{ player.props[i.key] || 0 }} · 卖价 {{ sellPrice(i.key) }}灵石/个</span>
+                </div>
+                <div class="ops qty-ops">
+                  <el-input-number :model-value="sQtyOf(i.key)" :min="1" :max="Math.max(1, player.props[i.key] || 0)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty(i.key, v)" />
+                  <el-slider :model-value="sQtyOf(i.key)" :min="1" :max="Math.max(1, player.props[i.key] || 0)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty(i.key, v)" />
+                  <el-button size="small" type="warning" plain @click="sell(i.key, sQtyOf(i.key))">出售{{ sQtyOf(i.key) > 1 ? '×' + sQtyOf(i.key) : '' }}</el-button>
+                </div>
+              </div>
+              <el-empty v-if="!ownedItems.length" description="暂无出售物品" :image-size="60" />
+            </div>
+            <PageNav :page="oiPage" :total="oiTotal" @change="setOiPage" />
+          </el-tab-pane>
+
+          <el-tab-pane label="寄售" name="consign">
+            <div class="section-title">寄售丹药 / 符箓 / 灵器</div>
+            <div class="rows">
+              <div class="row" v-for="x in csItems" :key="x.kind + '_' + x.id">
+                <div class="info">
+                  <tag :type="x.quality">{{ x.name }}</tag>
+                  <span class="sub">{{ x.sub }}</span>
+                </div>
+                <div class="ops qty-ops" v-if="x.kind === 'pill'">
+                  <el-input-number :model-value="sQtyOf('p_' + x.id)" :min="1" :max="Math.max(1, x.count || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty('p_' + x.id, v)" />
+                  <el-slider :model-value="sQtyOf('p_' + x.id)" :min="1" :max="Math.max(1, x.count || 1)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty('p_' + x.id, v)" />
+                  <el-button size="small" type="warning" plain @click="sellP(x, sQtyOf('p_' + x.id))">寄售{{ sQtyOf('p_' + x.id) > 1 ? '×' + sQtyOf('p_' + x.id) : '' }}</el-button>
+                </div>
+                <div class="ops qty-ops" v-else-if="x.kind === 'tal'">
+                  <el-input-number :model-value="sQtyOf('t_' + x.id)" :min="1" :max="Math.max(1, x.count || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setSellQty('t_' + x.id, v)" />
+                  <el-slider :model-value="sQtyOf('t_' + x.id)" :min="1" :max="Math.max(1, x.count || 1)" :step="1" size="small" style="width: 100px" @update:model-value="v => setSellQty('t_' + x.id, v)" />
+                  <el-button size="small" type="warning" plain @click="sellT(x, sQtyOf('t_' + x.id))">寄售{{ sQtyOf('t_' + x.id) > 1 ? '×' + sQtyOf('t_' + x.id) : '' }}</el-button>
+                </div>
+                <div class="ops" v-else><el-button size="small" type="warning" plain @click="sellE(x.src)">寄售</el-button></div>
+              </div>
+              <el-empty v-if="!consignList.length" description="暂无可寄售物品" :image-size="60" />
+            </div>
+            <PageNav :page="csPage" :total="csTotal" @change="setCsPage" />
+          </el-tab-pane>
+
+          <el-tab-pane label="奇珍阁" name="craft">
+            <div class="section-title">奇珍阁（丹药 / 符箓 / 灵器）</div>
+            <div class="rows">
+              <div class="row" v-for="r in crItems" :key="'cr_' + r.cat + '_' + r.it.name + r.it.price">
+                <el-tooltip :content="itemTip(r.it)" placement="top" :hide-after="0">
+                  <div class="info">
+                    <span class="mini-cat">{{ r.cat }}</span>
+                    <tag :type="r.it.quality">{{ r.it.name }}</tag>
+                    <span class="sub">{{ kindName(r.it.kind) }} · {{ r.it.price }}灵石</span>
+                  </div>
+                </el-tooltip>
+                <div class="ops qty-ops" v-if="r.it.kind !== 'equip'">
+                  <el-input-number :model-value="qtyOf('c_' + r.it.refId)" :min="1" :max="999" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('c_' + r.it.refId, v)" />
+                  <el-button size="small" type="primary" @click="buyCraft(r.it, qtyOf('c_' + r.it.refId))">购买×{{ qtyOf('c_' + r.it.refId) }}</el-button>
+                </div>
+                <div class="ops" v-else><el-button size="small" type="primary" @click="buyCraft(r.it, 1)">买1</el-button></div>
+              </div>
+              <el-empty v-if="!flatCraft.length" description="暂无奇珍" :image-size="60" />
+            </div>
+            <PageNav :page="crPage" :total="crTotal" @change="setCrPage" />
+          </el-tab-pane>
+        </el-tabs>
+      </el-tab-pane>
       <el-tab-pane label="交易会" name="fair" v-if="hasVenue('fair')">
         <div class="section-title">折扣购入</div>
         <div class="bulk-hint">批量：买 10+ 打 9 折 · 50+ 打 85 折 · 100+ 打 8 折</div>
         <div class="rows">
-          <div v-for="grp in visibleAvailable" :key="grp.cat" class="cat-group">
-            <div class="cat-head">{{ grp.cat }}</div>
-            <div class="row" v-for="i in grp.list" :key="i.key">
-              <div class="info">
-                <b>{{ i.name }}</b><span class="sub">{{ i.desc }}</span>
-                <span class="price">{{ fairPrice(i.key) }}灵石/个（买10 {{ fairPrice(i.key, 10) }}）</span>
-              </div>
-              <div class="ops qty-ops">
-                <el-input-number :model-value="qtyOf(i.key)" :min="1" :max="9999" :step="10" size="small" class="qty-input" @update:model-value="v => setQty(i.key, v)" />
-                <el-slider :model-value="qtyOf(i.key)" :min="1" :max="200" :step="10" size="small" style="width: 110px" @update:model-value="v => setQty(i.key, v)" />
-                <span class="qty-tip" v-if="qtyOf(i.key) >= 10">大宗×{{ qtyOf(i.key) }}</span>
-                <el-button size="small" type="success" @click="fair(i.key, qtyOf(i.key))">购买</el-button>
-              </div>
+          <div class="row" v-for="r in avItems" :key="'fair_' + r.cat + '_' + r.it.key">
+            <div class="info">
+              <span class="mini-cat">{{ r.cat }}</span>
+              <b>{{ r.it.name }}</b><span class="sub">{{ r.it.desc }}</span>
+              <span class="price">{{ fairPrice(r.it.key) }}灵石/个（买10 {{ fairPrice(r.it.key, 10) }}）</span>
+            </div>
+            <div class="ops qty-ops">
+              <el-input-number :model-value="qtyOf(r.it.key)" :min="1" :max="9999" :step="10" size="small" class="qty-input" @update:model-value="v => setQty(r.it.key, v)" />
+              <el-slider :model-value="qtyOf(r.it.key)" :min="1" :max="200" :step="10" size="small" style="width: 110px" @update:model-value="v => setQty(r.it.key, v)" />
+              <span class="qty-tip" v-if="qtyOf(r.it.key) >= 10">大宗×{{ qtyOf(r.it.key) }}</span>
+              <el-button size="small" type="success" @click="fair(r.it.key, qtyOf(r.it.key))">购买</el-button>
             </div>
           </div>
+          <el-empty v-if="!flatAV.length" description="暂无货品" :image-size="60" />
         </div>
+        <PageNav :page="avPage" :total="avTotal" @change="setAvPage" />
       </el-tab-pane>
-
       <el-tab-pane label="黑市" name="black" v-if="hasVenue('black')">
-        <div class="section-title">高价收稀有（限量）</div>
-        <div class="rows">
-          <div v-for="grp in visibleBlack" :key="grp.cat" class="cat-group">
-            <div class="cat-head">{{ grp.cat }}</div>
-            <div class="row" v-for="i in grp.list" :key="i.key">
-              <div class="info">
-                <b>{{ i.name }}</b><span class="sub">库存 {{ i.stock }}</span>
-                <span class="price danger">{{ i.price }}灵石/个 <span class="base">(市价 {{ i.base }})</span></span>
-              </div>
-              <div class="ops qty-ops">
-                <el-input-number :model-value="qtyOf('b_' + i.key)" :min="1" :max="i.stock" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('b_' + i.key, v)" />
-                <el-slider :model-value="qtyOf('b_' + i.key)" :min="1" :max="i.stock" :step="1" size="small" style="width: 100px" @update:model-value="v => setQty('b_' + i.key, v)" />
-                <el-button size="small" type="danger" @click="black(i, qtyOf('b_' + i.key))">购买</el-button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="section-title">奇珍（丹药 / 符箓 / 灵器，限量）</div>
-        <div class="rows">
-          <div v-for="grp in visibleBlackCraft" :key="grp.cat" class="cat-group">
-            <div class="cat-head">{{ grp.cat }}</div>
-            <div class="row" v-for="c in grp.list" :key="c.name + c.price">
-              <el-tooltip :content="itemTip(c)" placement="top" :hide-after="0">
+        <el-tabs v-model="blackSub" size="small" class="mk-sub">
+          <el-tab-pane label="高价收稀有" name="rare">
+            <div class="section-title">高价收稀有（限量）</div>
+            <div class="rows">
+              <div class="row" v-for="r in bkItems" :key="'bk_' + r.cat + '_' + r.it.key">
                 <div class="info">
-                  <tag :type="c.quality">{{ c.name }}</tag>
-                  <span class="sub">库存 {{ c.stock }} · {{ c.price }}灵石（市价 {{ c.value || c.price }}）</span>
+                  <span class="mini-cat">{{ r.cat }}</span>
+                  <b>{{ r.it.name }}</b><span class="sub">库存 {{ r.it.stock }}</span>
+                  <span class="price danger">{{ r.it.price }}灵石/个 <span class="base">(市价 {{ r.it.base }})</span></span>
                 </div>
-              </el-tooltip>
-              <div class="ops qty-ops" v-if="c.kind !== 'equip'">
-                <el-input-number :model-value="qtyOf('bc_' + c.refId)" :min="1" :max="Math.max(1, c.stock || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('bc_' + c.refId, v)" />
-                <el-button size="small" type="danger" @click="doBlackCraft(c, qtyOf('bc_' + c.refId))">购买×{{ qtyOf('bc_' + c.refId) }}</el-button>
+                <div class="ops qty-ops">
+                  <el-input-number :model-value="qtyOf('b_' + r.it.key)" :min="1" :max="r.it.stock" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('b_' + r.it.key, v)" />
+                  <el-slider :model-value="qtyOf('b_' + r.it.key)" :min="1" :max="r.it.stock" :step="1" size="small" style="width: 100px" @update:model-value="v => setQty('b_' + r.it.key, v)" />
+                  <el-button size="small" type="danger" @click="black(r.it, qtyOf('b_' + r.it.key))">购买</el-button>
+                </div>
               </div>
-              <div class="ops" v-else><el-button size="small" type="danger" @click="doBlackCraft(c, 1)">买1</el-button></div>
+              <el-empty v-if="!flatBlack.length" description="暂无稀有货" :image-size="60" />
             </div>
-          </div>
-        </div>
+            <PageNav :page="bkPage" :total="bkTotal" @change="setBkPage" />
+          </el-tab-pane>
+          <el-tab-pane label="奇珍" name="craft">
+            <div class="section-title">奇珍（丹药 / 符箓 / 灵器，限量）</div>
+            <div class="rows">
+              <div class="row" v-for="r in bcItems" :key="'bc_' + r.cat + '_' + r.it.name + r.it.price">
+                <el-tooltip :content="itemTip(r.it)" placement="top" :hide-after="0">
+                  <div class="info">
+                    <span class="mini-cat">{{ r.cat }}</span>
+                    <tag :type="r.it.quality">{{ r.it.name }}</tag>
+                    <span class="sub">库存 {{ r.it.stock }} · {{ r.it.price }}灵石（市价 {{ r.it.value || r.it.price }}）</span>
+                  </div>
+                </el-tooltip>
+                <div class="ops qty-ops" v-if="r.it.kind !== 'equip'">
+                  <el-input-number :model-value="qtyOf('bc_' + r.it.refId)" :min="1" :max="Math.max(1, r.it.stock || 1)" :step="1" size="small" class="qty-input" @update:model-value="v => setQty('bc_' + r.it.refId, v)" />
+                  <el-button size="small" type="danger" @click="doBlackCraft(r.it, qtyOf('bc_' + r.it.refId))">购买×{{ qtyOf('bc_' + r.it.refId) }}</el-button>
+                </div>
+                <div class="ops" v-else><el-button size="small" type="danger" @click="doBlackCraft(r.it, 1)">买1</el-button></div>
+              </div>
+              <el-empty v-if="!flatBlackCraft.length" description="暂无奇珍" :image-size="60" />
+            </div>
+            <PageNav :page="bcPage" :total="bcTotal" @change="setBcPage" />
+          </el-tab-pane>
+        </el-tabs>
       </el-tab-pane>
-
       <el-tab-pane label="拍卖会" name="auction" v-if="hasVenue('auction')">
         <div class="auction">
           <div class="auc-head">每 1 个自然日开一场，只上高价值拍品（丹/符/器）</div>
           <div class="auc-note">下次拍卖：{{ auctionNext }}</div>
-          <div class="auc-list" v-for="lot in auction.lots" :key="lot.name + lot.bid">
+          <div class="auc-list" v-for="lot in aucItems" :key="lot.name + lot.bid">
             <div class="auc-item">
               <el-tooltip :content="itemTip(lot)" placement="top" :hide-after="0">
                 <div class="auc-name">
@@ -205,6 +216,7 @@
               </el-button>
             </div>
           </div>
+          <PageNav :page="aucPage" :total="aucTotal" @change="setAucPage" />
         </div>
       </el-tab-pane>
 
@@ -278,6 +290,8 @@
   import { talismanById } from '@/plugins/talisman'
   import { currentRegion, regionHasVenue, VENUE_NAMES } from '@/plugins/regionDb'
   import MoneyBar from '@/components/MoneyBar.vue'
+import { usePager, useViewportPageSize } from '@/plugins/pager'
+import PageNav from '@/components/PageNav.vue'
 
   const store = useMainStore()
   const router = useRouter()
@@ -286,6 +300,8 @@
   const tide = computed(() => marketTide(player.value))
   const tideName = computed(() => tideLabel(tide.value))
   const tab = ref('market')
+  const marketSub = ref('buy')
+  const blackSub = ref('rare')
   const auction = computed(() => auctionLots(player.value, place.value))
   const auctionNext = computed(() => {
     const ms = auction.value.nextIn || 0
@@ -396,6 +412,24 @@
     (player.value.talismans || []).map(t => ({ ...t, recipe: talismanById(t.id), sellPrice: talismanById(t.id) ? talismanSellPrice(talismanById(t.id)) : 0, mval: talismanById(t.id) ? talismanPrice(talismanById(t.id)) : 0 })).filter(x => x.recipe)
   )
   const ownedEquips = computed(() => (player.value.inventory || []).map(e => ({ ...e, sellPrice: equipSellPrice(e), mval: equipSellPrice(e) })))
+  const flatAV = computed(() => visibleAvailable.value.flatMap(g => g.list.map(it => ({ it, cat: g.cat }))))
+  const flatCraft = computed(() => visibleCraft.value.flatMap(g => g.list.map(it => ({ it, cat: g.cat }))))
+  const flatBlack = computed(() => visibleBlack.value.flatMap(g => g.list.map(it => ({ it, cat: g.cat }))))
+  const flatBlackCraft = computed(() => visibleBlackCraft.value.flatMap(g => g.list.map(it => ({ it, cat: g.cat }))))
+  const consignList = computed(() => [
+    ...ownedPills.value.map(x => ({ kind: 'pill', name: x.name, quality: x.quality, count: x.count, sellPrice: x.sellPrice, mval: x.mval, id: x.id, sub: '持有 ' + x.count + ' · 寄售价 ' + x.sellPrice + '灵石/个（市场 ' + x.mval + '）' })),
+    ...ownedTalismans.value.map(x => ({ kind: 'tal', name: x.name, quality: x.quality, count: x.count, sellPrice: x.sellPrice, mval: x.mval, id: x.id, sub: '持有 ' + x.count + ' · 寄售价 ' + x.sellPrice + '灵石/个（市场 ' + x.mval + '）' })),
+    ...ownedEquips.value.map(x => ({ kind: 'equip', name: x.name, quality: x.quality, count: 1, sellPrice: x.sellPrice, mval: x.mval, id: x.id, sub: x.gradeName + levelNames(x.level) + ' · 寄售价 ' + x.sellPrice + '灵石（市场 ' + x.mval + '）', src: x }))
+  ])
+  const mkSize = useViewportPageSize(100, 4)
+  const auctionList = computed(() => auction.value.lots || [])
+  const { page: aucPage, total: aucTotal, pageItems: aucItems, setPage: setAucPage } = usePager(auctionList, mkSize)
+  const { page: avPage, total: avTotal, pageItems: avItems, setPage: setAvPage } = usePager(flatAV, mkSize)
+  const { page: oiPage, total: oiTotal, pageItems: oiItems, setPage: setOiPage } = usePager(ownedItems, mkSize)
+  const { page: csPage, total: csTotal, pageItems: csItems, setPage: setCsPage } = usePager(consignList, mkSize)
+  const { page: crPage, total: crTotal, pageItems: crItems, setPage: setCrPage } = usePager(flatCraft, mkSize)
+  const { page: bkPage, total: bkTotal, pageItems: bkItems, setPage: setBkPage } = usePager(flatBlack, mkSize)
+  const { page: bcPage, total: bcTotal, pageItems: bcItems, setPage: setBcPage } = usePager(flatBlackCraft, mkSize)
 
   const buy = (key, qty) => {
     const r = marketBuy(player.value, key, qty)
@@ -547,5 +581,24 @@
     .place-select { width: 100%; max-width: none; }
     .cat-filter { width: 100%; }
     .cat-filter .el-select { width: 100% !important; }
+  }
+
+  .mini-cat { display: inline-block; font-size: 11px; color: var(--el-color-primary); margin-right: 6px; padding: 0 6px; border-radius: 999px; background: var(--el-color-primary-light-9); }
+  .mk-root, .mk-sub { display: flex; flex-direction: column; }
+  .mk-sub :deep(.el-tabs__header) { margin: 0 0 4px; }
+  .mk-root :deep(.el-tabs__content), .mk-sub :deep(.el-tabs__content) { min-height: 0; }
+
+  @media only screen and (max-width: 768px) {
+    .market { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .page-header { flex: 0 0 auto; }
+    .scale-hint { display: none; }
+    .mk-root { flex: 1 1 auto; min-height: 0; }
+    .mk-root :deep(.el-tabs__content), .mk-sub :deep(.el-tabs__content) { overflow: hidden; }
+    .mk-root :deep(.el-tab-pane), .mk-sub :deep(.el-tab-pane) { height: 100%; display: flex; flex-direction: column; }
+    .mk-sub { height: 100%; }
+    .mk-sub :deep(.el-tabs__content) { flex: 1 1 auto; }
+    .rows { gap: 4px; }
+    .row { padding: 5px 8px; }
+    .mini-cat { display: block; width: fit-content; margin: 0 0 2px; }
   }
 </style>

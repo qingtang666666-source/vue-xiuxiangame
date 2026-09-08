@@ -9,62 +9,61 @@
         <el-tag type="warning">连续 {{ streak }} 天</el-tag>
       </div>
       <div class="hint">固定任务为里程碑；自选任务最多同时 {{ MAX_SELECTED }} 个，完成后可换。</div>
-      <div class="hint2">下方「玩法引导」覆盖全部功能模块，每项都有入口说明，新手照着点一遍即可上手。</div>
     </div>
 
-    <div class="section-title">玩法引导 · 新手必看</div>
-    <div class="guide-list">
-      <div class="guide-row" v-for="m in guides" :key="m.key">
-        <div class="guide-n"><b>{{ m.icon }} {{ m.name }}</b><span class="sub">{{ m.desc }}</span></div>
-        <el-tag v-if="m.done === true" size="small" type="success">已体验</el-tag>
-        <el-tag v-else-if="m.done === false" size="small" type="warning">待体验</el-tag>
-        <el-tag v-else size="small" type="info">待探索</el-tag>
-        <el-button size="small" type="primary" plain @click="go(m.route)">前往</el-button>
-      </div>
-    </div>
+    <el-tabs v-model="tab" stretch class="quest-tabs">
+      <el-tab-pane :label="'进行中 ' + selectedCount + '/' + MAX_SELECTED" name="sel">
+        <div class="list-body">
+          <div class="sel-row" v-for="s in selItems" :key="s.id">
+            <div class="n"><b>{{ s.name }}</b><span class="sub">{{ s.desc }}</span></div>
+            <el-progress :percentage="pct(s)" class="bar" :status="s.progress >= s.target ? 'success' : ''" :show-text="false" />
+            <span class="prog">{{ s.progress }}/{{ s.target }}</span>
+            <el-button v-if="s.progress >= s.target" size="small" type="success" @click="claimS(s)">领取</el-button>
+            <el-button v-else size="small" type="info" plain @click="unselect(s)">放弃</el-button>
+          </div>
+          <el-empty v-if="!selList.length" description="尚未接取自选任务，去「任务池」挑选" :image-size="60" />
+        </div>
+        <PageNav :page="selPage" :total="selTotal" @change="setSelPage" />
+      </el-tab-pane>
 
-    <div class="section-title">固定任务</div>
-    <div class="fixed-list">
-      <div class="fix-row" v-for="f in activeFixed" :key="f.id">
-        <div class="fix-n"><b>{{ f.name }}</b><span class="sub">{{ f.desc }}</span></div>
-        <div class="fix-reward">{{ rewardText(f.reward) }}</div>
-        <el-button v-if="!f.claimed && f.done" size="small" type="success" @click="claimF(f)">领取</el-button>
-        <el-tag v-else-if="f.claimed" size="small" type="info">已领取</el-tag>
-        <el-tag v-else size="small" type="warning">进行中</el-tag>
-      </div>
-    </div>
-    <div v-if="doneFixed.length" class="section-title">已完成任务（{{ doneFixed.length }}）</div>
-    <div class="fixed-list done-list" v-if="doneFixed.length">
-      <div class="fix-row" v-for="f in doneFixed" :key="f.id">
-        <div class="fix-n"><b>{{ f.name }}</b><span class="sub">{{ f.desc }}</span></div>
-        <div class="fix-reward">{{ rewardText(f.reward) }}</div>
-        <el-tag size="small" type="info">已领取</el-tag>
-      </div>
-    </div>
+      <el-tab-pane label="任务池" name="pool">
+        <div class="list-body">
+          <div class="pool-row" v-for="s in poolItems" :key="s.id">
+            <div class="n"><b>{{ s.name }}</b><span class="sub">{{ s.desc }}</span></div>
+            <span class="reward">{{ rewardText(s.reward) }}</span>
+            <el-button v-if="s.claimed" size="small" type="info" plain disabled>已领取</el-button>
+            <el-button v-else size="small" type="primary" :disabled="!canSelect || s.selected" @click="pick(s)">{{ s.selected ? '已选' : '选择' }}</el-button>
+          </div>
+        </div>
+        <PageNav :page="poolPage" :total="poolTotal" @change="setPoolPage" />
+      </el-tab-pane>
 
-    <div class="section-title">自选任务（已选 {{ selectedCount }}/{{ MAX_SELECTED }}）</div>
-    <div class="sel-list">
-      <div class="sel-row" v-for="s in selList" :key="s.id">
-        <div class="sel-n"><b>{{ s.name }}</b><span class="sub">{{ s.desc }}</span></div>
-        <el-progress :percentage="pct(s)" class="sel-bar" :status="s.progress >= s.target ? 'success' : ''" :show-text="false" />
-        <span class="sel-progress">{{ s.progress }}/{{ s.target }}</span>
-        <el-button v-if="s.progress >= s.target" size="small" type="success" @click="claimS(s)">领取</el-button>
-        <el-button v-else size="small" type="info" plain @click="unselect(s)">放弃</el-button>
-      </div>
-    </div>
+      <el-tab-pane :label="'固定任务 ' + doneFixed.length + '/' + fixedList.length" name="fixed">
+        <div class="list-body">
+          <div class="fix-row" v-for="f in fixedItems" :key="f.id" :class="{ done: f.claimed }">
+            <div class="n"><b>{{ f.name }}</b><span class="sub">{{ f.desc }}</span></div>
+            <div class="reward">{{ rewardText(f.reward) }}</div>
+            <el-button v-if="!f.claimed && f.done" size="small" type="success" @click="claimF(f)">领取</el-button>
+            <el-tag v-else-if="f.claimed" size="small" type="info">已领取</el-tag>
+            <el-tag v-else size="small" type="warning">进行中</el-tag>
+          </div>
+        </div>
+        <PageNav :page="fixedPage" :total="fixedTotal" @change="setFixedPage" />
+      </el-tab-pane>
 
-    <div class="section-title">可选任务池</div>
-    <div class="pool-list">
-      <div class="pool-row" v-for="s in poolList" :key="s.id">
-        <div class="pool-n"><b>{{ s.name }}</b><span class="sub">{{ s.desc }}</span></div>
-        <span class="pool-reward">{{ rewardText(s.reward) }}</span>
-        <el-button v-if="s.claimed" size="small" type="info" plain disabled>已领取</el-button>
-        <el-button v-else size="small" type="primary" :disabled="!canSelect || s.selected" @click="pick(s)">选择</el-button>
-      </div>
-    </div>
-
-    <div class="outer-actions">
-    </div>
+      <el-tab-pane label="玩法引导" name="guide">
+        <div class="list-body">
+          <div class="guide-row" v-for="m in guideItems" :key="m.key">
+            <div class="n"><b>{{ m.icon }} {{ m.name }}</b><span class="sub">{{ m.desc }}</span></div>
+            <el-tag v-if="m.done === true" size="small" type="success">已体验</el-tag>
+            <el-tag v-else-if="m.done === false" size="small" type="warning">待体验</el-tag>
+            <el-tag v-else size="small" type="info">待探索</el-tag>
+            <el-button size="small" type="primary" plain @click="go(m.route)">前往</el-button>
+          </div>
+        </div>
+        <PageNav :page="guidePage" :total="guideTotal" @change="setGuidePage" />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -86,14 +85,18 @@
     questStreak
   } from '@/plugins/quest'
   import { moduleGuides } from '@/plugins/guide'
+  import { usePager, useViewportPageSize } from '@/plugins/pager'
+  import PageNav from '@/components/PageNav.vue'
 
   const store = useMainStore()
   const router = useRouter()
   const player = ref(store.player)
+  const tab = ref('sel')
 
   const fixedList = computed(() => fixedQuests(player.value))
   const activeFixed = computed(() => fixedList.value.filter(f => !f.claimed))
   const doneFixed = computed(() => fixedList.value.filter(f => f.claimed))
+  const fixedSorted = computed(() => [...activeFixed.value, ...doneFixed.value])
   const poolList = computed(() => selectableQuests(player.value))
   const selList = computed(() => selectableQuests(player.value).filter(s => s.selected))
   const selectedCount = computed(() => selList.value.length)
@@ -101,6 +104,13 @@
   const questLv = computed(() => questLevel(player.value))
   const streak = computed(() => questStreak(player.value))
   const guides = computed(() => moduleGuides(player.value))
+
+  const qSize = useViewportPageSize(100, 8)
+  const { page: selPage, total: selTotal, pageItems: selItems, setPage: setSelPage } = usePager(selList, qSize)
+  const { page: poolPage, total: poolTotal, pageItems: poolItems, setPage: setPoolPage } = usePager(poolList, qSize)
+  const { page: fixedPage, total: fixedTotal, pageItems: fixedItems, setPage: setFixedPage } = usePager(fixedSorted, qSize)
+  const { page: guidePage, total: guideTotal, pageItems: guideItems, setPage: setGuidePage } = usePager(guides, qSize)
+
   const go = r => router.push(r)
 
   const rewardText = r =>
@@ -132,23 +142,59 @@
 
 <style scoped>
   .quest { text-align: left; padding: 0 4px; }
-  .page-header { margin-bottom: 10px; }
-  .title { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+  .page-header { margin-bottom: 8px; }
+  .title { font-size: 20px; font-weight: bold; margin-bottom: 6px; }
   .realm { color: var(--el-color-primary); }
-  .resources { display: flex; gap: 8px; margin-bottom: 6px; }
+  .resources { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .hint { font-size: 12px; color: var(--el-text-color-secondary); }
-  .hint2 { font-size: 12px; color: var(--el-color-warning); margin-top: 4px; }
-  .section-title { font-size: 15px; font-weight: bold; margin: 14px 0 8px; }
-  .fixed-list, .sel-list, .pool-list { display: flex; flex-direction: column; gap: 6px; }
-  .guide-list { display: flex; flex-direction: column; gap: 6px; }
-  .guide-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--el-fill-color-light); flex-wrap: wrap; }
-  .guide-n { display: flex; flex-direction: column; flex: 1; min-width: 210px; }
-  .fix-row, .sel-row, .pool-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 4px; background: var(--el-fill-color-light); }
-  .fix-n, .sel-n, .pool-n { display: flex; flex-direction: column; flex: 1; }
+  .list-body { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .guide-row, .fix-row, .sel-row, .pool-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-light);
+    flex-wrap: wrap;
+  }
+  .n { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
   .sub { font-size: 12px; color: var(--el-text-color-secondary); }
-  .fix-reward, .pool-reward { font-size: 12px; color: var(--el-color-warning); min-width: 140px; }
-  .done-list .fix-row { opacity: 0.5; }
-  .sel-bar { width: 160px; }
-  .sel-progress { font-size: 12px; min-width: 56px; }
-  .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
+  .reward { font-size: 12px; color: var(--el-color-warning); }
+  .bar { width: 120px; }
+  .prog { font-size: 12px; min-width: 46px; color: var(--el-text-color-secondary); }
+  .fix-row.done { opacity: 0.55; }
+
+  @media only screen and (max-width: 768px) {
+    .quest {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0 2px;
+    }
+    .page-header { flex: 0 0 auto; }
+    .hint { display: none; }
+    .resources { gap: 4px; }
+    .quest-tabs {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .quest-tabs :deep(.el-tabs__header) { margin: 0; }
+    .quest-tabs :deep(.el-tabs__content) {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .quest-tabs :deep(.el-tab-pane) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .list-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .sel-row, .pool-row, .guide-row { padding: 6px 8px; gap: 6px; }
+    .n { min-width: 0; }
+    .bar { width: 80px; }
+  }
 </style>

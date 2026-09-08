@@ -53,7 +53,7 @@
       <el-button size="small" type="primary" @click="skipCraft">跳 过</el-button>
     </div>
     <div class="recipe-grid">
-      <el-card v-for="r in displayRecipes" :key="r.id" class="recipe-card" shadow="hover">
+      <el-card v-for="r in recipeItems" :key="r.id" class="recipe-card" shadow="hover">
         <template #header>
           <div class="card-head">
             <el-tag :type="r.quality" effect="dark">{{ r.name }}</el-tag>
@@ -90,6 +90,7 @@
       </el-card>
     </div>
 
+    <PageNav :page="recipePage" :total="recipeTotal" @change="setRecipePage" />
     <div class="actions">
     </div>
     <item-info :visible="infoShow" :data="infoData" @update:visible="infoShow = $event" />
@@ -106,6 +107,8 @@
   import { recipeCostList, recipeShortfall } from '@/plugins/alchemy'
   import { pillPrice } from '@/plugins/market'
   import itemInfo from '@/components/itemInfo.vue'
+import { usePager, useViewportPageSize } from '@/plugins/pager'
+import PageNav from '@/components/PageNav.vue'
 
   const store = useMainStore()
   const router = useRouter()
@@ -127,6 +130,8 @@
       return true
     })
   })
+  const alSize = useViewportPageSize(100, 4)
+  const { page: recipePage, total: recipeTotal, pageItems: recipeItems, setPage: setRecipePage } = usePager(displayRecipes, alSize)
 
   const resourceList = computed(() => {
     const p = player.value.props || {}
@@ -508,5 +513,19 @@
       padding: 3px 6px;
       margin-bottom: 6px;
     }
+  }
+
+  @media only screen and (max-width: 768px) {
+    .alchemy { height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 0 2px; }
+    .alchemy-header { margin-bottom: 6px; }
+    .title { font-size: 17px; margin-bottom: 4px; }
+    .resources { gap: 4px; }
+    .buffs, .pills, .count { display: none; }
+    .section-title { margin: 6px 0 4px; font-size: 14px; }
+    .filter-bar { gap: 4px; margin-bottom: 6px; }
+    .recipe-card :deep(.el-card__header) { padding: 8px 10px; }
+    .recipe-card :deep(.el-card__body) { padding: 8px 10px; }
+    .effect { min-height: 28px; }
+    .crafting-bar { margin-bottom: 6px; padding: 6px 10px; }
   }
 </style>

@@ -355,4 +355,19 @@
       margin: 0 8px 4px 0;
     }
   }
+  @media only screen and (max-width: 768px) {
+    .forge { height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 0 2px; }
+    .forge-header { margin-bottom: 6px; }
+    .title { font-size: 17px; margin-bottom: 4px; }
+    .resources { gap: 4px; }
+    .res-tag { font-size: 12px; }
+    .form { padding: 8px; margin-bottom: 8px; }
+    .field { margin-bottom: 6px; }
+    .label { margin-bottom: 3px; font-size: 11px; }
+    .preview .section-title, .cost .section-title { margin: 8px 0 4px; font-size: 14px; }
+    .preview-item { padding: 2px 7px; font-size: 12px; }
+    .actions { margin-top: 8px; }
+    .crafting-bar { padding: 6px 10px; margin-top: 8px; }
+    .last-craft { display: none; }
+  }
 </style>

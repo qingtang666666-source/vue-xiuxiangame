@@ -608,4 +608,15 @@
       width: calc(50% - 10px);
     }
   }
+  @media only screen and (max-width: 768px) {
+    .cultivate { height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 0 2px; }
+    .cultivation-info { margin-bottom: 8px; }
+    .realm-display { margin-bottom: 6px; font-size: 15px; }
+    .cultivate-flavor { margin-top: 6px; font-size: 12px; }
+    .cultivate-stats { gap: 4px 10px; font-size: 12px; }
+    .storyText { flex: 0 1 auto; }
+    .storyText-box { max-height: 200px; padding: 8px; margin-bottom: 8px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .action { width: calc(50% - 3px); }
+  }
 </style>
