@@ -318,7 +318,7 @@
     else if (it.kind === 'pill') desc = RECIPES.find(x => x.id === it.key)?.effectText || ''
     else if (it.kind === 'treasure') desc = TREASURES.find(x => x.key === it.key)?.desc || ''
     else if (it.kind === 'scroll') desc = '功法卷轴，参悟以根骨资质 × 悟性判定成败'
-    else if (it.kind === 'blindbox') desc = '开箱：5% 千倍暴击 / 45% 等值 / 50% 垃圾'
+    else if (it.kind === 'blindbox') desc = '开箱：5% 千倍暴击 / 45% 等值 / 30% 返还灵石 / 20% 低值'
     return `${it.name}${it.tierName ? '（' + it.tierName + '）' : ''}\n${desc}\n${it.price} 灵石`
   }
   const travTimer = setInterval(() => {

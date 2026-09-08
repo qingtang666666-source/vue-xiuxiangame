@@ -89,7 +89,7 @@ const logOpen = (player, key, qty = 1) => {
   player.blindBoxLog.items[key] = (player.blindBoxLog.items[key] || 0) + qty
 }
 
-// 开盲盒：5% 1000倍 / 45% 等值 / 50% 低值；保底888次必出1000倍
+// 开盲盒：5% 1000倍 / 45% 等值 / 30% 返还灵石 / 20% 低值；保底888次必出1000倍
 export const openBlindBox = (player, item) => {
   if (item.qty <= 0) return { ok: false, reason: '盲盒已售罄' }
   if ((player.props.money || 0) < item.price) return { ok: false, reason: '灵石不足' }
@@ -124,6 +124,17 @@ export const openBlindBox = (player, item) => {
     addTreasure(player, t.key, 1)
     logOpen(player, t.key, 1)
     texts.push(`天材地宝【${t.name}】`)
+    return { ok: true, texts }
+  }
+  if (r < 0.8) {
+    const back = Math.max(100, Math.floor(cost * 0.4))
+    player.props.money = (player.props.money || 0) + back
+    const m = junkItem()
+    const q = 1 + Math.floor(Math.random() * 2)
+    player.props[m.key] = (player.props[m.key] || 0) + q
+    logOpen(player, m.key, q)
+    texts.push(`返还灵石 ${back}`)
+    texts.push(`${m.name} ×${q}`)
     return { ok: true, texts }
   }
   const m = junkItem()

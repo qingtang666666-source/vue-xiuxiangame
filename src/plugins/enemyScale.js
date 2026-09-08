@@ -49,8 +49,10 @@ const guardOneShot = (e, player, ratio = 0.42) => {
 
 // —— 历战（回合制竞技场）——
 // mult 由难度决定；多只时单只按比例削弱，避免“三只=三倍难度”的陡增。
+// 历战对手以「境界标准战力」为锚（不含装备/加点），不再跟着玩家总体战力水涨船高，
+// 也不会保底多少刀——装备强的玩家可秒杀同阶对手，数值不够也可能被高难度对手秒杀。
 export const ladderEnemies = (player, { count = 1, boss = false, levelOffset = 0, mult = 1, reincarnation = 0 } = {}) => {
-  const ref = anchorPower(player)
+  const ref = Math.max(1000, realmPower(player.level || 1))
   const pLv = Math.max(1, player.level || 1)
   const n = Math.max(1, Math.floor(count) || 1)
   const split = n > 1 ? 1 / Math.pow(n, 0.7) : 1
@@ -59,7 +61,7 @@ export const ladderEnemies = (player, { count = 1, boss = false, levelOffset = 0
   for (let i = 0; i < n; i++) {
     const lv = Math.max(1, Math.min(160, pLv + levelOffset + Math.floor(Math.random() * 5) - 2))
     const power = ref * mult * split * elite
-    out.push(guardOneShot(enemyFromPower(lv, power, { eliteTag: boss, extra: { idx: i } }), player))
+    out.push(enemyFromPower(lv, power, { eliteTag: boss, extra: { idx: i } }))
   }
   return out
 }

@@ -28,7 +28,7 @@
         </el-button>
       </div>
     </div>
-    <div class="shop-note">盲盒宝箱（1000 筹码/个）：5% 开出超出其自身价值 1000 倍的宝物 / 70% 开出垃圾（≤50 筹码）/ 25% 开出 300~600 筹码物品；累计开 888 次未出则必定触发千倍暴击！</div>
+    <div class="shop-note">盲盒宝箱（1000 筹码/个）：5% 千倍暴击 / 40% 开出 300~600 筹码物品 / 55% 返还 300 筹码 + 灵材；累计开 888 次未出则必定触发千倍暴击！</div>
     <el-dialog v-model="showInfo" title="商品详情" width="360px">
       <div v-if="info">
         <div class="info-name">{{ info.name }} <span v-if="info.tier" class="tier">{{ info.tier }}</span></div>

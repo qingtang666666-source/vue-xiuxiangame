@@ -151,7 +151,7 @@ const junkItem = () => {
   return pick(pool.length ? pool : MATERIALS)
 }
 
-// 开盲盒宝箱：5% 千倍 / 70% 垃圾 / 25% 300~600
+// 开盲盒宝箱：5% 千倍 / 40% 300~600 / 55% 返还300筹码+灵材
 export const openChipBlindBox = (player, item) => {
   if (item.qty <= 0) return { ok: false, reason: '盲盒已售罄' }
   if ((player.props.chips || 0) < item.price) return { ok: false, reason: '筹码不足' }
@@ -174,7 +174,7 @@ export const openChipBlindBox = (player, item) => {
     return { ok: true, jackpot: true, texts }
   }
   player.chipBoxPity = (player.chipBoxPity || 0) + 1
-  if (r < 0.3) {
+  if (r < 0.45) {
     const it = midValueItem()
     if (it.kind === 'treasure') {
       addTreasure(player, it.it.key, 1)
@@ -185,9 +185,12 @@ export const openChipBlindBox = (player, item) => {
     }
     return { ok: true, texts }
   }
+  const back = 300
+  player.props.chips = (player.props.chips || 0) + back
   const m = junkItem()
   const q = 1 + Math.floor(Math.random() * 2)
   player.props[m.key] = (player.props[m.key] || 0) + q
+  texts.push(`返还筹码 ${back}`)
   texts.push(`${m.name} ×${q}`)
   return { ok: true, texts }
 }

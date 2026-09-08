@@ -147,10 +147,10 @@
   const arenaStyle = { '--arena-img': `url(${battleArenaBg})` }
 
   const difficulties = [
-    { key: 'easy', name: '风平浪静', desc: '约你五成五战力，轻松取胜', levelOffset: -9, mult: 0.55 },
-    { key: 'normal', name: '势均力敌', desc: '略逊于你，稳扎稳打可胜', levelOffset: 0, mult: 0.9 },
-    { key: 'hard', name: '凶险莫测', desc: '高出你二成五战力，需小心应对', levelOffset: 9, mult: 1.25 },
-    { key: 'boss', name: '秘境首领', desc: '战力与境界双重压制，掉落丰厚', levelOffset: 18, mult: 1.5, boss: true }
+    { key: 'easy', name: '风平浪静', desc: '约你五成五境界基准，轻松取胜', levelOffset: -9, mult: 0.55 },
+    { key: 'normal', name: '势均力敌', desc: '略逊于境界基准，稳扎稳打可胜', levelOffset: 0, mult: 0.9 },
+    { key: 'hard', name: '凶险莫测', desc: '高出境界基准二成五，需小心应对', levelOffset: 9, mult: 1.25 },
+    { key: 'boss', name: '秘境首领', desc: '境界基准与境界双重压制，掉落丰厚', levelOffset: 18, mult: 1.5, boss: true }
   ]
   const diff = ref('normal')
   const count = ref(1)

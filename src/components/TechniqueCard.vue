@@ -6,9 +6,7 @@
     </div>
     <div class="tmeta">{{ t.familyName }} · {{ t.rarityName }} · {{ t.gradeName }}</div>
     <div class="tstat">{{ passiveText }}</div>
-    <el-tooltip v-if="t.divine" :content="divineTip" placement="top" :hide-after="0" popper-class="divine-tip">
-      <div class="tdivine">神通：{{ t.divine.name }}</div>
-    </el-tooltip>
+    <div v-if="t.divine" class="tdivine" @click="showDivine">神通：{{ t.divine.name }} <span class="tdivine-more">详情</span></div>
 
     <!-- 已习得 -->
     <div v-if="learned" class="tops">
@@ -124,6 +122,14 @@
     return chapter.value ? parts.join('，') : `每重 +${parts.join('，')}`
   })
   const divineTip = computed(() => divineTipForTech(player.value, t.value.id))
+  const showDivine = () => {
+    if (!t.value.divine) return
+    ElMessageBox.alert(divineTip.value.replace(/\n/g, '<br/>'), t.value.divine.name, {
+      dangerouslyUseHTMLString: true,
+      customClass: 'divine-msg',
+      confirmButtonText: '知道了'
+    })
+  }
   // 熟练度 / 章节 的收益预览
   const profPrev = computed(() => proficiencyPreview(player.value, t.value.id))
   const chPrev = computed(() => chapterPreview(player.value, t.value.id))
@@ -184,7 +190,9 @@
   .ttype { font-size: 12px; color: var(--el-text-color-placeholder); }
   .tmeta { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 2px; }
   .tstat { font-size: 12px; color: var(--el-color-success); margin-bottom: 2px; }
-  .tdivine { font-size: 12px; color: var(--el-color-warning); margin-bottom: 4px; }
+  .tdivine { font-size: 12px; color: var(--el-color-warning); margin-bottom: 4px; cursor: pointer; }
+  .tdivine-more { font-size: 11px; color: var(--el-color-primary); margin-left: 4px; }
+  :global(.divine-msg .el-message-box__message) { line-height: 1.7; font-size: 13px; }
   .tops { margin-top: 4px; }
   .tinfo { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 6px; }
   .tbtns { display: flex; flex-wrap: wrap; gap: 6px; }
