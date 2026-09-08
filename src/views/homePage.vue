@@ -1,6 +1,22 @@
 <template>
   <div class="index">
     <div class="money-banner"><MoneyBar compact /></div>
+    <div class="m-dash">
+      <div v-if="guide && guide.title" class="m-guide" @click="doGuide">📌 {{ guide.title }} · <span class="m-guide-desc">{{ guide.desc }}</span></div>
+      <div v-if="!player.isNewbie" class="m-newbie" @click="newbiePack()">🎁 新手大礼包未领取 · 点击开包</div>
+      <div class="m-status">
+        <div class="m-status-row"><span class="m-k">境界</span><span class="m-v">{{ levelNames(player.level) }} <b class="m-realm">{{ currentRealmName }}</b></span></div>
+        <div class="m-status-row"><span class="m-k">修为</span><span class="m-v">{{ calculatePercentageDifference(player.maxCultivation, player.cultivation) }}%</span></div>
+        <div class="m-status-row"><span class="m-k">战力</span><span class="m-v"><AnimatedNumber :value="Math.round(powerScore || 0)" /></span></div>
+        <div class="m-status-row"><span class="m-k">寿元</span><span class="m-v">{{ player.age }}/{{ lifespan }}</span></div>
+      </div>
+      <div class="m-grid-tiles">
+        <button v-for="t in mTiles" :key="t.name" class="m-tile" @click="mTileTap(t)">
+          <span class="m-tile-ico">{{ t.icon }}</span>
+          <span class="m-tile-name">{{ t.name }}</span>
+        </button>
+      </div>
+    </div>
     <div class="left-fabs">
       <div class="left-fab" @click="heroShow = true">⚔️ 豪杰</div>
       <div class="left-fab" @click="equipAllShow = true">📖 图鉴</div>
@@ -1470,6 +1486,46 @@
   const naLv = computed(() => player.value.natalArtifact?.level || 1)
   const wbShow = ref(false)
   const techniqueShow = ref(false)
+  const mTiles = [
+    { icon: '🌀', name: '修炼', route: '/cultivate' },
+    { icon: '⚔️', name: '历战', route: '/battle' },
+    { icon: '🎒', name: '背包', route: '/backpack' },
+    { icon: '📜', name: '任务', route: '/quest' },
+    { icon: '🏯', name: '宗门', route: '/sect' },
+    { icon: '🧧', name: '坊市', route: '/market' },
+    { icon: '🌌', name: '秘境', route: '/realm' },
+    { icon: '🚶', name: '探索', route: '/explore' },
+    { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
+    { icon: '☠️', name: '世界Boss', route: '/boss' },
+    { icon: '💊', name: '炼丹', route: '/alchemy' },
+    { icon: '🔨', name: '炼器', route: '/forge' },
+    { icon: '📃', name: '制符', route: '/talisman' },
+    { icon: '⛩️', name: '阵法', route: '/formation' },
+    { icon: '🏡', name: '洞府', route: '/manor' },
+    { icon: '🏝️', name: '洞天', route: '/map' },
+    { icon: '👥', name: '仙盟', route: '/guild' },
+    { icon: '👤', name: 'NPC', route: '/npc' },
+    { icon: '🎲', name: '休闲', route: '/game' },
+    { icon: '✨', name: '飞升', route: '/ascension' },
+    { icon: '🔄', name: '转生', route: '/rebirthShop' },
+    { icon: '🗺️', name: '大地图', route: '/worldmap' },
+    { icon: '⭐', name: '豪杰', dialog: 'heroShow' },
+    { icon: '📖', name: '图鉴', dialog: 'equipAllShow' },
+    { icon: '🗂️', name: '批量', dialog: 'batch' },
+    { icon: '🏆', name: '赛季', dialog: 'seasonShow' },
+    { icon: '🌍', name: '世界', dialog: 'wbShow' },
+    { icon: '📕', name: '功法', dialog: 'techniqueShow' },
+    { icon: '⚙️', name: '设置', dialog: 'show' },
+    { icon: '💠', name: '本命', dialog: 'naShow' }
+  ]
+  const mTileTap = t => {
+    if (t.route) { router.push(t.route); return }
+    if (t.dialog === 'batch') { sellingEquipmentBox(); return }
+    if (t.dialog) {
+      const map = { heroShow, equipAllShow, seasonShow, wbShow, techniqueShow, show, naShow }
+      if (map[t.dialog]) map[t.dialog].value = true
+    }
+  }
   const lifespan = computed(() => playerLifespan(player.value))
   const remaining = computed(() => Math.max(0, lifespan.value - (player.value.age || 0)))
   const familyName = computed(() => birthFamilyInfo(ensureBirthFamily(player.value))?.name || '无')
@@ -3152,20 +3208,24 @@
     gap: 6px;
   }
 
+  .m-dash { display: none; }
+
   @media only screen and (max-width: 768px) {
-    .money-banner {
-      position: static;
-      margin: 8px auto 0;
-      justify-content: center;
-    }
-    .left-fabs {
-      position: static;
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 8px 4px 0;
-      justify-content: center;
-    }
+    .index-box, .left-fabs { display: none !important; }
+    .money-banner { position: static; margin: 8px auto 0; justify-content: center; }
+    .m-dash { display: block; padding: 0 4px; }
+    .m-guide { font-size: 12px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .m-newbie { font-size: 12px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; cursor: pointer; }
+    .m-status { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--el-fill-color-light); border-radius: 12px; margin-bottom: 8px; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
+    .m-status-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--el-text-color-primary); }
+    .m-k { color: var(--el-text-color-secondary); }
+    .m-v { font-weight: bold; }
+    .m-realm { color: var(--el-color-primary); }
+    .m-grid-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+    .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 2px; min-height: 46px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 12px; cursor: pointer; }
+    .m-tile:active { transform: scale(0.95); background: var(--el-fill-color); }
+    .m-tile-ico { font-size: 19px; line-height: 1; }
+    .m-tile-name { font-size: 11px; color: var(--el-text-color-primary); white-space: nowrap; }
   }
 
   .left-fab {
