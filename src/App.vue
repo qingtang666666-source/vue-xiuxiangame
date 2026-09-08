@@ -54,11 +54,14 @@
       <div v-if="mMenu" class="m-mask" @click.self="mMenu = false">
         <div class="m-sheet">
           <div class="m-sheet-head"><span>全部功能</span><div class="m-sheet-actions"><span class="m-theme">🌗</span><el-switch size="small" v-model="player.dark" /><button class="m-close" @click="mMenu = false">✕</button></div></div>
-          <div class="m-grid">
-            <button class="m-cell" v-for="m in mobileModules" :key="m.name" @click="m.action ? m.action() : go(m.route)">
-              <span class="m-cell-icon">{{ m.icon }}</span>
-              <span class="m-cell-name">{{ m.name }}</span>
-            </button>
+          <div class="m-group" v-for="g in mobileGroups" :key="g.title">
+            <div class="m-group-title">{{ g.title }}</div>
+            <div class="m-grid">
+              <button class="m-cell" v-for="m in g.items" :key="m.name" @click="m.action ? m.action() : go(m.route)">
+                <span class="m-cell-icon">{{ m.icon }}</span>
+                <span class="m-cell-name">{{ m.name }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,29 +145,39 @@
   const isHome = computed(() => ['/', '/home'].includes(route.path))
   const mMenu = ref(false)
   const go = path => { mMenu.value = false; router.push(path) }
-  const mobileModules = [
-    { icon: '📜', name: '任务', route: '/quest' },
-    { icon: '🎒', name: '背包', route: '/backpack' },
-    { icon: '📖', name: '功法', route: '/home' },
-    { icon: '🏡', name: '洞府', route: '/manor' },
-    { icon: '🏯', name: '宗门', route: '/sect' },
-    { icon: '🗺️', name: '大地图', route: '/worldmap' },
-    { icon: '🚶', name: '探索', route: '/explore' },
-    { icon: '🌌', name: '秘境', route: '/realm' },
-    { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
-    { icon: '☠️', name: '世界Boss', route: '/boss' },
-    { icon: '🏝️', name: '洞天', route: '/map' },
-    { icon: '💊', name: '炼丹', route: '/alchemy' },
-    { icon: '🔨', name: '炼器', route: '/forge' },
-    { icon: '📜', name: '制符', route: '/talisman' },
-    { icon: '⛩️', name: '阵法', route: '/formation' },
-    { icon: '👥', name: '仙盟', route: '/guild' },
-    { icon: '👤', name: 'NPC', route: '/npc' },
-    { icon: '🧧', name: '坊市', route: '/market' },
-    { icon: '🎲', name: '休闲', route: '/game' },
-    { icon: '🗿', name: '游商', action: () => openTrav() },
-    { icon: '✨', name: '飞升', route: '/ascension' },
-    { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+  const mobileGroups = [
+    { title: '战斗', items: [
+      { icon: '🚶', name: '探索', route: '/explore' },
+      { icon: '🌌', name: '秘境', route: '/realm' },
+      { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
+      { icon: '☠️', name: '世界Boss', route: '/boss' },
+      { icon: '🗺️', name: '大地图', route: '/worldmap' },
+      { icon: '🏝️', name: '洞天', route: '/map' }
+    ]},
+    { title: '资源', items: [
+      { icon: '🎒', name: '背包', route: '/backpack' },
+      { icon: '🧧', name: '坊市', route: '/market' },
+      { icon: '🗿', name: '游商', action: () => openTrav() }
+    ]},
+    { title: '炼制', items: [
+      { icon: '💊', name: '炼丹', route: '/alchemy' },
+      { icon: '🔨', name: '炼器', route: '/forge' },
+      { icon: '📃', name: '制符', route: '/talisman' },
+      { icon: '⛩️', name: '阵法', route: '/formation' },
+      { icon: '📕', name: '功法', route: '/home' }
+    ]},
+    { title: '势力', items: [
+      { icon: '🏯', name: '宗门', route: '/sect' },
+      { icon: '👥', name: '仙盟', route: '/guild' },
+      { icon: '🏡', name: '洞府', route: '/manor' },
+      { icon: '👤', name: 'NPC', route: '/npc' }
+    ]},
+    { title: '杂项', items: [
+      { icon: '📜', name: '任务', route: '/quest' },
+      { icon: '🎲', name: '休闲', route: '/game' },
+      { icon: '✨', name: '飞升', route: '/ascension' },
+      { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+    ]}
   ]
   watch(() => route.path, () => { mMenu.value = false })
   const questBadge = computed(() => {
@@ -786,7 +799,16 @@
     .m-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      gap: 8px;
+    }
+    .m-group {
+      margin-bottom: 10px;
+    }
+    .m-group-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--el-text-color-secondary);
+      margin: 0 4px 6px;
     }
     .m-cell {
       display: flex;
