@@ -10,11 +10,26 @@
         <div class="m-status-row"><span class="m-k">战力</span><span class="m-v"><AnimatedNumber :value="Math.round(powerScore || 0)" /></span></div>
         <div class="m-status-row"><span class="m-k">寿元</span><span class="m-v">{{ player.age }}/{{ lifespan }}</span></div>
       </div>
-      <div class="m-grid-tiles">
-        <button v-for="t in mTiles" :key="t.name" class="m-tile" @click="mTileTap(t)">
-          <span class="m-tile-ico">{{ t.icon }}</span>
-          <span class="m-tile-name">{{ t.name }}</span>
-        </button>
+      <div class="m-points">
+        <div class="m-points-head">
+          <span class="m-points-title">境界点 <b>{{ player.points }}</b></span>
+          <span class="m-points-tip" @click="gameNotifys({ title: '境界点', message: '每提升一次境界可获得 3 点境界点，用于加到气血 / 攻击 / 防御。' })">怎么获得？</span>
+        </div>
+        <div class="m-points-ops">
+          <button class="m-alloc" :disabled="player.points <= 0" @click="attributePoints('health')">气血 +{{ pointBonus('health') }}</button>
+          <button class="m-alloc" :disabled="player.points <= 0" @click="attributePoints('attack')">攻击 +{{ pointBonus('attack') }}</button>
+          <button class="m-alloc" :disabled="player.points <= 0" @click="attributePoints('defense')">防御 +{{ pointBonus('defense') }}</button>
+          <button v-if="spentPoints > 0" class="m-reset" @click="resetPoints">重置（返还{{ spentPoints }}点）</button>
+        </div>
+      </div>
+      <div class="m-panel">
+        <div class="m-panel-title">面板工具</div>
+        <div class="m-grid-tiles">
+          <button v-for="t in mTiles" :key="t.name" class="m-tile" @click="mTileTap(t)">
+            <span class="m-tile-ico">{{ t.icon }}</span>
+            <span class="m-tile-name">{{ t.name }}</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="left-fabs">
@@ -1487,36 +1502,14 @@
   const wbShow = ref(false)
   const techniqueShow = ref(false)
   const mTiles = [
-    { icon: '🌀', name: '修炼', route: '/cultivate' },
-    { icon: '⚔️', name: '历战', route: '/battle' },
-    { icon: '🎒', name: '背包', route: '/backpack' },
-    { icon: '📜', name: '任务', route: '/quest' },
-    { icon: '🏯', name: '宗门', route: '/sect' },
-    { icon: '🧧', name: '坊市', route: '/market' },
-    { icon: '🌌', name: '秘境', route: '/realm' },
-    { icon: '🚶', name: '探索', route: '/explore' },
-    { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
-    { icon: '☠️', name: '世界Boss', route: '/boss' },
-    { icon: '💊', name: '炼丹', route: '/alchemy' },
-    { icon: '🔨', name: '炼器', route: '/forge' },
-    { icon: '📃', name: '制符', route: '/talisman' },
-    { icon: '⛩️', name: '阵法', route: '/formation' },
-    { icon: '🏡', name: '洞府', route: '/manor' },
-    { icon: '🏝️', name: '洞天', route: '/map' },
-    { icon: '👥', name: '仙盟', route: '/guild' },
-    { icon: '👤', name: 'NPC', route: '/npc' },
-    { icon: '🎲', name: '休闲', route: '/game' },
-    { icon: '✨', name: '飞升', route: '/ascension' },
-    { icon: '🔄', name: '转生', route: '/rebirthShop' },
-    { icon: '🗺️', name: '大地图', route: '/worldmap' },
     { icon: '⭐', name: '豪杰', dialog: 'heroShow' },
     { icon: '📖', name: '图鉴', dialog: 'equipAllShow' },
-    { icon: '🗂️', name: '批量', dialog: 'batch' },
+    { icon: '📕', name: '功法', dialog: 'techniqueShow' },
+    { icon: '💠', name: '本命', dialog: 'naShow' },
     { icon: '🏆', name: '赛季', dialog: 'seasonShow' },
     { icon: '🌍', name: '世界', dialog: 'wbShow' },
-    { icon: '📕', name: '功法', dialog: 'techniqueShow' },
-    { icon: '⚙️', name: '设置', dialog: 'show' },
-    { icon: '💠', name: '本命', dialog: 'naShow' }
+    { icon: '🗂️', name: '批量', dialog: 'batch' },
+    { icon: '⚙️', name: '设置', dialog: 'show' }
   ]
   const mTileTap = t => {
     if (t.route) { router.push(t.route); return }
@@ -3221,7 +3214,7 @@
     .m-k { color: var(--el-text-color-secondary); }
     .m-v { font-weight: bold; }
     .m-realm { color: var(--el-color-primary); }
-    .m-grid-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+    .m-grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
     .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 2px; min-height: 46px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 12px; cursor: pointer; }
     .m-tile:active { transform: scale(0.95); background: var(--el-fill-color); }
     .m-tile-ico { font-size: 19px; line-height: 1; }
@@ -4099,5 +4092,18 @@
   /* 上传按钮 */
   .el-upload {
     width: 100%;
+  }
+
+  @media only screen and (max-width: 768px) {
+    .m-points { background: rgba(255, 180, 60, 0.12); border: 1px solid var(--attr-c-points, #c8871f); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; }
+    .m-points-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 6px; }
+    .m-points-title b { color: var(--attr-c-points, #c8871f); font-size: 16px; margin-left: 2px; }
+    .m-points-tip { font-size: 11px; color: var(--el-text-color-secondary); cursor: pointer; }
+    .m-points-ops { display: flex; flex-wrap: wrap; gap: 6px; }
+    .m-alloc { border: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-light); color: var(--el-text-color-primary); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+    .m-alloc:disabled { opacity: 0.4; cursor: not-allowed; }
+    .m-alloc:active:not(:disabled) { transform: scale(0.96); }
+    .m-reset { margin-left: auto; border: 1px solid var(--el-color-danger); background: transparent; color: var(--el-color-danger); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+    .m-panel-title { font-size: 12px; color: var(--el-text-color-secondary); margin: 2px 2px 6px; }
   }
 </style>
