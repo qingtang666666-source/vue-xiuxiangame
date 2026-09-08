@@ -491,25 +491,30 @@
         </div>
       </div>
       <div class="group-tabs">
-        <el-button
+        <button
           v-for="group in actionGroups"
           :key="group.name"
-          size="small"
-          :type="activeGroup === group.name ? 'primary' : ''"
+          class="group-tab"
+          :class="{ on: activeGroup === group.name }"
           @click="onGroupTab(group)"
         >
           {{ group.name }}
-        </el-button>
+        </button>
       </div>
-      <div class="actions" v-for="group in actionGroups" :key="group.name" v-show="group.name === activeGroup">
-        <div class="action-row">
-          <div class="action" v-for="(action, index) in group.actions" :key="index">
-            <el-button class="item" :type="action.type ? action.type : ''" @click="action.handler">
-              {{ action.text }}
-            </el-button>
-          </div>
+
+      <el-dialog v-model="groupDialog" :title="dialogTitle" width="360px" :lock-scroll="false" append-to-body>
+        <div class="group-dialog-grid">
+          <button
+            v-for="(action, index) in activeGroupActions"
+            :key="index"
+            class="gd-item"
+            @click="pickAction(action)"
+          >
+            <span class="gd-icon">{{ actionIcon(action.text) }}</span>
+            <span class="gd-text">{{ action.text }}</span>
+          </button>
         </div>
-      </div>
+      </el-dialog>
     </div>
     <LevelsBoard :visible="isLevel" @update:visible="isLevel = $event" />
     <el-drawer :title="player.wife?.name" v-model="wifeItemShow" direction="rtl" class="strengthen">
@@ -1471,11 +1476,32 @@
   const familySeen = computed(() => (player.value.birthFamilySeen || []).map(r => `${birthFamilyInfo(r)?.name}(${r})`).join(' / '))
   const guide = computed(() => nextObjective(player.value))
   const activeGroup = ref('修 炼')
+  // 子功能改为弹窗展示
+  const groupDialog = ref(false)
+  const dialogTitle = computed(() => `${(activeGroup.value || '').replace(/\s/g, '')} · 选择功能`)
+  const activeGroupActions = computed(() => {
+    const g = actionGroups.value.find(x => x.name === activeGroup.value)
+    return (g && g.actions) || []
+  })
+  const actionIcon = text => {
+    const map = {
+      '开始修炼': '🧘', '洞府': '🏡', '界域飞升': '✨', '转世商店': '🔄',
+      '炼丹': '💊', '炼器': '🔨', '符箓': '📜', '阵法': '⛩️',
+      '贸易市场': '🏪', '行会商会': '🏛️', '下界坊市': '👥', '宗门': '🏯',
+      '秘境': '🌌', '探索秘境': '🗺️', '挑战无尽塔': '🗼', '世界BOSS': '☠️', '奇遇': '🍀', '随机剧情': '📖'
+    }
+    return map[text] || '▶'
+  }
+  const pickAction = action => {
+    groupDialog.value = false
+    if (typeof action.handler === 'function') action.handler()
+  }
   // 隐藏 GM：连点「修炼」分类页签 5 次进入
   let gmClick = 0
   let gmTimer = null
   const onGroupTab = group => {
     activeGroup.value = group.name
+    groupDialog.value = true
     if (group.name.replace(/\s/g, '') === '修炼') {
       gmClick++
       if (gmTimer) clearTimeout(gmTimer)
@@ -3173,12 +3199,81 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 12px;
     padding: 8px;
     background: rgba(255, 255, 255, 0.4);
     border: 1px solid var(--el-border-color-lighter);
-    border-radius: 10px;
+    border-radius: 999px;
+  }
+
+  .group-tab {
+    flex: 1;
+    min-width: 72px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.16s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .group-tab:hover {
+    border-color: var(--el-color-primary-light-5);
+  }
+
+  .group-tab.on {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 35%, transparent);
+  }
+
+  .group-tab:active {
+    transform: scale(0.97);
+  }
+
+  .group-dialog-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .gd-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px 14px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 12px;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .gd-item:hover {
+    border-color: var(--el-color-primary-light-5);
+    background: var(--el-color-primary-light-9);
+    transform: translateY(-2px);
+  }
+
+  .gd-item:active {
+    transform: scale(0.96);
+  }
+
+  .gd-icon {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .gd-text {
+    font-size: 14px;
+    font-weight: 600;
   }
 
   .quest-tip {
