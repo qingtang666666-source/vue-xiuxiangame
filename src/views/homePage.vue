@@ -3152,6 +3152,22 @@
     gap: 6px;
   }
 
+  @media only screen and (max-width: 768px) {
+    .money-banner {
+      position: static;
+      margin: 8px auto 0;
+      justify-content: center;
+    }
+    .left-fabs {
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 4px 0;
+      justify-content: center;
+    }
+  }
+
   .left-fab {
     background: rgba(255, 255, 255, 0.82);
     border: 1px solid var(--el-border-color);

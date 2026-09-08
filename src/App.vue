@@ -1,5 +1,5 @@
 <template>
-  <div class="game-container-wrapper" draggable="true">
+  <div class="game-container-wrapper">
     <div :class="['game-container', { dark: player.dark, 'full-width': route.meta.fullWidth }]">
       <ActionTimerBar :player="player" />
       <main class="page-viewport">
@@ -46,7 +46,6 @@
       <button class="m-dock-item" :class="{ on: isHome }" @click="go('/home')"><span class="m-ico">🏠</span><span>首页</span></button>
       <button class="m-dock-item" :class="{ on: route.path === '/cultivate' }" @click="go('/cultivate')"><span class="m-ico">🌀</span><span>修炼</span></button>
       <button class="m-dock-item" :class="{ on: route.path === '/battle' }" @click="go('/battle')"><span class="m-ico">⚔️</span><span>历战</span></button>
-      <button class="m-dock-item" :class="{ on: route.path === '/manor' }" @click="go('/manor')"><span class="m-ico">🏡</span><span>洞府</span></button>
       <button class="m-dock-item" :class="{ on: mMenu }" @click="mMenu = true"><span class="m-ico">🗂️</span><span>更多</span><i v-if="questBadge || travNew" class="m-dot"></i></button>
     </nav>
 
@@ -54,7 +53,7 @@
     <transition name="m-fade">
       <div v-if="mMenu" class="m-mask" @click.self="mMenu = false">
         <div class="m-sheet">
-          <div class="m-sheet-head"><span>全部功能</span><button class="m-close" @click="mMenu = false">✕</button></div>
+          <div class="m-sheet-head"><span>全部功能</span><div class="m-sheet-actions"><span class="m-theme">🌗</span><el-switch size="small" v-model="player.dark" /><button class="m-close" @click="mMenu = false">✕</button></div></div>
           <div class="m-grid">
             <button class="m-cell" v-for="m in mobileModules" :key="m.name" @click="m.action ? m.action() : go(m.route)">
               <span class="m-cell-icon">{{ m.icon }}</span>
@@ -147,6 +146,7 @@
     { icon: '📜', name: '任务', route: '/quest' },
     { icon: '🎒', name: '背包', route: '/backpack' },
     { icon: '📖', name: '功法', route: '/home' },
+    { icon: '🏡', name: '洞府', route: '/manor' },
     { icon: '🏯', name: '宗门', route: '/sect' },
     { icon: '🗺️', name: '大地图', route: '/worldmap' },
     { icon: '🚶', name: '探索', route: '/explore' },
@@ -549,12 +549,7 @@
 
   @media only screen and (max-width: 768px) {
     .top-right {
-      position: fixed;
-      top: 6px;
-      right: 10px;
-      left: auto;
-      width: auto;
-      gap: 5px;
+      display: none;
     }
     .top-right .nav-btn {
       display: none;
@@ -679,6 +674,9 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      touch-action: pan-y;
+      overscroll-behavior-y: none;
       -webkit-overflow-scrolling: touch;
       padding-right: 2px;
     }
@@ -710,18 +708,22 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 2px;
       border: none;
       background: none;
       color: var(--el-text-color-secondary);
       font-size: 12px;
       cursor: pointer;
       position: relative;
-      padding: 0;
+      padding: 4px 0;
+      margin: 4px 6px;
+      min-height: 44px;
+      border-radius: 12px;
     }
     .m-dock-item.on {
       color: var(--el-color-primary);
       font-weight: bold;
+      background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
     }
     .m-dock-item .m-ico {
       font-size: 20px;
@@ -763,6 +765,15 @@
       margin-bottom: 10px;
       padding: 0 4px;
       color: var(--el-text-color-primary);
+    }
+    .m-sheet-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .m-theme {
+      font-size: 14px;
+      line-height: 1;
     }
     .m-close {
       border: none;
