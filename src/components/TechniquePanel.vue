@@ -116,7 +116,12 @@
 </script>
 
 <style scoped>
-  .tech-body { display: flex; flex-direction: column; gap: 10px; }
+  .technique-drawer :deep(.el-drawer__body) {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .tech-body { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding-bottom: 8px; }
   .tech-hint { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; }
   .tech-res { display: flex; flex-wrap: wrap; gap: 6px; }
   .tech-set-banner { display: flex; gap: 12px; font-size: 13px; color: var(--el-text-color-primary); background: var(--el-fill-color-light); border-radius: 8px; padding: 8px 12px; }
