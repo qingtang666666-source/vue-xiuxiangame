@@ -24,13 +24,11 @@
       </div>
       <div class="m-buffs" v-if="activeBuffsList.length">
         <div class="m-buffs-title">当前加成</div>
-        <div class="m-buff" v-for="b in activeBuffsList" :key="b.name + b.expireAt">
-          <div class="m-buff-top">
-            <b>{{ b.name }}</b>
-            <span>{{ formatBuffRemaining(b.expireAt, buffNow) }}</span>
-          </div>
-          <div class="m-buff-effect" v-if="buffEffectText(b.effect)">{{ buffEffectText(b.effect) }}</div>
+        <div class="m-buff" v-for="b in visibleBuffs" :key="b.name + b.expireAt">
+          <b>{{ b.name }}</b>
+          <span>{{ formatBuffRemaining(b.expireAt, buffNow) }}</span>
         </div>
+        <div class="m-buff-more" v-if="hiddenBuffCount">另有 {{ hiddenBuffCount }} 个加成，详情见炼丹页</div>
       </div>
       <div class="m-panel" v-for="section in mTileGroups" :key="section.title">
         <div class="m-panel-title">{{ section.title }}</div>
@@ -1622,6 +1620,8 @@
     buffNow.value
     return activeBuffs(player.value)
   })
+  const visibleBuffs = computed(() => activeBuffsList.value.slice(0, 2))
+  const hiddenBuffCount = computed(() => Math.max(0, activeBuffsList.value.length - visibleBuffs.value.length))
   // 临时(丹药/符箓)加成，显示在基础属性后的括号
   const buffBonus = computed(() => {
     const b = buffStats(player.value)
@@ -3223,20 +3223,21 @@
 
   @media only screen and (max-width: 768px) {
     .index-box, .left-fabs { display: none !important; }
-    .money-banner { position: static; margin: 8px auto 0; justify-content: center; }
-    .m-dash { display: block; padding: 0 4px; }
-    .m-guide { font-size: 12px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-    .m-newbie { font-size: 12px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; cursor: pointer; }
-    .m-status { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--el-fill-color-light); border-radius: 12px; margin-bottom: 8px; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
-    .m-status-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--el-text-color-primary); }
+    .index { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+    .money-banner { position: static; margin: 4px auto 0; padding: 4px 10px; font-size: 12px; justify-content: center; }
+    .m-dash { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; padding: 0 4px; overflow: hidden; }
+    .m-guide { font-size: 11px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .m-newbie { font-size: 11px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; }
+    .m-status { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 10px; margin-bottom: 0; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
+    .m-status-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--el-text-color-primary); }
     .m-k { color: var(--el-text-color-secondary); }
     .m-v { font-weight: bold; }
     .m-realm { color: var(--el-color-primary); }
-    .m-grid-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-    .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 2px; min-height: 46px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 12px; cursor: pointer; }
+    .m-grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; min-height: 38px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 10px; cursor: pointer; }
     .m-tile:active { transform: scale(0.95); background: var(--el-fill-color); }
-    .m-tile-ico { font-size: 19px; line-height: 1; }
-    .m-tile-name { font-size: 11px; color: var(--el-text-color-primary); white-space: nowrap; }
+    .m-tile-ico { font-size: 16px; line-height: 1; }
+    .m-tile-name { font-size: 10px; color: var(--el-text-color-primary); white-space: nowrap; }
   }
 
   .left-fab {
@@ -4113,22 +4114,21 @@
   }
 
   @media only screen and (max-width: 768px) {
-    .m-points { background: rgba(255, 180, 60, 0.12); border: 1px solid var(--attr-c-points, #c8871f); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; }
-    .m-points-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 6px; }
-    .m-points-title b { color: var(--attr-c-points, #c8871f); font-size: 16px; margin-left: 2px; }
+    .m-points { background: rgba(255, 180, 60, 0.12); border: 1px solid var(--attr-c-points, #c8871f); border-radius: 10px; padding: 6px 8px; margin-bottom: 0; }
+    .m-points-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; }
+    .m-points-title b { color: var(--attr-c-points, #c8871f); font-size: 14px; margin-left: 2px; }
     .m-points-tip { font-size: 11px; color: var(--el-text-color-secondary); cursor: pointer; }
-    .m-points-ops { display: flex; flex-wrap: wrap; gap: 6px; }
-    .m-alloc { border: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-light); color: var(--el-text-color-primary); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+    .m-points-ops { display: flex; flex-wrap: wrap; gap: 5px; }
+    .m-alloc { border: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-light); color: var(--el-text-color-primary); border-radius: 999px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
     .m-alloc:disabled { opacity: 0.4; cursor: not-allowed; }
     .m-alloc:active:not(:disabled) { transform: scale(0.96); }
-    .m-reset { margin-left: auto; border: 1px solid var(--el-color-danger); background: transparent; color: var(--el-color-danger); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
-    .m-buffs { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; margin-bottom: 8px; background: rgba(230, 162, 60, 0.12); border: 1px solid rgba(230, 162, 60, 0.45); border-radius: 12px; }
-    .m-buffs-title { font-size: 12px; color: var(--el-color-warning); font-weight: bold; }
-    .m-buff { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 8px; }
-    .m-buff-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
-    .m-buff-top b { color: var(--el-text-color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .m-buff-top span { color: var(--el-color-warning); white-space: nowrap; font-weight: bold; }
-    .m-buff-effect { font-size: 11px; color: var(--el-text-color-secondary); }
-    .m-panel-title { font-size: 12px; color: var(--el-text-color-secondary); margin: 2px 2px 6px; }
+    .m-reset { margin-left: auto; border: 1px solid var(--el-color-danger); background: transparent; color: var(--el-color-danger); border-radius: 999px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
+    .m-buffs { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; margin-bottom: 0; background: rgba(230, 162, 60, 0.12); border: 1px solid rgba(230, 162, 60, 0.45); border-radius: 10px; }
+    .m-buffs-title { font-size: 11px; color: var(--el-color-warning); font-weight: bold; }
+    .m-buff { display: flex; justify-content: space-between; gap: 8px; padding: 3px 6px; background: var(--el-fill-color-light); border-radius: 7px; font-size: 11px; }
+    .m-buff b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--el-text-color-primary); }
+    .m-buff span { color: var(--el-color-warning); white-space: nowrap; font-weight: bold; }
+    .m-buff-more { font-size: 10px; color: var(--el-text-color-secondary); }
+    .m-panel-title { font-size: 11px; color: var(--el-text-color-secondary); margin: 0 2px 4px; }
   }
 </style>

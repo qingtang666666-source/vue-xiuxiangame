@@ -2,7 +2,7 @@
   <div class="game-container-wrapper">
     <div :class="['game-container', { dark: player.dark, 'full-width': route.meta.fullWidth }]">
       <ActionTimerBar :player="player" />
-      <main class="page-viewport">
+      <main class="page-viewport" :class="{ 'page-viewport--locked': isHome }">
         <router-view v-slot="{ Component }">
           <keep-alive v-if="route.meta.keepAlive">
             <component :is="Component" :key="key" />
@@ -695,6 +695,9 @@
       overscroll-behavior-y: none;
       -webkit-overflow-scrolling: touch;
       padding-right: 2px;
+    }
+    .page-viewport--locked {
+      overflow-y: hidden;
     }
     .credit {
       display: none;
