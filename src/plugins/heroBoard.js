@@ -5,6 +5,8 @@ import { levelNames, gradeMultiplier } from './game'
 import { gearRealmMult } from './craft'
 
 export const HERO_COUNT = 300
+// 豪杰整体战力系数：按当前装备豪杰基准再削 0.4
+export const HERO_POWER_MULT = 0.4
 
 // 豪杰也按排名穿戴装备：越靠前品阶越高、强化越高。
 // 后期限定“无视境界标准上限”，让顶级豪杰能跟上玩家+30道装的成长。
@@ -111,7 +113,7 @@ export const heroPowerOfRank = rank => {
   const gear = heroEquipmentStats(r)
   const gearScore = gear.dodge * 320 + gear.attack * 4 + (gear.health / 100) * 0.4 + gear.defense * 2.4 + gear.critical * 360
   const sameLevelFactor = 1 - sameLevelPosition(r) * 0.06
-  return Math.floor((realmPower(lv) + gearScore * POWER_SCALE) * heroBoostOfRank(r) * sameLevelFactor)
+  return Math.floor((realmPower(lv) + gearScore * POWER_SCALE) * heroBoostOfRank(r) * sameLevelFactor * HERO_POWER_MULT)
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
