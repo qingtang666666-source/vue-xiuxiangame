@@ -59,7 +59,9 @@
         >
           <div class="unit-name">{{ e.name }} <span class="lv">{{ levelNames(e.level) }}</span></div>
           <div class="bar hp"><span :style="{ width: hpPct(e) + '%' }" /></div>
+          <div class="bar mp"><span :style="{ width: mpPct(e) + '%' }" /></div>
           <div class="unit-sub">气血 {{ Math.max(0, Math.floor(e.hp)) }}/{{ e.maxHp }}</div>
+          <div class="unit-sub">灵力 {{ Math.floor(e.mp) }}/{{ e.maxMp }}</div>
           <div class="def-tag" v-if="e._defending">🛡 防御中</div>
         </div>
       </div>

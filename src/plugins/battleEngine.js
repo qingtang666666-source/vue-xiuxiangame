@@ -26,6 +26,7 @@ const battleMaxMp = abilities => {
   const totalCost = (abilities || []).reduce((sum, ab) => sum + Math.max(0, ab.mpCost || 0), 0)
   return Math.max(150, Math.floor(totalCost * 1.2))
 }
+const enemySkillCost = e => Math.max(20, Math.floor(16 + (e?.level || 1) * 0.22 + ((e?.name || '').includes('首领') ? 8 : 0)))
 
 // —— 把玩家快照成战斗实体 ——
 export const createPlayerEntity = player => {
@@ -121,6 +122,8 @@ export const startBattle = (player, enemies = buildEnemies(player, {}), opts = {
 // 把探索/BOSS 的野怪原数据(health/attack/defense/critical/dodge/level)转成对战实体，供 startBattle 使用
 export const monsterToEntity = (m, idx = 0) => {
   const hp = m?.health || m?.maxHp || 100
+  const elite = (m?.name || '').includes('首领')
+  const maxMp = Math.max(80, Math.floor(70 + (m?.level || 1) * 1.2 + (elite ? 60 : 0)))
   return {
     id: `cm-${idx}`,
     isPlayer: false,
@@ -128,8 +131,8 @@ export const monsterToEntity = (m, idx = 0) => {
     level: m?.level || 1,
     hp,
     maxHp: hp,
-    mp: Math.floor(hp * 0.25),
-    maxMp: Math.floor(hp * 0.25),
+    mp: maxMp,
+    maxMp,
     atk: m?.attack || 10,
     def: m?.defense || 1,
     spd: 8 + (m?.level || 1) * 0.05,
@@ -162,8 +165,9 @@ const addLog = (st, html, cls = '') => {
 }
 
 const actorMpRegen = (st, actor) => {
-  if (!actor.isPlayer) return
-  actor.mp = Math.min(actor.maxMp, actor.mp + Math.max(1, Math.floor(actor.maxMp * MP_REGEN_RATE)))
+  if (!actor.maxMp) return
+  const rate = actor.isPlayer ? MP_REGEN_RATE : 0.05
+  actor.mp = Math.min(actor.maxMp, actor.mp + Math.max(1, Math.floor(actor.maxMp * rate)))
 }
 
 // 世界压制：玩家 vs 敌人按各自境界
@@ -312,11 +316,16 @@ export const enemyTurn = st => {
   }
   if (e._defending) e._defending = false
   const boss = e.name.includes('首领')
+  const skillCost = enemySkillCost(e)
   const r = Math.random()
-  if (boss && r < 0.25 && e.mp > 0) {
-    e.mp -= 15
+  if (boss && r < 0.35 && e.mp >= skillCost) {
+    e.mp -= skillCost
     const hit = dealDamage(st, e, p, 1.7)
     if (!hit.miss) addLog(st, `<span class="dmg">${e.name}施展绝学，对你造成 <b>${hit.dmg}</b> 点伤害${hit.crit ? '（暴击）' : ''}！</span>`, 'dmg')
+  } else if (!boss && r < 0.18 && e.mp >= skillCost) {
+    e.mp -= skillCost
+    const hit = dealDamage(st, e, p, 1.35)
+    if (!hit.miss) addLog(st, `<span class="skill">${e.name}灵力涌动，蓄力一击造成 <b>${hit.dmg}</b> 点伤害${hit.crit ? '（暴击）' : ''}！</span>`, 'skill')
   } else if (r > 0.9) {
     e._defending = true
     addLog(st, `<span class="def">${e.name}摆出守势，蓄势待发。</span>`, 'def')
@@ -440,9 +449,9 @@ export const nextTurn = st => {
   st.phase = res.ent.isPlayer ? 'player' : 'enemy'
   if (res.ent.isPlayer) {
     res.ent._defending = false
-    actorMpRegen(st, res.ent)
     if (res.ent.hpRegen > 0) heal(st, res.ent, res.ent.hpRegen)
   }
+  actorMpRegen(st, res.ent)
 }
 
 const awardVictory = st => {

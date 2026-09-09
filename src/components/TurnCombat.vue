@@ -40,7 +40,8 @@
             <div class="tc-name">{{ foe.name }}<span class="lv">{{ levelNames(foe.level) }}</span></div>
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(foe.maxHp, foe.hp) + '%' }" /></div>
-              <div class="tc-num">血 <b>{{ Math.max(0, Math.floor(foe.hp)) }}</b>/{{ foe.maxHp }}</div>
+              <div class="tc-bar mp"><span :style="{ width: pct(foe.maxMp, foe.mp) + '%' }" /></div>
+              <div class="tc-num">血 <b>{{ Math.max(0, Math.floor(foe.hp)) }}</b>/{{ foe.maxHp }} · 灵 {{ Math.floor(foe.mp) }}/{{ foe.maxMp }}</div>
             </div>
             <div class="tc-pct">{{ pct(foe.maxHp, foe.hp).toFixed(1) }}%</div>
             <div v-if="foe._defending" class="tc-flag">🛡 防御中</div>

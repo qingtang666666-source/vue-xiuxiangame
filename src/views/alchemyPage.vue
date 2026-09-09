@@ -14,7 +14,7 @@
     <div class="buffs" v-if="buffs.length">
       <div class="section-title">当前增益</div>
       <el-tag v-for="b in buffs" :key="b.name + b.expireAt" :type="b.quality" effect="dark" class="buff-tag">
-        {{ b.name }} · {{ b.expireAt ? `剩余 ${remainingMinutes(b.expireAt)} 分钟` : '（永久持续）' }}
+        {{ b.name }} · {{ formatBuffRemaining(b.expireAt, buffNow) }}<span v-if="buffEffectText(b.effect)"> · {{ buffEffectText(b.effect) }}</span>
       </el-tag>
     </div>
 
@@ -103,6 +103,7 @@
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
   import { RECIPES, TIERS, recipeById, canCraft, usePill, activeBuffs } from '@/plugins/alchemy'
+  import { buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { beginAction, actionTask, finishNow } from '@/plugins/actionTimer'
   import { recipeCostList, recipeShortfall } from '@/plugins/alchemy'
   import { pillPrice } from '@/plugins/market'
@@ -142,7 +143,11 @@ import PageNav from '@/components/PageNav.vue'
     ]
   })
 
-  const buffs = computed(() => activeBuffs(player.value))
+  const buffNow = useBuffClock(1000)
+  const buffs = computed(() => {
+    buffNow.value
+    return activeBuffs(player.value)
+  })
 
   const pills = computed(() => {
     return (player.value.pills || [])
@@ -178,8 +183,6 @@ import PageNav from '@/components/PageNav.vue'
   })
 
   const costPct = c => (c.need > 0 ? Math.max(4, Math.min(100, Math.floor((c.have / c.need) * 100))) : 100)
-
-  const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
 
   const craft = r => {
     if (actionTask(player.value)) {
@@ -520,7 +523,7 @@ import PageNav from '@/components/PageNav.vue'
     .alchemy-header { margin-bottom: 6px; }
     .title { font-size: 17px; margin-bottom: 4px; }
     .resources { gap: 4px; }
-    .buffs, .pills, .count { display: none; }
+    .pills, .count { display: none; }
     .section-title { margin: 6px 0 4px; font-size: 14px; }
     .filter-bar { gap: 4px; margin-bottom: 6px; }
     .recipe-card :deep(.el-card__header) { padding: 8px 10px; }

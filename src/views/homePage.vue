@@ -22,6 +22,16 @@
           <button v-if="spentPoints > 0" class="m-reset" @click="resetPoints">重置（返还{{ spentPoints }}点）</button>
         </div>
       </div>
+      <div class="m-buffs" v-if="activeBuffsList.length">
+        <div class="m-buffs-title">当前加成</div>
+        <div class="m-buff" v-for="b in activeBuffsList" :key="b.name + b.expireAt">
+          <div class="m-buff-top">
+            <b>{{ b.name }}</b>
+            <span>{{ formatBuffRemaining(b.expireAt, buffNow) }}</span>
+          </div>
+          <div class="m-buff-effect" v-if="buffEffectText(b.effect)">{{ buffEffectText(b.effect) }}</div>
+        </div>
+      </div>
       <div class="m-panel" v-for="section in mTileGroups" :key="section.title">
         <div class="m-panel-title">{{ section.title }}</div>
         <div class="m-grid-tiles">
@@ -154,7 +164,7 @@
       </div>
       <div class="buff-banner" v-if="activeBuffsList.length">
         <el-tag v-for="b in activeBuffsList" :key="b.name + b.expireAt" type="warning" effect="dark" class="buff-tag">
-          【{{ b.name }}】 {{ b.expireAt ? `剩余 ${remainingMinutes(b.expireAt)} 分钟` : '（永久持续）' }}
+          【{{ b.name }}】 {{ formatBuffRemaining(b.expireAt, buffNow) }}<span v-if="buffEffectText(b.effect)"> · {{ buffEffectText(b.effect) }}</span>
         </el-tag>
       </div>
       <div class="set-banner" v-if="setList.length">
@@ -1405,7 +1415,7 @@
   import { TALENTS, TALENT_QUALITY } from '@/plugins/talent'
   import { manorEnhanceBonus } from '@/plugins/manor'
   import { activeBuffs } from '@/plugins/alchemy'
-  import { buffStats } from '@/plugins/buffs'
+  import { buffStats, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
   import { setRewardStatus, setRewardSummary } from '@/plugins/setReward'
@@ -1607,7 +1617,11 @@
   }
   const actionGroups = ref([])
   // 当前生效的限时增益
-  const activeBuffsList = computed(() => activeBuffs(player.value))
+  const buffNow = useBuffClock(1000)
+  const activeBuffsList = computed(() => {
+    buffNow.value
+    return activeBuffs(player.value)
+  })
   // 临时(丹药/符箓)加成，显示在基础属性后的括号
   const buffBonus = computed(() => {
     const b = buffStats(player.value)
@@ -1618,7 +1632,6 @@
       dodge: ((player.value.dodge || 0) * (b.dodge || 0) * 100).toFixed(1) + '%'
     }
   })
-  const remainingMinutes = expireAt => (expireAt ? Math.max(0, Math.ceil((expireAt - Date.now()) / 60000)) : 0)
   const setList = computed(() => setSummary(player.value))
   // 集齐全套奖励：进度与清单（同阶四件 / 同名套装四件）
   const rewardTipShow = ref(false)
@@ -4109,6 +4122,13 @@
     .m-alloc:disabled { opacity: 0.4; cursor: not-allowed; }
     .m-alloc:active:not(:disabled) { transform: scale(0.96); }
     .m-reset { margin-left: auto; border: 1px solid var(--el-color-danger); background: transparent; color: var(--el-color-danger); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+    .m-buffs { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; margin-bottom: 8px; background: rgba(230, 162, 60, 0.12); border: 1px solid rgba(230, 162, 60, 0.45); border-radius: 12px; }
+    .m-buffs-title { font-size: 12px; color: var(--el-color-warning); font-weight: bold; }
+    .m-buff { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 8px; }
+    .m-buff-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .m-buff-top b { color: var(--el-text-color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .m-buff-top span { color: var(--el-color-warning); white-space: nowrap; font-weight: bold; }
+    .m-buff-effect { font-size: 11px; color: var(--el-text-color-secondary); }
     .m-panel-title { font-size: 12px; color: var(--el-text-color-secondary); margin: 2px 2px 6px; }
   }
 </style>

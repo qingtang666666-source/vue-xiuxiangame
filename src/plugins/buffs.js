@@ -5,6 +5,52 @@
 //   战斗类：attack(攻击+%) / defense(防御+%) / critical(暴击+百分点) / dodge(闪避+百分点)
 //   其他：effectBoost(特效触发+百分点)
 
+import { onMounted, onUnmounted, ref } from 'vue'
+
+const pad2 = n => String(n).padStart(2, '0')
+
+// 剩余时间统一格式：永久 / 已结束 / 1小时05分 / 29分08秒
+export const formatBuffRemaining = (expireAt, now = Date.now()) => {
+  if (!expireAt) return '永久'
+  const left = expireAt - now
+  if (left <= 0) return '已结束'
+  const total = Math.ceil(left / 1000)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  return h > 0 ? `${h}小时${pad2(m)}分` : `${m}分${pad2(s)}秒`
+}
+
+// 每秒刷新一次的时钟，供各页面显示实时剩余时间
+export const useBuffClock = (interval = 1000) => {
+  const now = ref(Date.now())
+  let timer = null
+  onMounted(() => {
+    timer = setInterval(() => {
+      now.value = Date.now()
+    }, interval)
+  })
+  onUnmounted(() => {
+    if (timer) clearInterval(timer)
+  })
+  return now
+}
+
+// 把 effect 对象转成可读加成，用于剩余时间旁展示
+export const buffEffectText = effect => {
+  const e = effect || {}
+  const parts = []
+  if (e.cultivation) parts.push(`修炼 +${Math.round(e.cultivation * 100)}%`)
+  if (e.moneyMult) parts.push(`灵石 +${Math.round(e.moneyMult * 100)}%`)
+  if (e.offlineMult) parts.push(`离线 +${Math.round(e.offlineMult * 100)}%`)
+  if (e.attack) parts.push(`攻击 +${Math.round(e.attack * 100)}%`)
+  if (e.defense) parts.push(`防御 +${Math.round(e.defense * 100)}%`)
+  if (e.critical) parts.push(`暴击 +${(e.critical * 100).toFixed(1)}%`)
+  if (e.dodge) parts.push(`闪避 +${(e.dodge * 100).toFixed(1)}%`)
+  if (e.effectBoost) parts.push(`特效 +${(e.effectBoost * 100).toFixed(1)}%`)
+  return parts.join(' · ')
+}
+
 export const buffStats = player => {
   const now = Date.now()
   const acc = { cultivation: 0, moneyMult: 0, offlineMult: 0, attack: 0, defense: 0, critical: 0, dodge: 0, effectBoost: 0 }

@@ -75,6 +75,7 @@
               <tag :type="p.recipe.quality" @click="showPillInfo(p)">{{ p.recipe.name }}</tag>
             </el-tooltip>
             <div class="sub">×{{ p.count }} · 价值 {{ formatNumberToChineseUnit(pillPrice(p.recipe)) }} 灵石</div>
+            <div class="buff-left" v-if="buffLeftText(p.recipe.name)">{{ buffLeftText(p.recipe.name) }}</div>
             <div class="ops">
               <el-button size="small" type="primary" @click="takePill(p)">服用</el-button>
               <el-button size="small" type="success" plain @click="useBatch(p)">批量服用</el-button>
@@ -93,6 +94,7 @@
               <tag :type="t.recipe.quality" @click="showTalInfo(t)">{{ t.recipe.name }}</tag>
             </el-tooltip>
             <div class="sub">×{{ t.count }} · 价值 {{ formatNumberToChineseUnit(talismanPrice(t.recipe)) }} 灵石</div>
+            <div class="buff-left" v-if="buffLeftText(t.recipe.name)">{{ buffLeftText(t.recipe.name) }}</div>
             <div class="ops">
               <el-button size="small" type="primary" @click="useTal(t)">使用</el-button>
               <el-button size="small" type="success" plain @click="useTalBatch(t)">批量使用</el-button>
@@ -142,6 +144,7 @@
   import { equipSellPrice, itemDb } from '@/plugins/market'
   import { recipeById, usePill as usePillFn, usePillBatch } from '@/plugins/alchemy'
   import { talismanById, useTalisman as useTalismanFn, useTalismanBatch } from '@/plugins/talisman'
+  import { activeBuffs, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { pillPrice, talismanPrice, quickSell, quickSellUnit, quickSellEquip, equipQuickSellPrice } from '@/plugins/market'
   import tag from '@/components/tag.vue'
   import itemInfo from '@/components/itemInfo.vue'
@@ -157,6 +160,19 @@
   const tab = ref('equip')
   const infoShow = ref(false)
   const infoData = ref(null)
+  const buffNow = useBuffClock(1000)
+  const activeBuffMap = computed(() => {
+    buffNow.value
+    const map = {}
+    activeBuffs(player.value).forEach(b => {
+      map[b.name] = b
+    })
+    return map
+  })
+  const buffLeftText = name => {
+    const b = activeBuffMap.value[name]
+    return b ? `生效中 · 剩余 ${formatBuffRemaining(b.expireAt, buffNow.value)}${buffEffectText(b.effect) ? ` · ${buffEffectText(b.effect)}` : ''}` : ''
+  }
 
   const props = computed(() => {
     const obj = player.value.props || {}
@@ -316,8 +332,8 @@
   }
   const eqTip = it => `【${it.name}】${it.gradeName || ''}${it.level || ''}级\n攻击 ${Math.round(it.attack || 0)} · 防御 ${Math.round(it.defense || 0)} · 气血 ${Math.round(it.health || 0)} · 暴击 ${((it.critical || 0) * 100).toFixed(1)}%\n价值 ${equipSellPrice(it)} 灵石`
   const propTip = p => `${propItemNames[p.key]?.name || p.key}\n${propItemNames[p.key]?.desc || ''}\n价值 ${propValue(p)} 灵石`
-  const pillTip = p => `【${p.recipe.name}】${p.recipe.effectText || ''}\n价值 ${pillPrice(p.recipe)} 灵石`
-  const talTip = t => `【${t.recipe.name}】${t.recipe.effectText || ''}\n价值 ${talismanPrice(t.recipe)} 灵石`
+  const pillTip = p => `【${p.recipe.name}】${p.recipe.effectText || ''}${buffLeftText(p.recipe.name) ? `\n${buffLeftText(p.recipe.name)}` : ''}\n价值 ${pillPrice(p.recipe)} 灵石`
+  const talTip = t => `【${t.recipe.name}】${t.recipe.effectText || ''}${buffLeftText(t.recipe.name) ? `\n${buffLeftText(t.recipe.name)}` : ''}\n价值 ${talismanPrice(t.recipe)} 灵石`
 
   const valueOf = it => {
     if (it.type && it.quality && it.score != null) return equipSellPrice(it)
@@ -413,12 +429,12 @@
   const { page: wifePage, total: wifeTotal, pageItems: wifeItems, setPage: setWifePage } = usePager(wifeList, bpSize)
   const takePill = p => {
     const r = usePillFn(player.value, p.id)
-    if (r.ok) gameNotifys({ title: '服用', message: `服下【${p.recipe.name}】${r.reason || ''}`, type: 'success' })
+    if (r.ok) gameNotifys({ title: '服用', message: `服下【${p.recipe.name}】${r.buff ? `，${buffLeftText(p.recipe.name)}` : r.reason || ''}`, type: 'success' })
     else gameNotifys({ title: '服用', message: r.reason, type: 'error' })
   }
   const useTal = t => {
     const r = useTalismanFn(player.value, t.id)
-    if (r.ok) gameNotifys({ title: '使用', message: `使用【${t.recipe.name}】，${t.recipe.effectText || ''}`, type: 'success' })
+    if (r.ok) gameNotifys({ title: '使用', message: `使用【${t.recipe.name}】，${t.recipe.effectText || ''}${r.buff ? ` · ${buffLeftText(t.recipe.name)}` : ''}`, type: 'success' })
     else gameNotifys({ title: '使用', message: r.reason, type: 'error' })
   }
 
@@ -435,7 +451,7 @@
       .then(({ value }) => {
         const n = Math.max(1, Math.min(cnt, parseInt(value) || 1))
         const r = useTalismanBatch(player.value, t.id, n)
-        if (r.ok) gameNotifys({ title: '批量使用', message: `使用了【${t.recipe.name}】×${r.used}${r.buff ? '，时长已延长' : ''}`, type: 'success' })
+        if (r.ok) gameNotifys({ title: '批量使用', message: `使用了【${t.recipe.name}】×${r.used}${r.buff ? `，${buffLeftText(t.recipe.name)}` : ''}`, type: 'success' })
         else gameNotifys({ title: '批量使用', message: r.reason, type: 'warning' })
       })
       .catch(() => {})
@@ -486,18 +502,22 @@
       .then(({ value }) => {
         const n = Math.max(1, Math.min(cnt, parseInt(value) || 1))
         const r = usePillBatch(player.value, p.id, n)
-        if (r.ok) gameNotifys({ title: '批量服用', message: `服下【${p.recipe.name}】×${n}`, type: 'success' })
+        if (r.ok) gameNotifys({ title: '批量服用', message: `服下【${p.recipe.name}】×${n}${r.buff ? `，${buffLeftText(p.recipe.name)}` : ''}`, type: 'success' })
         else gameNotifys({ title: '批量服用', message: r.reason, type: 'warning' })
       })
       .catch(() => {})
   }
 
   const showPillInfo = p => {
-    infoData.value = { title: p.recipe.name, rows: [{ k: '品阶', v: p.recipe.tierName }, { k: '类型', v: p.recipe.category === 'buff' ? '限时' : '永久' }, { k: '库存', v: p.count }], effects: [p.recipe.effectText] }
+    const rows = [{ k: '品阶', v: p.recipe.tierName }, { k: '类型', v: p.recipe.category === 'buff' ? '限时' : '永久' }, { k: '库存', v: p.count }]
+    if (buffLeftText(p.recipe.name)) rows.push({ k: '当前加成', v: buffLeftText(p.recipe.name) })
+    infoData.value = { title: p.recipe.name, rows, effects: [p.recipe.effectText] }
     infoShow.value = true
   }
   const showTalInfo = t => {
-    infoData.value = { title: t.recipe.name, rows: [{ k: '品阶', v: t.recipe.tierName }, { k: '库存', v: t.count }], effects: [t.recipe.effectText] }
+    const rows = [{ k: '品阶', v: t.recipe.tierName }, { k: '库存', v: t.count }]
+    if (buffLeftText(t.recipe.name)) rows.push({ k: '当前加成', v: buffLeftText(t.recipe.name) })
+    infoData.value = { title: t.recipe.name, rows, effects: [t.recipe.effectText] }
     infoShow.value = true
   }
 </script>
@@ -512,6 +532,7 @@
   .grid { display: flex; flex-wrap: wrap; gap: 8px; }
   .cell { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 4px; background: var(--el-fill-color-light); }
   .sub { font-size: 12px; color: var(--el-text-color-secondary); }
+  .buff-left { font-size: 11px; color: var(--el-color-success); line-height: 1.5; }
   .v { font-size: 12px; color: var(--el-color-warning); }
   .ops { display: flex; gap: 4px; }
   .pname { font-weight: bold; }
