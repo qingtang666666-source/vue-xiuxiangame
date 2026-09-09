@@ -107,17 +107,29 @@
         <PageNav :page="talPage" :total="talTotal" @change="setTalPage" />
       </el-tab-pane>
       <el-tab-pane label="灵宠" name="pet">
+        <div class="pet-active" v-if="player.pet?.name">
+          <span>🐾 出战中：<b>{{ player.pet.name }}</b></span>
+          <div class="pet-active-ops">
+            <el-button size="small" type="success" plain @click="openPetTrain(player.pet)">培养</el-button>
+            <el-button size="small" type="warning" plain @click="retractPet">收回</el-button>
+          </div>
+        </div>
         <div class="grid">
-          <div class="cell" v-for="(p, i) in petItems" :key="i">
-            <tag :type="petQualityOf(p).color" @click="showPetInfo(p)">{{ p.name }}</tag>
+          <div class="cell" v-for="p in petItems" :key="p.id">
+            <tag :type="petQualityOf(p).color" @click="showPetInfo(p)">
+              {{ p.name }}
+              <span v-if="isActivePet(p)" class="pet-active-badge">出战中</span>
+            </tag>
             <div class="sub">{{ petRoleOf(p).icon }} {{ petRoleOf(p).name }} · {{ levelNames(p.level) }}{{ p.reincarnation ? ` · ${p.reincarnation}转` : '' }}</div>
             <div class="v">战力 {{ petPowerScore(p).toLocaleString('zh-CN') }} · 悟性 {{ p.rootBone }}</div>
             <div class="ops">
-              <el-button size="small" type="primary" @click="carryPet(p)">出战</el-button>
-              <el-button size="small" type="danger" plain @click="releasePetItem(p)">放生</el-button>
+              <el-button size="small" type="success" @click="openPetTrain(p)">培养</el-button>
+              <el-button v-if="!isActivePet(p)" size="small" type="primary" @click="carryPet(p)">出战</el-button>
+              <el-button v-else size="small" type="warning" plain @click="retractPet">收回</el-button>
+              <el-button v-if="!isActivePet(p)" size="small" type="danger" plain @click="releasePetItem(p)">放生</el-button>
             </div>
           </div>
-          <el-empty v-if="!player.pets.length" description="暂无灵宠" :image-size="60" />
+          <el-empty v-if="!petTotal" description="暂无灵宠" :image-size="60" />
         </div>
         <PageNav :page="petPage" :total="petTotal" @change="setPetPage" />
       </el-tab-pane>
@@ -133,17 +145,33 @@
       </el-tab-pane>
     </el-tabs>
 
+    <el-dialog v-model="petTrainShow" :title="`灵宠培养 · ${petTrain.name || ''}`" width="min(420px, 94vw)">
+      <div class="pet-train">
+        <div class="pet-train-row"><span>品质</span><b>{{ petQualityOf(petTrain).name }}</b></div>
+        <div class="pet-train-row"><span>境界</span><b>{{ levelNames(petTrain.level) }}（{{ petTrain.reincarnation || 0 }}转）</b></div>
+        <div class="pet-train-row"><span>悟性</span><b>{{ petTrain.rootBone }}</b></div>
+        <div class="pet-train-row"><span>灵宠战力</span><b>{{ petPowerScore(petTrain).toLocaleString('zh-CN') }}</b></div>
+        <div class="pet-train-row"><span>培养丹</span><b>{{ formatNumberToChineseUnit(player.props.cultivateDan || 0) }}</b></div>
+        <div class="pet-train-row"><span>悟性丹</span><b>{{ formatNumberToChineseUnit(player.props.rootBone || 0) }}</b></div>
+        <div class="pet-train-row"><span>本次培养消耗</span><b>{{ petTrainCost }} 培养丹</b></div>
+        <div class="pet-train-row"><span>提升悟性消耗</span><b>{{ petTrainRootCost }} 悟性丹</b></div>
+        <el-checkbox v-model="petTrainRoot">提升悟性（消耗悟性丹）</el-checkbox>
+        <el-checkbox v-model="petTrainReincarnate" :disabled="petTrain.level < maxLv">灵宠转生（需人物转生次数更高）</el-checkbox>
+        <el-button type="primary" class="pet-train-btn" @click="doPetTrain">开始培养</el-button>
+      </div>
+    </el-dialog>
+
     <div class="hint">穿戴 / 强化 / 技能 等操作请回主页。主页左上角「🎒 背包」即可返回这里。</div>
     <item-info :visible="infoShow" :data="infoData" @update:visible="infoShow = $event" />
   </div>
 </template>
 
 <script setup>
-  import { ref, computed } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { ref, computed, watch } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
   import { ElMessageBox } from 'element-plus'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit, levelNames, levels, genre, gameNotifys } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames, levels, genre, gameNotifys, maxLv } from '@/plugins/game'
   import { propItemNames } from '@/plugins/game'
   import equip from '@/plugins/equip'
   import { equipSellPrice, itemDb } from '@/plugins/market'
@@ -151,7 +179,19 @@
   import { talismanById, useTalisman as useTalismanFn, useTalismanBatch } from '@/plugins/talisman'
   import { activeBuffs, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { sourceOfEquip, sourceOfPill, sourceOfProp, sourceOfTalisman } from '@/plugins/itemSource'
-  import { ensurePet, petQualityOf, petRoleOf, petPowerScore, setActivePet, releasePet } from '@/plugins/petSystem'
+  import {
+    ensurePet,
+    petQualityOf,
+    petRoleOf,
+    petPowerScore,
+    petUpgradeCost,
+    petRootCost,
+    upgradePet,
+    upgradePetRoot,
+    setActivePet,
+    retractActivePet,
+    releasePet
+  } from '@/plugins/petSystem'
   import { pillPrice, talismanPrice, quickSell, quickSellUnit, quickSellEquip, equipQuickSellPrice } from '@/plugins/market'
   import tag from '@/components/tag.vue'
   import itemInfo from '@/components/itemInfo.vue'
@@ -163,10 +203,22 @@
 
   const store = useMainStore()
   const router = useRouter()
+  const route = useRoute()
   const player = ref(store.player)
   const tab = ref('equip')
+  watch(
+    () => route.query.tab,
+    value => {
+      if (value === 'pet') tab.value = 'pet'
+    },
+    { immediate: true }
+  )
   const infoShow = ref(false)
   const infoData = ref(null)
+  const petTrainShow = ref(false)
+  const petTrain = ref({})
+  const petTrainRoot = ref(false)
+  const petTrainReincarnate = ref(false)
   const buffNow = useBuffClock(1000)
   const activeBuffMap = computed(() => {
     buffNow.value
@@ -427,7 +479,15 @@
   const pillList = computed(() => (player.value.pills || []).map(p => ({ ...p, recipe: recipeById(p.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
   const talList = computed(() => (player.value.talismans || []).map(x => ({ ...x, recipe: talismanById(x.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
   const invList = computed(() => player.value.inventory || [])
-  const petList = computed(() => (player.value.pets || []).map(p => ensurePet(p)).filter(Boolean))
+  const activePet = computed(() => (player.value.pet?.name ? ensurePet(player.value.pet) : null))
+  const petList = computed(() => {
+    const list = (player.value.pets || []).map(p => ensurePet(p)).filter(Boolean)
+    const active = activePet.value
+    return active ? [active, ...list.filter(p => p.id !== active.id)] : list
+  })
+  const petTrainCost = computed(() => petUpgradeCost(petTrain.value, { reincarnate: petTrainReincarnate.value }))
+  const petTrainRootCost = computed(() => petRootCost(petTrain.value))
+  const isActivePet = p => !!p && player.value.pet?.id === p.id
   const wifeList = computed(() => player.value.wifes || [])
   const bpSize = useViewportPageSize(100, 4)
   const { page: invPage, total: invTotal, pageItems: invItems, setPage: setInvPage } = usePager(invList, bpSize)
@@ -464,6 +524,42 @@
     const r = setActivePet(player.value, p.id)
     if (r.ok) gameNotifys({ title: '灵宠出战', message: `【${r.pet.name}】已出战`, type: 'success' })
     else gameNotifys({ title: '灵宠出战', message: r.reason, type: 'warning' })
+  }
+
+  const retractPet = () => {
+    const r = retractActivePet(player.value)
+    if (r.ok) gameNotifys({ title: '灵宠收回', message: `【${r.pet.name}】已收回`, type: 'info' })
+    else gameNotifys({ title: '灵宠收回', message: r.reason, type: 'warning' })
+  }
+
+  const openPetTrain = p => {
+    const pet = ensurePet(p)
+    if (!pet) return
+    petTrain.value = pet
+    petTrainRoot.value = false
+    petTrainReincarnate.value = false
+    petTrainShow.value = true
+  }
+
+  const doPetTrain = () => {
+    const pet = ensurePet(petTrain.value)
+    if (!pet) return
+    const wasRoot = petTrainRoot.value
+    const result = wasRoot
+      ? upgradePetRoot(player.value, pet)
+      : upgradePet(player.value, pet, { reincarnate: petTrainReincarnate.value })
+    if (!result.ok) return gameNotifys({ title: '灵宠培养', message: result.reason, type: 'warning' })
+    if (wasRoot) petTrainRoot.value = false
+    if (petTrainReincarnate.value) petTrainReincarnate.value = false
+    gameNotifys({
+      title: '灵宠培养',
+      message: wasRoot
+        ? `【${pet.name}】悟性提升至 ${pet.rootBone}`
+        : result.reincarnate
+          ? `【${pet.name}】转生成功，境界已重置`
+          : `【${pet.name}】培养成功，当前 ${levelNames(pet.level)}`,
+      type: 'success'
+    })
   }
 
   const releasePetItem = p => {
@@ -583,6 +679,13 @@
   .buff-left { font-size: 11px; color: var(--el-color-success); line-height: 1.5; }
   .v { font-size: 12px; color: var(--el-color-warning); }
   .ops { display: flex; gap: 4px; }
+  .pet-active { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 10px; margin-bottom: 8px; border-radius: 8px; background: var(--el-color-success-light-9); border: 1px solid var(--el-color-success-light-7); font-size: 13px; }
+  .pet-active-ops { display: flex; gap: 6px; }
+  .pet-active-badge { margin-left: 4px; font-size: 10px; color: var(--el-color-success); }
+  .pet-train { display: flex; flex-direction: column; gap: 8px; }
+  .pet-train-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+  .pet-train-row > span { color: var(--el-text-color-secondary); }
+  .pet-train-btn { width: 100%; margin-top: 4px; }
   .pname { font-weight: bold; }
   .clickable { cursor: pointer; color: var(--el-color-primary); }
   .hint { margin-top: 14px; font-size: 12px; color: var(--el-text-color-secondary); }
@@ -600,6 +703,9 @@
     .grid { gap: 6px; }
     .cell { padding: 6px 8px; gap: 3px; }
     .cell .ops { flex-wrap: wrap; }
+    .pet-active { font-size: 12px; padding: 6px 8px; }
+    .pet-active-ops { width: 100%; }
+    .pet-active-ops .el-button { flex: 1; }
     .batch-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
   }
 </style>

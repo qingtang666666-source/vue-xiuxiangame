@@ -163,6 +163,7 @@
     { title: '资源', items: [
       { icon: '🎒', name: '背包', route: '/backpack' },
       { icon: '🎰', name: '灵宠抽奖', route: '/petGacha' },
+      { icon: '🐾', name: '灵宠培养', route: '/backpack?tab=pet' },
       { icon: '🏪', name: '贸易市场', route: '/market' },
       { icon: '👥', name: '下界坊市', route: '/npc' },
       { icon: '🗿', name: '游商', action: () => openTrav() }

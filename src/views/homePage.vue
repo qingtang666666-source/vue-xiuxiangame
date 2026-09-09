@@ -9,6 +9,30 @@
         <div class="m-status-row"><span class="m-k">修为</span><span class="m-v">{{ calculatePercentageDifference(player.maxCultivation, player.cultivation) }}%</span></div>
         <div class="m-status-row"><span class="m-k">战力</span><span class="m-v"><AnimatedNumber :value="Math.round(powerScore || 0)" /></span></div>
         <div class="m-status-row"><span class="m-k">寿元</span><span class="m-v">{{ player.age }}/{{ lifespan }}</span></div>
+        <div class="m-status-row" title="当前气血 / 气血上限">
+          <span class="m-k">气血</span>
+          <span class="m-v">{{ compactNumber(player.health) }}/{{ compactNumber(effStats.maxHealth) }}</span>
+        </div>
+        <div class="m-status-row" title="攻击">
+          <span class="m-k">攻击</span>
+          <span class="m-v">{{ compactNumber(effStats.attack) }}</span>
+        </div>
+        <div class="m-status-row" title="防御">
+          <span class="m-k">防御</span>
+          <span class="m-v">{{ compactNumber(effStats.defense) }}</span>
+        </div>
+        <div class="m-status-row" title="暴击率">
+          <span class="m-k">暴击</span>
+          <span class="m-v">{{ (Math.min(0.8, effStats.critical || 0) * 100).toFixed(1) }}%</span>
+        </div>
+        <div class="m-status-row" title="闪避率">
+          <span class="m-k">闪避</span>
+          <span class="m-v">{{ (Math.min(0.8, effStats.dodge || 0) * 100).toFixed(1) }}%</span>
+        </div>
+        <div class="m-status-row m-pet-row" @click="router.push('/backpack?tab=pet')">
+          <span class="m-k">灵宠</span>
+          <span class="m-v">{{ player.pet?.name || '未出战' }} <span class="m-link">培养/更换</span></span>
+        </div>
       </div>
       <div class="m-points">
         <div class="m-points-head">
@@ -137,6 +161,9 @@
           </div>
           <div class="tag attribute attr-critical">
             暴击率: {{ (Math.min(0.8, effStats.critical || 0) * 100).toFixed(2) }}%
+          </div>
+          <div class="tag attribute attr-pet" @click="router.push('/backpack?tab=pet')">
+            灵宠: {{ player.pet?.name || '未出战' }} <span class="attr-temp">培养/更换</span>
           </div>
           <div class="tag attribute attr-score">总体实力: <b><AnimatedNumber :value="Math.round(powerScore || 0)" /></b></div>
           <div
@@ -1541,6 +1568,14 @@
   // 有效属性（含装备/功法/阵法/增益等），暴击/闪避封顶 80%
   const effStats = computed(() => effectivePlayerStats(player.value))
   const powerScore = computed(() => playerPowerScore(player.value))
+  const compactNumber = value => {
+    const n = Number(value) || 0
+    const abs = Math.abs(n)
+    const unit = abs >= 1e12 ? 1e12 : abs >= 1e8 ? 1e8 : abs >= 1e4 ? 1e4 : 1
+    if (unit === 1) return Math.floor(n).toLocaleString('zh-CN')
+    const text = (n / unit).toFixed(1).replace(/\.0$/, '')
+    return `${text}${unit === 1e12 ? '万亿' : unit === 1e8 ? '亿' : '万'}`
+  }
   const calendar = computed(() => gameDate(player.value))
   const fateData = computed(() => fateInfo(player.value))
   const codexStat = computed(() => codexStats(player.value))
@@ -1562,6 +1597,7 @@
   const mTiles = [
     { icon: '⭐', name: '豪杰', dialog: 'heroShow', group: '成长收藏' },
     { icon: '📖', name: '图鉴', dialog: 'equipAllShow', group: '成长收藏' },
+    { icon: '🐾', name: '灵宠培养', route: '/backpack?tab=pet', group: '成长收藏' },
     { icon: '📕', name: '功法', dialog: 'techniqueShow', group: '成长收藏' },
     { icon: '💠', name: '本命', dialog: 'naShow', group: '成长收藏' },
     { icon: '🏆', name: '赛季', dialog: 'seasonShow', group: '成长收藏' },
@@ -3176,10 +3212,12 @@
     .m-dash { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; padding: 0 4px; overflow: hidden; }
     .m-guide { font-size: 11px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
     .m-newbie { font-size: 11px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; }
-    .m-status { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 10px; margin-bottom: 0; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
-    .m-status-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--el-text-color-primary); }
-    .m-k { color: var(--el-text-color-secondary); }
-    .m-v { font-weight: bold; }
+    .m-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px; background: var(--el-fill-color-light); border-radius: 10px; margin-bottom: 0; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
+    .m-status-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; padding: 3px 5px; border-radius: 6px; background: var(--el-bg-color); font-size: 11px; color: var(--el-text-color-primary); }
+    .m-status-row.m-pet-row { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; cursor: pointer; }
+    .m-k { color: var(--el-text-color-secondary); font-size: 10px; }
+    .m-v { font-weight: bold; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .m-link { color: var(--el-color-primary); font-size: 10px; font-weight: normal; margin-left: 4px; }
     .m-realm { color: var(--el-color-primary); }
     .m-grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
     .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; min-height: 38px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 10px; cursor: pointer; }
@@ -3382,6 +3420,7 @@
   .attr-defense, .attr-realm { background: rgba(64, 158, 255, 0.15); color: var(--attr-c-defense); border-color: var(--attr-c-defense); }
   .attr-dodge { background: rgba(0, 176, 176, 0.14); color: var(--attr-c-dodge); border-color: var(--attr-c-dodge); }
   .attr-critical, .attr-collect, .attr-fate { background: rgba(178, 109, 240, 0.13); color: var(--attr-c-critical); border-color: var(--attr-c-critical); }
+  .attr-pet { background: rgba(230, 126, 34, 0.13); color: #d97706; border-color: #f0a04b; cursor: pointer; }
   .attr-score { background: linear-gradient(135deg, rgba(230, 178, 60, 0.2), rgba(255, 200, 120, 0.12)); color: var(--attr-c-score); border-color: var(--attr-c-score); }
   .attr-name { background: rgba(120, 130, 150, 0.13); color: var(--attr-c-name); border-color: var(--attr-c-name); }
   .attr-codex { background: rgba(0, 160, 160, 0.13); color: var(--attr-c-codex); border-color: var(--attr-c-codex); }
