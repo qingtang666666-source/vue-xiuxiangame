@@ -6,6 +6,8 @@ import { scoreTierBoost } from './equip.js'
 import { applyPlayerAttribute } from './playerAttr.js'
 import { gradeNames } from './game.js'
 
+export const REFINE_MAX = 20
+
 // 炼器消耗（炼器石）
 export const enhanceCost = (player, item, { protect = false, increase = false } = {}) => {
   const baseCost = item.level * 5
@@ -22,6 +24,23 @@ export const enhanceSuccessRate = (player, item, { increase = false } = {}) => {
   let c = s <= 10 ? 0.95 - s * 0.043 : 0.5 * Math.pow(0.7, s - 10)
   c += successBonus + (increase ? 0.08 : 0)
   return Math.max(0.0006, Math.min(0.99, c))
+}
+
+// 精炼消耗：同样消耗炼器石，等级越高越贵
+export const refineCost = (player, item, { protect = false, increase = false } = {}) => {
+  const baseCost = (item.level || 1) * 7
+  const incrementPerLevel = (item.refine || 0) * 70
+  const { costDiscount } = manorEnhanceBonus(player)
+  return Math.max(1, Math.floor((baseCost + incrementPerLevel) * (protect ? 6 : 1) * (increase ? 4 : 1) * (1 - costDiscount)))
+}
+
+// 精炼成功率：0~10 从 90% 缓降，10 以上继续衰减；失败最多掉 1 级
+export const refineSuccessRate = (player, item, { increase = false } = {}) => {
+  const { successBonus } = manorEnhanceBonus(player)
+  const r = item.refine || 0
+  let c = r <= 10 ? 0.9 - r * 0.04 : 0.5 * Math.pow(0.8, r - 10)
+  c += successBonus + (increase ? 0.08 : 0)
+  return Math.max(0.01, Math.min(0.99, c))
 }
 
 // 成功时：词条按 0.2 比例增强，累加到装备并从 player 面板同步
@@ -82,6 +101,22 @@ const enhanceBonusFor = (item, s) => {
     default: return { attack: Math.floor(b.attack * f), health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
   }
 }
+// 精炼累计加成系数：每级小幅提升装备基础属性，满级约 +40%
+const refineCumFactor = r => (r <= 0 ? 0 : 0.012 * r + 0.0008 * r * (r + 1) / 2)
+const refineBonusFor = (item, r) => {
+  const f = refineCumFactor(r)
+  const b = baseStats(item)
+  switch (item.type) {
+    case 'weapon': return { attack: Math.floor(b.attack * f), health: 0, defense: 0 }
+    case 'armor': return { attack: 0, health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
+    default: return { attack: Math.floor(b.attack * f), health: Math.floor(b.health * f), defense: Math.floor(b.defense * f) }
+  }
+}
+const totalBonusFor = (item, s, r) => {
+  const a = enhanceBonusFor(item, s)
+  const b = refineBonusFor(item, r)
+  return { attack: a.attack + b.attack, health: a.health + b.health, defense: a.defense + b.defense }
+}
 // 强化等级 s 时该装备「强化净增」的三维（用于收益预览，不改数值）
 export const enhancePreview = (item, s) => enhanceBonusFor(item, Math.max(0, s || 0))
 
@@ -111,8 +146,31 @@ export const enhanceStepPreview = (player, item, opts = {}) => {
   }
 }
 
-const syncStrengthen = (item, player, s, broken) => {
-  const bonus = broken ? { attack: 0, health: 0, defense: 0 } : enhanceBonusFor(item, s)
+export const refineStepPreview = (player, item, opts = {}) => {
+  const r = item.refine || 0
+  const cur = refineBonusFor(item, r)
+  const nxt = refineBonusFor(item, Math.min(REFINE_MAX, r + 1))
+  const rate = refineSuccessRate(player, item, opts)
+  const cost = refineCost(player, item, opts)
+  return {
+    from: r,
+    to: Math.min(REFINE_MAX, r + 1),
+    rate,
+    cost,
+    expectCost: Math.ceil(cost / Math.max(0.01, rate)),
+    gain: {
+      attack: Math.max(0, nxt.attack - cur.attack),
+      health: Math.max(0, nxt.health - cur.health),
+      defense: Math.max(0, nxt.defense - cur.defense)
+    },
+    total: nxt,
+    maxed: r >= REFINE_MAX,
+    risky: r >= 10
+  }
+}
+
+const syncEquipmentStats = (item, player) => {
+  const bonus = item.broken ? { attack: 0, health: 0, defense: 0 } : totalBonusFor(item, item.strengthen || 0, item.refine || 0)
   const dA = bonus.attack - (item.attack || 0)
   const dH = bonus.health - (item.health || 0)
   const dD = bonus.defense - (item.defense || 0)
@@ -124,8 +182,8 @@ const syncStrengthen = (item, player, s, broken) => {
 }
 
 export const enhanceRepairCost = (player, item) => ({
-  money: Math.floor((item.level || 1) * 6 + (item.strengthen || 0) * 90),
-  stone: Math.max(1, Math.floor((item.strengthen || 0) / 4))
+  money: Math.floor((item.level || 1) * 6 + (item.strengthen || 0) * 90 + (item.refine || 0) * 45),
+  stone: Math.max(1, Math.floor(((item.strengthen || 0) + (item.refine || 0)) / 4))
 })
 
 export const repairEnhancement = (player, item) => {
@@ -136,7 +194,7 @@ export const repairEnhancement = (player, item) => {
   player.props.money = (player.props.money || 0) - c.money
   player.props.strengtheningStone = (player.props.strengtheningStone || 0) - c.stone
   item.broken = false
-  syncStrengthen(item, player, item.strengthen || 0, false)
+  syncEquipmentStats(item, player)
   return { ok: true, cost: c }
 }
 
@@ -145,7 +203,7 @@ export const resolveEnhancement = (player, item, { protect = false, increase = f
   const s = item.strengthen || 0
   if (roll <= enhanceSuccessRate(player, item, { increase })) {
     item.strengthen = s + 1
-    syncStrengthen(item, player, s + 1, false)
+    syncEquipmentStats(item, player)
     const prevGrade = item.grade || 1
     const newGrade = Math.min(5, 1 + Math.floor(item.strengthen / 5))
     item.grade = newGrade
@@ -154,7 +212,7 @@ export const resolveEnhancement = (player, item, { protect = false, increase = f
   }
   if (s >= 10) {
     item.broken = true
-    syncStrengthen(item, player, s, true)
+    syncEquipmentStats(item, player)
     return { status: 'fail', broke: true }
   }
   return { status: 'fail', broke: false }
@@ -213,6 +271,23 @@ export const resolveEnhancement = (player, item, { protect = false, increase = f
     item.strengthen = 0
     applyPlayerAttribute(player, newDodge, newAttack, newHealth, newCritical, newDefense)
     item.score = equip.calculateEquipmentScore(newDodge, newAttack, newHealth, newCritical, newDefense)
+    return { status: 'fail', drop: true }
+  }
+  return { status: 'fail', drop: false }
+}
+
+// 精炼：成功提升 1 级；高等级失败最多掉 1 级，不会损坏装备
+export const resolveRefinement = (player, item, { protect = false, increase = false, roll = Math.random() } = {}) => {
+  const r = item.refine || 0
+  if (r >= REFINE_MAX) return { status: 'max' }
+  if (roll <= refineSuccessRate(player, item, { increase })) {
+    item.refine = r + 1
+    syncEquipmentStats(item, player)
+    return { status: 'success' }
+  }
+  if (r >= 10 && !protect && r > 0) {
+    item.refine = r - 1
+    syncEquipmentStats(item, player)
     return { status: 'fail', drop: true }
   }
   return { status: 'fail', drop: false }

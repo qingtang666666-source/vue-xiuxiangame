@@ -5,7 +5,7 @@
 import { craftPill } from './alchemy.js'
 import { craftEquipment } from './forge.js'
 import { craftTalisman } from './talisman.js'
-import { enhanceCost, resolveEnhancement } from './equipForge.js'
+import { enhanceCost, resolveEnhancement, refineCost, resolveRefinement } from './equipForge.js'
 import { upgradeProficiency, PROF_MAX } from './technique.js'
 import { insightDiscount } from './insight.js'
 
@@ -57,6 +57,7 @@ const durationOf = (player, kind, data) => {
   else if (kind === 'craft-equip') sec = 10 + (data?.qi || 0) * 3
   else if (kind === 'craft-talisman') sec = 6 + (data?.tier || 0) * 2
   else if (kind === 'enhance') sec = 5 + (data?.strengthen || 0)
+  else if (kind === 'refine') sec = 5 + (data?.refine || 0)
   else if (kind === 'proficiency') sec = (4 + ((data?.prof || 1) - 1) * 4) * capReduce(player)
   else sec = 20
   return Math.max(4000, Math.floor(sec) * 1000)
@@ -67,6 +68,7 @@ const labelOf = (kind, data) => {
   if (kind === 'craft-equip') return `炼器【${data?.name || ''}】`
   if (kind === 'craft-talisman') return `制符【${data?.name || ''}】`
   if (kind === 'enhance') return `强化【${data?.name || ''}】`
+  if (kind === 'refine') return `精炼【${data?.name || ''}】`
   if (kind === 'proficiency') return `熟练【${data?.name || ''}】`
   return '工坊'
 }
@@ -159,6 +161,21 @@ export const tickActions = player => {
           message = r.broke ? '强化失败！装备受损，请花【灵石/炼器石】修复' : '强化失败'
           type = 'warning'
         }
+      }
+    }
+  } else if (task.kind === 'refine') {
+    const item = findItem(player, task.id)
+    if (!item) { message = '装备已不在背包，精炼取消'; type = 'warning' }
+    else {
+      const cost = refineCost(player, item, task.data || {})
+      if (cost > (props.strengtheningStone || 0)) { message = '炼器石不足，精炼取消'; type = 'warning' }
+      else {
+        const r = resolveRefinement(player, item, task.data || {})
+        props.strengtheningStone = Math.max(0, (props.strengtheningStone || 0) - cost)
+        result = r
+        if (r.status === 'success') { message = '精炼成功'; type = 'success' }
+        else if (r.status === 'max') { message = '精炼等级已满'; type = 'info' }
+        else if (r.status === 'fail') { message = r.drop ? '精炼失败，等级 -1' : '精炼失败'; type = 'warning' }
       }
     }
   } else if (task.kind === 'proficiency') {

@@ -16,11 +16,12 @@
           <div class="grid">
             <div class="cell equipped-cell" v-for="s in equippedSlots" :key="s.key">
               <tag :type="s.item.quality" @click="showItem(s.item)">{{ s.item.name }}</tag>
-              <div class="sub">{{ genre[s.key] }} · +{{ s.item.strengthen || 0 }}</div>
+              <div class="sub">{{ genre[s.key] }} · +{{ s.item.strengthen || 0 }}{{ s.item.refine ? ' · 精+' + s.item.refine : '' }}</div>
               <div class="v">价值 {{ formatNumberToChineseUnit(valueOf(s.item)) }} 灵石</div>
               <div class="ops">
                 <el-button size="small" type="warning" plain @click="unequipItem(s.key)">卸下</el-button>
                 <el-button size="small" type="primary" plain @click="goForge">强化</el-button>
+                <el-button size="small" type="success" plain @click="goForge">精炼</el-button>
                 <el-button size="small" type="info" plain @click="rerollItem(s.item)">洗练</el-button>
                 <el-button size="small" type="success" plain @click="enchantItem(s.item)">附魔</el-button>
               </div>
@@ -302,6 +303,7 @@
         { k: '品质', v: levels[it.quality] },
         { k: '细分级', v: it.gradeName },
         { k: '强化', v: it.strengthen ? '+' + it.strengthen : '无' },
+        { k: '精炼', v: it.refine ? '+' + it.refine : '无' },
         { k: '气血', v: formatNumberToChineseUnit(it.health) },
         { k: '攻击', v: formatNumberToChineseUnit(it.attack) },
         { k: '防御', v: formatNumberToChineseUnit(it.defense) },
@@ -342,7 +344,7 @@
   }
   const propValue = p => (itemDb(p.key)?.price || 0) * p.num
   const goForge = () => {
-    gameNotifys({ title: '强化', message: '炼器强化在主页，点右上角返回即可', type: 'info' })
+    gameNotifys({ title: '装备强化/精炼', message: '请回主页装备栏进行强化或精炼', type: 'info' })
     router.push('/home')
   }
 

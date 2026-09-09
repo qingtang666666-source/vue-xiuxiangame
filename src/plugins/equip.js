@@ -90,7 +90,8 @@ const equips = {
           grade, // 细分等级 1~5（下品/中品/上品/极品/绝品）
           gradeName: gradeNames[grade - 1],
           affixes, // 装备词条（数值型 + 特效型）
-          strengthen: 0 // 炼器等级
+          strengthen: 0, // 炼器等级
+          refine: 0 // 精炼等级
         }
         return baseEquip
       }

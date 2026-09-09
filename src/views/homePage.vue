@@ -233,7 +233,7 @@
                     @mouseenter="getEquipmentInfo(player.equipment['weapon']?.id, 'weapon')"
                   >
                     {{ player.equipment?.weapon?.name }}
-                    {{ player.equipment?.weapon?.strengthen ? '+' + player.equipment?.weapon?.strengthen : '' }}
+                    {{ player.equipment?.weapon?.strengthen ? '+' + player.equipment?.weapon?.strengthen : '' }}{{ player.equipment?.weapon?.refine ? ' 精+' + player.equipment?.weapon?.refine : '' }}
                   </tag>
                 </span>
               </template>
@@ -244,6 +244,7 @@
               </template>
             </el-popover>
             <el-button v-if="player.equipment?.weapon?.name" size="small" link type="primary" class="forge-btn" @click="equipmentInfo(player.equipment['weapon']?.id, 'weapon')">强化</el-button>
+            <el-button v-if="player.equipment?.weapon?.name" size="small" link type="success" class="forge-btn" @click="equipmentInfo(player.equipment['weapon']?.id, 'weapon', 'refine')">精炼</el-button>
             <span v-else>无</span>
           </span>
           <span class="equip">
@@ -265,7 +266,7 @@
                     @mouseenter="getEquipmentInfo(player.equipment['armor']?.id, 'armor')"
                   >
                     {{ player.equipment?.armor?.name }}
-                    {{ player.equipment?.armor?.strengthen ? '+' + player.equipment?.armor?.strengthen : '' }}
+                    {{ player.equipment?.armor?.strengthen ? '+' + player.equipment?.armor?.strengthen : '' }}{{ player.equipment?.armor?.refine ? ' 精+' + player.equipment?.armor?.refine : '' }}
                   </tag>
                 </span>
               </template>
@@ -276,6 +277,7 @@
               </template>
             </el-popover>
             <el-button v-if="player.equipment?.armor?.name" size="small" link type="primary" class="forge-btn" @click="equipmentInfo(player.equipment['armor']?.id, 'armor')">强化</el-button>
+            <el-button v-if="player.equipment?.armor?.name" size="small" link type="success" class="forge-btn" @click="equipmentInfo(player.equipment['armor']?.id, 'armor', 'refine')">精炼</el-button>
             <span v-else>无</span>
           </span>
         </div>
@@ -299,7 +301,7 @@
                     @mouseenter="getEquipmentInfo(player.equipment['accessory']?.id, 'accessory')"
                   >
                     {{ player.equipment?.accessory?.name }}
-                    {{ player.equipment?.accessory?.strengthen ? '+' + player.equipment?.accessory?.strengthen : '' }}
+                    {{ player.equipment?.accessory?.strengthen ? '+' + player.equipment?.accessory?.strengthen : '' }}{{ player.equipment?.accessory?.refine ? ' 精+' + player.equipment?.accessory?.refine : '' }}
                   </tag>
                 </span>
               </template>
@@ -310,6 +312,7 @@
               </template>
             </el-popover>
             <el-button v-if="player.equipment?.accessory?.name" size="small" link type="primary" class="forge-btn" @click="equipmentInfo(player.equipment['accessory']?.id, 'accessory')">强化</el-button>
+            <el-button v-if="player.equipment?.accessory?.name" size="small" link type="success" class="forge-btn" @click="equipmentInfo(player.equipment['accessory']?.id, 'accessory', 'refine')">精炼</el-button>
             <span v-else>无</span>
           </span>
           <span class="equip">
@@ -331,7 +334,7 @@
                     @mouseenter="getEquipmentInfo(player.equipment['sutra']?.id, 'sutra')"
                   >
                     {{ player.equipment?.sutra?.name }}
-                    {{ player.equipment?.sutra?.strengthen ? '+' + player.equipment?.sutra?.strengthen : '' }}
+                    {{ player.equipment?.sutra?.strengthen ? '+' + player.equipment?.sutra?.strengthen : '' }}{{ player.equipment?.sutra?.refine ? ' 精+' + player.equipment?.sutra?.refine : '' }}
                   </tag>
                 </span>
               </template>
@@ -342,6 +345,7 @@
               </template>
             </el-popover>
             <el-button v-if="player.equipment?.sutra?.name" size="small" link type="primary" class="forge-btn" @click="equipmentInfo(player.equipment['sutra']?.id, 'sutra')">强化</el-button>
+            <el-button v-if="player.equipment?.sutra?.name" size="small" link type="success" class="forge-btn" @click="equipmentInfo(player.equipment['sutra']?.id, 'sutra', 'refine')">精炼</el-button>
             <span v-else>无</span>
           </span>
         </div>
@@ -615,7 +619,7 @@
         </div>
       </div>
     </el-drawer>
-    <StrengthenPanel :visible="strengthenShow" :info="strengthenInfo" @update:visible="strengthenShow = $event" />
+    <StrengthenPanel :visible="strengthenShow" :info="strengthenInfo" :mode="strengthenMode" @update:visible="strengthenShow = $event" />
     <el-dialog :title="petInfo.name" :lock-scroll="false" v-model="petShow" center width="420px">
       <div class="monsterinfo">
         <div class="monsterinfo-box">
@@ -1588,6 +1592,7 @@
         { k: '品质', v: levels[it.quality] },
         { k: '细分级', v: it.gradeName },
         { k: '强化', v: it.strengthen ? '+' + it.strengthen : '无' },
+        { k: '精炼', v: it.refine ? '+' + it.refine : '无' },
         { k: '气血', v: formatNumberToChineseUnit(it.health) },
         { k: '攻击', v: formatNumberToChineseUnit(it.attack) },
         { k: '防御', v: formatNumberToChineseUnit(it.defense) },
@@ -1723,6 +1728,7 @@
   const inventoryShow = ref(false)
   // 炼器弹窗
   const strengthenShow = ref(false)
+  const strengthenMode = ref('enhance')
   // 炼器的信息
   const strengthenInfo = ref({})
   const achievementAll = ref([])
@@ -2900,9 +2906,10 @@
   }
 
   // 装备信息
-  const equipmentInfo = (id, type) => {
+  const equipmentInfo = (id, type, mode = 'enhance') => {
     if (id) {
       // 打开炼器弹窗
+      strengthenMode.value = mode
       strengthenShow.value = true
       getEquipmentInfo(id, type)
     }

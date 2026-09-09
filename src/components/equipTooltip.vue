@@ -25,6 +25,7 @@
         }}%
       </div>
       <div class="tag attribute">强化等级: {{ strengthenInfo.strengthen ?? 0 }}</div>
+      <div class="tag attribute">精炼等级: {{ strengthenInfo.refine ?? 0 }}</div>
       <div class="tag attribute">装备评分: {{ Math.round(strengthenInfo.score || 0).toLocaleString('zh-CN') }}</div>
       <div class="tag attribute" v-if="strengthenInfo.gradeName">品阶细分: {{ strengthenInfo.gradeName }}</div>
       <div class="tag attribute" v-if="setInfo" :style="{ width: '100%' }">
@@ -51,9 +52,9 @@
         拥有炼器石:
         {{ formatNumberToChineseUnit(player.props.strengtheningStone) }}
       </div>
-      <div class="tag attribute" v-if="calculateCost">强化消耗: {{ calculateCost }}</div>
+      <div class="tag attribute" v-if="calculateCost">{{ actionLabel || '强化' }}消耗: {{ calculateCost }}</div>
       <div class="tag attribute" v-if="calculateEnhanceSuccessRate">
-        成功率: {{ (calculateEnhanceSuccessRate * 100).toFixed(2) }}%
+        {{ actionLabel || '强化' }}成功率: {{ (calculateEnhanceSuccessRate * 100).toFixed(2) }}%
       </div>
     </div>
   </div>
@@ -73,6 +74,7 @@
   const props = defineProps({
     calculateCost: {},
     calculateEnhanceSuccessRate: {},
+    actionLabel: { type: String, default: '强化' },
     player: {},
     strengthenInfo: {}
   })
