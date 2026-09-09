@@ -109,8 +109,13 @@
       <el-tab-pane label="灵宠" name="pet">
         <div class="grid">
           <div class="cell" v-for="(p, i) in petItems" :key="i">
-            <div class="pname">{{ p.name }}</div>
-            <div class="sub">{{ levelNames(p.level) }}</div>
+            <tag :type="petQualityOf(p).color" @click="showPetInfo(p)">{{ p.name }}</tag>
+            <div class="sub">{{ petRoleOf(p).icon }} {{ petRoleOf(p).name }} · {{ levelNames(p.level) }}{{ p.reincarnation ? ` · ${p.reincarnation}转` : '' }}</div>
+            <div class="v">战力 {{ petPowerScore(p).toLocaleString('zh-CN') }} · 悟性 {{ p.rootBone }}</div>
+            <div class="ops">
+              <el-button size="small" type="primary" @click="carryPet(p)">出战</el-button>
+              <el-button size="small" type="danger" plain @click="releasePetItem(p)">放生</el-button>
+            </div>
           </div>
           <el-empty v-if="!player.pets.length" description="暂无灵宠" :image-size="60" />
         </div>
@@ -146,6 +151,7 @@
   import { talismanById, useTalisman as useTalismanFn, useTalismanBatch } from '@/plugins/talisman'
   import { activeBuffs, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { sourceOfEquip, sourceOfPill, sourceOfProp, sourceOfTalisman } from '@/plugins/itemSource'
+  import { ensurePet, petQualityOf, petRoleOf, petPowerScore, setActivePet, releasePet } from '@/plugins/petSystem'
   import { pillPrice, talismanPrice, quickSell, quickSellUnit, quickSellEquip, equipQuickSellPrice } from '@/plugins/market'
   import tag from '@/components/tag.vue'
   import itemInfo from '@/components/itemInfo.vue'
@@ -421,7 +427,7 @@
   const pillList = computed(() => (player.value.pills || []).map(p => ({ ...p, recipe: recipeById(p.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
   const talList = computed(() => (player.value.talismans || []).map(x => ({ ...x, recipe: talismanById(x.id) })).filter(x => x.recipe).sort((a, b) => (b.recipe?.tier || 0) - (a.recipe?.tier || 0)))
   const invList = computed(() => player.value.inventory || [])
-  const petList = computed(() => player.value.pets || [])
+  const petList = computed(() => (player.value.pets || []).map(p => ensurePet(p)).filter(Boolean))
   const wifeList = computed(() => player.value.wifes || [])
   const bpSize = useViewportPageSize(100, 4)
   const { page: invPage, total: invTotal, pageItems: invItems, setPage: setInvPage } = usePager(invList, bpSize)
@@ -434,6 +440,44 @@
     const r = usePillFn(player.value, p.id)
     if (r.ok) gameNotifys({ title: '服用', message: `服下【${p.recipe.name}】${r.buff ? `，${buffLeftText(p.recipe.name)}` : r.reason || ''}`, type: 'success' })
     else gameNotifys({ title: '服用', message: r.reason, type: 'error' })
+  }
+
+  const showPetInfo = p => {
+    const role = petRoleOf(p)
+    infoData.value = {
+      title: p.name,
+      rows: [
+        { k: '品质', v: petQualityOf(p).name },
+        { k: '定位', v: `${role.icon} ${role.name}` },
+        { k: '技能', v: role.skill },
+        { k: '境界', v: levelNames(p.level) },
+        { k: '转生', v: `${p.reincarnation || 0} 转` },
+        { k: '悟性', v: p.rootBone },
+        { k: '战力', v: petPowerScore(p).toLocaleString('zh-CN') }
+      ],
+      effects: [role.desc, '获取途径：大世界探索收服灵宠']
+    }
+    infoShow.value = true
+  }
+
+  const carryPet = p => {
+    const r = setActivePet(player.value, p.id)
+    if (r.ok) gameNotifys({ title: '灵宠出战', message: `【${r.pet.name}】已出战`, type: 'success' })
+    else gameNotifys({ title: '灵宠出战', message: r.reason, type: 'warning' })
+  }
+
+  const releasePetItem = p => {
+    ElMessageBox.confirm(`确定放生【${p.name}】吗？将返还培养丹。`, '灵宠放生', {
+      confirmButtonText: '放生',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+      .then(() => {
+        const r = releasePet(player.value, p.id)
+        if (r.ok) gameNotifys({ title: '灵宠放生', message: `放生【${r.pet.name}】，获得培养丹 ${r.dan}`, type: 'success' })
+        else gameNotifys({ title: '灵宠放生', message: r.reason, type: 'warning' })
+      })
+      .catch(() => {})
   }
   const useTal = t => {
     const r = useTalismanFn(player.value, t.id)

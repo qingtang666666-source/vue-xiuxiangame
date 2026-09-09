@@ -88,6 +88,7 @@
   import { useMainStore } from '@/plugins/store'
   // 成就
   import achievement from '@/plugins/achievement'
+  import { createCapturedPet } from '@/plugins/petSystem'
   import {
     maxLv,
     levelNames,
@@ -443,33 +444,15 @@
         // 暴击
         const critical = parseFloat(getRandomFloatInRange(0.001, 0.01) * newProperties)
         // 添加到灵宠背包里
-        player.value.pets.push({
-          id: Date.now(),
-          lock: false,
+        player.value.pets.push(createCapturedPet({
           name: item.name,
-          level: 1,
-          score: equip.calculateEquipmentScore(dodge, attack, health, critical, defense),
-          dodge,
-          health,
+          potential: newProperties,
           attack,
+          health,
           defense,
-          critical,
-          // 初始数据
-          initial: {
-            dodge,
-            health,
-            attack,
-            defense,
-            critical,
-            rootBone: newProperties
-          },
-          // 悟性
-          rootBone: newProperties,
-          // 好感度
-          favorability: 0,
-          // 转生
-          reincarnation: 0
-        })
+          dodge,
+          critical
+        }))
         // 玩家灵宠成就
         const petAchievement = player.value.achievement.pet
         // 完成成就

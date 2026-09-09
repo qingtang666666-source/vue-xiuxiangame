@@ -591,11 +591,13 @@
             <div class="tag attribute">
               境界: {{ levelNames(player.pet.level) }} ({{ player.pet.reincarnation || 0 }}转)
             </div>
+            <div class="tag attribute">品质: {{ petQualityOf(player.pet).name }}</div>
+            <div class="tag attribute">定位: {{ petRoleOf(player.pet).icon }} {{ petRoleOf(player.pet).name }} · 技能【{{ petRoleOf(player.pet).skill }}】</div>
             <div class="tag attribute">悟性: {{ player.pet.rootBone }}</div>
             <div class="tag attribute">气血: {{ formatNumberToChineseUnit(player.pet.health) }}</div>
             <div class="tag attribute">攻击: {{ formatNumberToChineseUnit(player.pet.attack) }}</div>
             <div class="tag attribute">防御: {{ formatNumberToChineseUnit(player.pet.defense) }}</div>
-            <div class="tag attribute">灵宠评分: {{ Math.round(player.pet.score || 0).toLocaleString('zh-CN') }}</div>
+            <div class="tag attribute">灵宠战力: {{ petPowerScore(player.pet).toLocaleString('zh-CN') }}</div>
             <div
               class="tag attribute"
               @click="gameNotifys({ title: '获得方式', message: '可以通过探索秘境获得', position: 'top-left' })"
@@ -608,8 +610,11 @@
             >
               拥有悟性丹: {{ formatNumberToChineseUnit(player.props.rootBone) }}
             </div>
-            <div class="tag attribute">培养消耗: {{ petConsumption(player.pet.level) }}</div>
-            <div class="tag attribute">提升悟性消耗: {{ petRootBone ? player.pet.rootBone : 0 }}</div>
+            <div class="tag attribute">培养消耗: {{ petConsumption() }} 培养丹</div>
+            <div class="tag attribute">提升悟性消耗: {{ petRootCost(player.pet) }} 悟性丹</div>
+            <div class="tag attribute" @click="gameNotifys({ title: '获取途径', message: PET_SOURCE, position: 'top-left' })">
+              {{ PET_SOURCE }}
+            </div>
           </div>
         </div>
         <div class="click-box">
@@ -623,6 +628,10 @@
     <el-dialog :title="petInfo.name" :lock-scroll="false" v-model="petShow" center width="420px">
       <div class="monsterinfo">
         <div class="monsterinfo-box">
+          <p>
+            <span class="description">品质: {{ petQualityOf(petInfo).name }}</span>
+            <span class="value">{{ petRoleOf(petInfo).icon }} {{ petRoleOf(petInfo).name }} · 技能【{{ petRoleOf(petInfo).skill }}】</span>
+          </p>
           <p>
             <span class="description">境界: {{ levelNames(petInfo?.level) }}</span>
             <span class="icon">
@@ -693,11 +702,15 @@
             <span class="value">{{ calculateDifference(petInfo?.critical, player.pet?.critical).num }}</span>
           </p>
           <p>
-            <span class="description">灵宠评分: {{ petInfo?.score }}</span>
+            <span class="description">灵宠战力: {{ petPowerScore(petInfo) }}</span>
             <span class="icon">
               <i :class="calculateDifference(petInfo?.score, player.pet?.score).icon" />
             </span>
             <span class="value">{{ calculateDifference(petInfo?.score, player.pet?.score).num }}</span>
+          </p>
+          <p>
+            <span class="description">获取途径</span>
+            <span class="value">{{ PET_SOURCE }}</span>
           </p>
         </div>
       </div>
@@ -1419,6 +1432,7 @@
   import { activeBuffs } from '@/plugins/alchemy'
   import { buffStats, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { sourceOfEquip } from '@/plugins/itemSource'
+  import { ensurePet, petQualityOf, petRoleOf, petPowerScore, petUpgradeCost, petRootCost, upgradePet, upgradePetRoot, setActivePet, retractActivePet, releasePet, syncPetForPlayer, PET_SOURCE } from '@/plugins/petSystem'
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
   import { setRewardStatus, setRewardSummary } from '@/plugins/setReward'
@@ -2303,24 +2317,10 @@
   }
   // 灵宠出战
   const petCarry = item => {
-    // 根据灵宠id查找灵宠信息
-    const petItem = getObjectById(item.id, player.value.pets)
-    // 如果已经有灵宠出战就收回
-    if (JSON.stringify(player.value.pet) != '{}') {
-      const itemInfo = player.value.pet
-      // 更新玩家属性，移除出战灵宠的属性加成
-      playerAttribute(-itemInfo.dodge, -itemInfo.attack, -itemInfo.health, -itemInfo.critical, -itemInfo.defense)
-      // 收回当前出战的灵宠
-      player.value.pets.push(player.value.pet)
-    }
-    // 关闭灵宠信息弹窗
+    const res = setActivePet(player.value, item.id)
+    if (!res.ok) return gameNotifys({ title: '灵宠出战', message: res.reason, type: 'warning' })
     petShow.value = false
-    // 出战当前选择的灵宠
-    player.value.pet = petItem
-    // 更新玩家属性，添加当前出战灵宠的属性加成
-    playerAttribute(petItem.dodge, petItem.attack, petItem.health, petItem.critical, petItem.defense)
-    // 从灵宠背包中移除这个灵宠
-    player.value.pets = player.value.pets.filter(i => i.id !== item.id)
+    gameNotifys({ title: '灵宠出战', message: `【${res.pet.name}】已出战`, type: 'success' })
   }
 
   // 放生灵宠
@@ -2338,20 +2338,12 @@
       }
     )
       .then(() => {
-        // 灵宠转生次数
-        const reincarnation = item.reincarnation ? item.reincarnation : 1
-        // 获得的培养丹数量
-        const num = item.level * reincarnation
-        // 关闭灵宠信息弹窗
+        const res = releasePet(player.value, item.id)
         petShow.value = false
-        // 增加培养丹数量
-        player.value.props.cultivateDan += num
-        // 删除道具
-        player.value.pets = player.value.pets.filter(obj => obj.id !== item.id)
-        // 装备分解通知
+        if (!res.ok) return gameNotifys({ title: '灵宠放生', message: res.reason, type: 'warning' })
         gameNotifys({
-          title: `${item.name}已成功放生`,
-          message: `对方临走时赠与了你${num}个培养丹`
+          title: `${res.pet.name}已成功放生`,
+          message: `对方临走时赠与了你${res.dan}个培养丹`
         })
       })
       .catch(() => {})
@@ -2384,132 +2376,21 @@
 
   // 灵宠升级
   const petUpgrade = item => {
-    // 计算灵宠升级所需材料数量
-    const consume = petConsumption(item.level)
-
-    // 如果勾选了提升悟性但是悟性丹不足
-    if (petRootBone.value && player.value.props.rootBone < item.rootBone) {
-      // 发送通知
-      gameNotifys({
-        title: '灵宠培养提示',
-        message: '悟性丹不足, 无法提升灵宠悟性',
-        position: 'top-left'
-      })
-      return
-    }
-    // 如果勾选了灵宠转生但是人物转生不等于灵宠转生
-    if (petReincarnation.value && player.value.reincarnation < player.value.pet.reincarnation) {
-      // 发送通知
-      gameNotifys({
-        title: '灵宠培养提示',
-        message: '灵宠转生不能高于人物转生',
-        position: 'top-left'
-      })
-      return
-    }
-    // 如果勾选了灵宠转生但是灵宠等级没满
-    if (petReincarnation.value && maxLv > item.level) {
-      // 发送通知
-      gameNotifys({
-        title: '灵宠培养提示',
-        message: '灵宠境界未满无法转生',
-        position: 'top-left'
-      })
-      return
-    }
-    // 如果没有勾选灵宠转生并且境界满了
-    if (!petReincarnation.value && item.level >= maxLv) {
-      // 发送通知
-      gameNotifys({
-        title: '灵宠培养提示',
-        message: '灵宠境界已满请转生',
-        position: 'top-left'
-      })
-      return
-    }
-    // 如果培养丹不足
-    if (consume > player.value.props.cultivateDan) {
-      // 发送通知
-      gameNotifys({
-        title: '灵宠培养提示',
-        message: '培养丹不足, 进行无法培养',
-        position: 'top-left'
-      })
-      return
-    }
-    // 灵宠培养确认弹窗
-    ElMessageBox.confirm('你确定要培养该灵宠吗?', '灵宠培养提示', {
-      cancelButtonText: '我点错了',
-      confirmButtonText: '确定以及肯定'
+    const p = ensurePet(item)
+    if (!p) return
+    const wasRoot = petRootBone.value
+    const action = wasRoot
+      ? upgradePetRoot(player.value, p)
+      : upgradePet(player.value, p, { reincarnate: petReincarnation.value })
+    if (!action.ok) return gameNotifys({ title: '灵宠培养提示', message: action.reason, type: 'warning', position: 'top-left' })
+    if (wasRoot) petRootBone.value = false
+    if (petReincarnation.value) petReincarnation.value = false
+    gameNotifys({
+      title: '灵宠培养提示',
+      message: wasRoot ? `悟性提升至 ${p.rootBone}` : action.reincarnate ? '灵宠转生成功，境界已重置' : '灵宠培养成功',
+      type: 'success',
+      position: 'top-left'
     })
-      .then(() => {
-        let attack,
-          health,
-          defense = 0
-        // 如果勾选了提升悟性并且悟性丹足够
-        if (petRootBone.value && player.value.props.rootBone >= item.rootBone) {
-          let rootBone = item.initial.rootBone - item.rootBone
-          rootBone = rootBone ? rootBone : 1
-          // 攻击
-          attack = Math.floor(item.initial.attack * rootBone)
-          // 血量
-          health = Math.floor(item.initial.health * rootBone)
-          // 防御
-          defense = Math.floor(item.initial.defense * rootBone)
-          // 提升悟性
-          item.rootBone++
-          // 扣除悟性丹
-          player.value.props.rootBone -= item.rootBone
-        } else {
-          // 攻击
-          attack = Math.floor(item.initial.attack * 0.05)
-          // 血量
-          health = Math.floor(item.initial.health * 0.05)
-          // 防御
-          defense = Math.floor(item.initial.defense * 0.05)
-        }
-        // 如果勾选了转生并且当前等级已满
-        if (petReincarnation.value && item.level >= maxLv) {
-          // 重置灵宠等级
-          player.value.pet.level = 1
-          // 取消转生勾选
-          petReincarnation.value = false
-          // 增加灵宠转生次数
-          player.value.pet.reincarnation++
-          // 发送通知
-          gameNotifys({
-            title: '灵宠培养提示',
-            message: '灵宠转生成功, 已重置灵宠境界',
-            position: 'top-left'
-          })
-        } else {
-          // 增加灵宠等级
-          player.value.pet.level++
-          // 发送通知
-          gameNotifys({
-            title: '灵宠培养提示',
-            message: '灵宠培养成功',
-            position: 'top-left'
-          })
-        }
-        // 增加灵宠属性
-        player.value.pet.attack += attack
-        player.value.pet.health += health
-        player.value.pet.defense += defense
-        // 更新玩家属性，添加灵宠培养后的属性加成
-        playerAttribute(0, attack, health, 0, defense)
-        // 重新计算灵宠评分
-        player.value.pet.score = equip.calculateEquipmentScore(
-          player.value.pet.dodge,
-          player.value.pet.attack,
-          player.value.pet.health,
-          player.value.pet.critical,
-          player.value.pet.defense
-        )
-        // 扣除培养丹
-        player.value.props.cultivateDan -= consume
-      })
-      .catch(() => {})
   }
   // 道侣升级
   const wifeUpgrade = item => {
@@ -2555,13 +2436,7 @@
   }
 
   // 计算灵宠升级所需消耗
-  const petConsumption = lv => {
-    // 是否勾选转生选项
-    const cost = petReincarnation.value ? 10 : 1
-    // 转生次数
-    const reincarnation = player.value.pet.reincarnation ? lv * 200 : 1
-    return (lv * 200 + reincarnation) * cost
-  }
+  const petConsumption = () => petUpgradeCost(player.value.pet || {}, { reincarnate: petReincarnation.value })
 
   // 购买装备
   const shopBuy = item => {
@@ -2846,21 +2721,15 @@
   // 灵宠信息
   const petItemInfo = item => {
     petShow.value = true
-    petInfo.value = item
+    petInfo.value = syncPetForPlayer(player.value, item)
   }
 
   // 灵宠收回
   const petRetract = () => {
-    const item = player.value.pet
-    if (JSON.stringify(item) == '{}') return
-    // 更新玩家属性，移除当前出战灵宠的属性加成
-    playerAttribute(-item.dodge, -item.attack, -item.health, -item.critical, -item.defense)
-    // 跳转背包相关页
+    const res = retractActivePet(player.value)
+    if (!res.ok) return gameNotifys({ title: '灵宠收回', message: res.reason, type: 'warning' })
     inventoryActive.value = 'pet'
-    // 添加灵宠到灵宠背包里
-    player.value.pets.push(item)
-    // 收回当前出战的灵宠
-    player.value.pet = {}
+    gameNotifys({ title: '灵宠收回', message: `【${res.pet.name}】已收回`, type: 'info' })
   }
 
   // 计算灵宠等级
