@@ -38,7 +38,7 @@
         <span v-if="auto" class="auto-tip">行动将自动进行…</span>
       </div>
 
-      <div class="side-row player-row">
+      <div class="battlefield">
         <div class="unit player-unit" :class="{ active: isPlayerTurnV, dead: state.player.hp <= 0 }">
           <div class="unit-name">{{ state.player.name }} <span class="lv">{{ levelNames(state.player.level) }}</span></div>
           <div class="bar hp"><span :style="{ width: hpPct(state.player) + '%' }" /></div>
@@ -47,22 +47,22 @@
           <div class="unit-sub">灵力 {{ Math.floor(state.player.mp) }}/{{ state.player.maxMp }}</div>
           <div class="def-tag" v-if="state.player._defending">🛡 防御中</div>
         </div>
-      </div>
 
-      <div class="enemy-row">
-        <div
-          v-for="(e, i) in state.enemies"
-          :key="e.id"
-          class="unit enemy-unit"
-          :class="{ active: e.id === state.activeId && !e.isPlayer, dead: e.hp <= 0, sel: target === e.id }"
-          @click="target = e.id"
-        >
-          <div class="unit-name">{{ e.name }} <span class="lv">{{ levelNames(e.level) }}</span></div>
-          <div class="bar hp"><span :style="{ width: hpPct(e) + '%' }" /></div>
-          <div class="bar mp"><span :style="{ width: mpPct(e) + '%' }" /></div>
-          <div class="unit-sub">气血 {{ Math.max(0, Math.floor(e.hp)) }}/{{ e.maxHp }}</div>
-          <div class="unit-sub">灵力 {{ Math.floor(e.mp) }}/{{ e.maxMp }}</div>
-          <div class="def-tag" v-if="e._defending">🛡 防御中</div>
+        <div class="enemy-row">
+          <div
+            v-for="(e, i) in state.enemies"
+            :key="e.id"
+            class="unit enemy-unit"
+            :class="{ active: e.id === state.activeId && !e.isPlayer, dead: e.hp <= 0, sel: target === e.id }"
+            @click="target = e.id"
+          >
+            <div class="unit-name">{{ e.name }} <span class="lv">{{ levelNames(e.level) }}</span></div>
+            <div class="bar hp"><span :style="{ width: hpPct(e) + '%' }" /></div>
+            <div class="bar mp"><span :style="{ width: mpPct(e) + '%' }" /></div>
+            <div class="unit-sub">气血 {{ Math.max(0, Math.floor(e.hp)) }}/{{ e.maxHp }}</div>
+            <div class="unit-sub">灵力 {{ Math.floor(e.mp) }}/{{ e.maxMp }}</div>
+            <div class="def-tag" v-if="e._defending">🛡 防御中</div>
+          </div>
         </div>
       </div>
 
@@ -277,28 +277,28 @@
   .fight-btn { width: 100%; }
   .tip { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 10px; line-height: 1.7; }
 
-  .arena { display: flex; flex-direction: column; border-radius: 14px; padding: 12px; background: linear-gradient(rgba(250, 247, 240, 0.86), rgba(238, 234, 224, 0.9)), var(--arena-img, none) center / cover no-repeat; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
-  .round-bar { font-size: 14px; margin-bottom: 8px; }
-  .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .arena { display: flex; flex-direction: column; border-radius: 14px; padding: 10px; background: linear-gradient(rgba(250, 247, 240, 0.86), rgba(238, 234, 224, 0.9)), var(--arena-img, none) center / cover no-repeat; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+  .round-bar { font-size: 13px; margin-bottom: 6px; }
+  .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .auto-tip { font-size: 12px; color: var(--el-color-success); }
-  .side-row, .enemy-row { display: flex; gap: 10px; margin-bottom: 10px; }
-  .enemy-row { flex-wrap: wrap; }
-  .unit { border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; padding: 14px 18px; min-width: 200px; background: radial-gradient(circle at 30% 16%, rgba(255, 255, 255, 0.08), transparent 60%), linear-gradient(160deg, #3a3550, #232036); position: relative; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.3); }
+  .battlefield { display: grid; grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr); gap: 10px; align-items: start; margin-bottom: 10px; }
+  .enemy-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+  .unit { border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 10px 12px; min-width: 0; background: radial-gradient(circle at 30% 16%, rgba(255, 255, 255, 0.08), transparent 60%), linear-gradient(160deg, #3a3550, #232036); position: relative; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.3); }
   .unit.active { border-color: var(--el-color-warning); box-shadow: 0 0 0 2px #ffe082, 0 0 22px rgba(255, 224, 130, 0.25); }
   .unit.dead { opacity: 0.45; filter: grayscale(0.8); }
   .unit.sel { border-color: var(--el-color-danger); cursor: pointer; }
   .player-unit { border-color: var(--el-color-primary); }
-  .unit-name { font-weight: 800; margin-bottom: 6px; font-size: 18px; color: #fff; }
-  .unit-sub { font-size: 13px; color: #dfe0f0; }
-  .bar { height: 14px; border-radius: 7px; background: rgba(0, 0, 0, 0.35); margin: 6px 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
+  .unit-name { font-weight: 800; margin-bottom: 4px; font-size: 15px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .unit-sub { font-size: 12px; line-height: 1.35; color: #dfe0f0; }
+  .bar { height: 11px; border-radius: 7px; background: rgba(0, 0, 0, 0.35); margin: 4px 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
   .bar span { display: block; height: 100%; transition: width .3s; border-radius: 7px; }
   .bar.hp span { background: linear-gradient(90deg, #ff5252, #ff8a80); }
   .bar.mp span { background: linear-gradient(90deg, #448aff, #82b1ff); }
   .def-tag { font-size: 12px; color: #ffd54f; margin-top: 4px; }
 
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .actions .el-button { min-height: 42px; font-size: 14px; }
-  .log { max-height: 300px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 14px; background: #14141f; color: #cbd0e0; font-size: 14px; line-height: 2; box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.55); }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .actions .el-button { min-height: 36px; font-size: 13px; padding: 8px 10px; }
+  .log { max-height: 180px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 8px 12px; background: #14141f; color: #cbd0e0; font-size: 13px; line-height: 1.8; box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.55); }
   .log-line { margin-bottom: 2px; }
   .log-round { color: #6b7280; margin-right: 4px; }
   .log-line.dmg { color: #f2a4a4; }
@@ -317,5 +317,26 @@
   .res-sub { color: var(--el-text-color-secondary); margin-bottom: 8px; }
   .res-btns { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
 
-  @media only screen and (max-width: 768px) { .unit { min-width: 120px; } }
+  @media only screen and (max-width: 768px) {
+    .page-header { margin-bottom: 6px; }
+    .title { font-size: 16px; margin-bottom: 4px; }
+    .resources { gap: 4px; }
+    .resources .el-tag { height: 22px; padding: 0 6px; font-size: 11px; }
+    .arena { padding: 7px; border-radius: 10px; }
+    .round-bar { font-size: 12px; margin-bottom: 4px; }
+    .controls { margin-bottom: 5px; }
+    .battlefield { grid-template-columns: 1fr; gap: 7px; margin-bottom: 7px; }
+    .enemy-row { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px; }
+    .unit { padding: 7px 8px; border-radius: 10px; }
+    .unit-name { margin-bottom: 3px; font-size: 12px; }
+    .unit-sub { font-size: 10px; line-height: 1.3; word-break: break-all; }
+    .bar { height: 9px; margin: 3px 0; }
+    .def-tag { margin-top: 2px; font-size: 10px; }
+    .actions { gap: 5px; margin-bottom: 7px; }
+    .actions .el-button { min-height: 32px; margin-left: 0 !important; padding: 6px 8px; font-size: 11px; }
+    .log { max-height: 132px; padding: 6px 8px; border-radius: 8px; font-size: 11px; line-height: 1.6; }
+    .result { margin-top: 8px; padding: 10px; }
+    .res-title { margin-bottom: 4px; font-size: 16px; }
+    .res-lines { line-height: 1.7; font-size: 12px; }
+  }
 </style>

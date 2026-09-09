@@ -47,7 +47,7 @@
   import { useMainStore } from '@/plugins/store'
   import equip from '@/plugins/equip'
   import { maxLv, smoothScrollToBottom, levelNames, gameNotifys, computeMaxCultivation, realmStageOf, formatNumberToChineseUnit } from '@/plugins/game'
-  import { playerLifespan, gameAge } from '@/plugins/time'
+  import { playerLifespan, gameAge, breakthroughLifespanNeed } from '@/plugins/time'
   import { drawTalentForPlayer, TALENT_QUALITY, getTalentById } from '@/plugins/talent'
   import { manorTalentBoost } from '@/plugins/manor'
   import { idleRates } from '@/plugins/alchemy'
@@ -126,7 +126,9 @@
     if (willCross && p.level >= 19) {
       const danNeed = Math.max(1, Math.ceil(p.level / 15))
       req.push(`培养丹×${danNeed}（${p.props.cultivateDan || 0}/${danNeed}）`)
-      const treq = 30 + targetStage * 15
+    }
+    if (willCross) {
+      const treq = breakthroughLifespanNeed(p.level)
       const rem = playerLifespan(p) - gameAge(p)
       req.push(`余寿≥${treq}（当前${Math.max(0, Math.floor(rem))}）`)
     }
@@ -296,7 +298,7 @@
           return
         }
         if (firstPass && willCross) {
-          const req = 30 + targetStage * 15 // 越高境界，突破所需余寿越多
+          const req = breakthroughLifespanNeed(player.value.level)
           const rem = playerLifespan(player.value) - gameAge(player.value)
           if (rem < req) {
             stopCultivate()

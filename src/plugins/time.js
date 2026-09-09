@@ -17,6 +17,20 @@ const REALM_LIFESPANS = [
   150, 300, 600, 1200, 2400, 5000, 10000, 20000, 40000, 80000, 150000, 300000, 500000, 800000, 1200000, 2000000
 ]
 
+export const realmLifespanBase = level => {
+  const lv = Math.max(1, Math.floor(level || 1))
+  const stage = Math.min(15, Math.floor((lv - 1) / 9))
+  return REALM_LIFESPANS[stage]
+}
+
+// 突破所需余寿：按当前大境界寿元上限的比例递增（低境界要求低，高境界逐步提高）
+export const breakthroughLifespanNeed = level => {
+  const lv = Math.max(1, Math.floor(level || 1))
+  const stage = Math.min(15, Math.floor((lv - 1) / 9))
+  const ratio = Math.min(0.35, 0.12 + stage * 0.015)
+  return Math.max(15, Math.round(REALM_LIFESPANS[stage] * ratio))
+}
+
 const now = () => Date.now()
 
 // 自游戏开始累计的游戏天数(含当前未结算的实时部分)
