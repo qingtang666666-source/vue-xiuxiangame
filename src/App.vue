@@ -171,6 +171,7 @@
     { title: '炼制', items: [
       { icon: '💊', name: '炼丹', route: '/alchemy' },
       { icon: '🔨', name: '炼器', route: '/forge' },
+      { icon: '🛡️', name: '强化装备', route: '/backpack?tab=equip' },
       { icon: '📃', name: '制符', route: '/talisman' },
       { icon: '⛩️', name: '阵法', route: '/formation' }
     ]},

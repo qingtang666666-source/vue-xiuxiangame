@@ -1606,6 +1606,7 @@
     { icon: '⭐', name: '豪杰', dialog: 'heroShow', group: '成长收藏' },
     { icon: '📖', name: '图鉴', dialog: 'equipAllShow', group: '成长收藏' },
     { icon: '🐾', name: '灵宠培养', route: '/backpack?tab=pet', group: '成长收藏' },
+    { icon: '🔨', name: '强化装备', route: '/backpack?tab=equip', group: '成长收藏' },
     { icon: '📕', name: '功法', dialog: 'techniqueShow', group: '成长收藏' },
     { icon: '💠', name: '本命', dialog: 'naShow', group: '成长收藏' },
     { icon: '🏆', name: '赛季', dialog: 'seasonShow', group: '成长收藏' },

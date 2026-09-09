@@ -11,6 +11,7 @@
 
     <el-tabs v-model="tab" stretch>
       <el-tab-pane label="装备" name="equip">
+        <div class="equip-hint" v-if="equippedSlots.length">点击已装备栏的「强化 / 精炼」即可直接操作。</div>
         <div class="eq-section" v-if="equippedSlots.length">
           <div class="section-title">已装备</div>
           <div class="grid">
@@ -20,8 +21,8 @@
               <div class="v">价值 {{ formatNumberToChineseUnit(valueOf(s.item)) }} 灵石</div>
               <div class="ops">
                 <el-button size="small" type="warning" plain @click="unequipItem(s.key)">卸下</el-button>
-                <el-button size="small" type="primary" plain @click="goForge">强化</el-button>
-                <el-button size="small" type="success" plain @click="goForge">精炼</el-button>
+                <el-button size="small" type="primary" plain @click="openStrengthen(s.item, 'enhance')">强化</el-button>
+                <el-button size="small" type="success" plain @click="openStrengthen(s.item, 'refine')">精炼</el-button>
                 <el-button size="small" type="info" plain @click="rerollItem(s.item)">洗练</el-button>
                 <el-button size="small" type="success" plain @click="enchantItem(s.item)">附魔</el-button>
               </div>
@@ -161,14 +162,15 @@
       </div>
     </el-dialog>
 
-    <div class="hint">穿戴 / 强化 / 技能 等操作请回主页。主页左上角「🎒 背包」即可返回这里。</div>
+    <div class="hint">已装备栏可直接强化 / 精炼；其他装备操作也都在本页完成。</div>
+    <StrengthenPanel :visible="strengthenShow" :info="strengthenInfo" :mode="strengthenMode" @update:visible="strengthenShow = $event" />
     <item-info :visible="infoShow" :data="infoData" @update:visible="infoShow = $event" />
   </div>
 </template>
 
 <script setup>
   import { ref, computed, watch } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { useRoute } from 'vue-router'
   import { ElMessageBox } from 'element-plus'
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, levels, genre, gameNotifys, maxLv } from '@/plugins/game'
@@ -196,25 +198,28 @@
   import tag from '@/components/tag.vue'
   import itemInfo from '@/components/itemInfo.vue'
   import MoneyBar from '@/components/MoneyBar.vue'
+  import StrengthenPanel from '@/components/StrengthenPanel.vue'
   import { setById } from '@/plugins/equipSetDb'
   import { rerollCost, enchantCost, canAfford, payCost, rerollItemAffixes, enchantItemAffix, affixCap } from '@/plugins/affixForge'
   import { usePager, useViewportPageSize } from '@/plugins/pager'
   import PageNav from '@/components/PageNav.vue'
 
   const store = useMainStore()
-  const router = useRouter()
   const route = useRoute()
   const player = ref(store.player)
   const tab = ref('equip')
   watch(
     () => route.query.tab,
     value => {
-      if (value === 'pet') tab.value = 'pet'
+      if (value === 'pet' || value === 'equip') tab.value = value
     },
     { immediate: true }
   )
   const infoShow = ref(false)
   const infoData = ref(null)
+  const strengthenShow = ref(false)
+  const strengthenInfo = ref({})
+  const strengthenMode = ref('enhance')
   const petTrainShow = ref(false)
   const petTrain = ref({})
   const petTrainRoot = ref(false)
@@ -401,9 +406,11 @@
     return 0
   }
   const propValue = p => (itemDb(p.key)?.price || 0) * p.num
-  const goForge = () => {
-    gameNotifys({ title: '装备强化/精炼', message: '请回主页装备栏进行强化或精炼', type: 'info' })
-    router.push('/home')
+  const openStrengthen = (item, mode = 'enhance') => {
+    if (!item || !item.id) return gameNotifys({ title: '装备强化/精炼', message: '请先穿戴一件装备', type: 'warning' })
+    strengthenInfo.value = item
+    strengthenMode.value = mode
+    strengthenShow.value = true
   }
 
   const equippedTypeOf = id => {
@@ -672,6 +679,7 @@
   .resources { display: flex; gap: 8px; margin-bottom: 8px; }
   .section-title { font-size: 15px; font-weight: bold; margin: 12px 0 8px; }
   .eq-section { margin-bottom: 6px; }
+  .equip-hint { margin-bottom: 6px; padding: 6px 8px; border-radius: 6px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 12px; }
   .equipped-cell { border: 1px solid var(--el-color-primary-light-7); }
   .grid { display: flex; flex-wrap: wrap; gap: 8px; }
   .cell { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 4px; background: var(--el-fill-color-light); }
