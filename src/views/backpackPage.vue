@@ -298,15 +298,14 @@
   const sortInventory = () => {
     player.value.inventory.sort(
       (a, b) =>
-        (QUALITY_RANK[b.quality] || 0) - (QUALITY_RANK[a.quality] || 0) ||
-        ((a.setId || '').localeCompare(b.setId || '')) ||
-        (b.grade || 0) - (a.grade || 0) ||
         (b.score || 0) - (a.score || 0) ||
+        (QUALITY_RANK[b.quality] || 0) - (QUALITY_RANK[a.quality] || 0) ||
+        (b.grade || 0) - (a.grade || 0) ||
         (b.level || 0) - (a.level || 0)
     )
     ;(player.value.pills || []).sort((a, b) => (recipeById(b.id)?.tier || 0) - (recipeById(a.id)?.tier || 0))
     ;(player.value.talismans || []).sort((a, b) => (talismanById(b.id)?.tier || 0) - (talismanById(a.id)?.tier || 0))
-    gameNotifys({ title: '一键整理', message: '已按品级/阶位/评分整理', type: 'success' })
+    gameNotifys({ title: '一键整理', message: '装备已按战力（评分）从高到低整理', type: 'success' })
   }
 
   const applyStats = (item, sign) => {
