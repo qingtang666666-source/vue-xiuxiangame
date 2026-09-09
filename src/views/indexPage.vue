@@ -129,7 +129,7 @@
       player.value.zc = player.value.zc ? player.value.zc : false
       // 登录时结算离线挂机收益
       const offline = settleOffline(local.player)
-      if (offline && offline.hours >= 1 / 120) {
+      if (offline && offline.hours >= 1 / 60) {
         ElMessageBox.alert(buildOfflineHtml(offline), '欢迎回来', {
           dangerouslyUseHTMLString: true,
           confirmButtonText: '收下',

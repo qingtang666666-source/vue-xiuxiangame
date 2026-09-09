@@ -141,6 +141,7 @@ export const useMainStore = defineStore('main', {
       taskNum: 0,
       version: 0.9,
       lastOnlineTime: null,
+      lastSaveAt: null,
       currency: 0,
       maxHealth: 50,
       inventory: [],

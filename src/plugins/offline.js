@@ -4,6 +4,7 @@ import { manorOfflineBonus } from './manor.js'
 import { idleRates } from './alchemy.js'
 
 const BASE_RATE = 0.02 // 基准速率：每境界每秒可获得 maxCultivation 的 2%
+export const OFFLINE_MIN_SEC = 60
 
 // 离线可产出的材料（与奇遇保持一致）及其名称
 const MATERIAL_KEYS = ['strengtheningStone', 'cultivateDan', 'zhuSha', 'xuanTie', 'zhenQi', 'yaoDan']
@@ -24,15 +25,24 @@ const MATERIAL_NAMES = {
  */
 export const settleOffline = player => {
   const now = Date.now()
-  const last = player.lastOnlineTime
-  if (!last) {
+  const lastOnline = Number(player.lastOnlineTime) || 0
+  const lastSave = Number(player.lastSaveAt) || 0
+  if (!lastOnline && !lastSave) {
     player.lastOnlineTime = now
+    player.lastSaveAt = now
     return null
   }
 
-  let elapsedSec = Math.floor((now - last) / 1000)
-  if (elapsedSec <= 0) {
+  // 取“最后在线”和“最后落盘”中更晚的一个，避免只改单一字段刷离线时长
+  const anchor = Math.max(lastOnline, lastSave)
+  // 系统时间回拨：不重置锚点，防止回拨后再前拨重复领取
+  if (now < anchor) return null
+
+  let elapsedSec = Math.floor((now - anchor) / 1000)
+  // 离线不足 1 分钟不计入，直接刷新在线锚点，防止反复短时间刷新累计
+  if (elapsedSec < OFFLINE_MIN_SEC) {
     player.lastOnlineTime = now
+    player.lastSaveAt = now
     return null
   }
 
@@ -68,6 +78,7 @@ export const settleOffline = player => {
     }
   }
   player.lastOnlineTime = now
+  player.lastSaveAt = now
 
   // 修为超过上限不退还，只是显示为可突破
   return {
@@ -82,5 +93,6 @@ export const settleOffline = player => {
 
 // 更新在线时间戳（离开页面/定期保存时调用）
 export const touchOnline = player => {
-  player.lastOnlineTime = Date.now()
+  const now = Date.now()
+  if (!player.lastOnlineTime || now > player.lastOnlineTime) player.lastOnlineTime = now
 }

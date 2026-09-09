@@ -59,6 +59,7 @@ const persistNow = store => {
   try {
     let raw
     try {
+      if (store?.player) store.player.lastSaveAt = Date.now()
       raw = encryptState(store)
     } catch (e) {
       return
@@ -145,6 +146,7 @@ const loadState = () => {
   // 老存档背包容量兜底到 1000（避免改默认值后老玩家仍是 50）
   if (player && typeof player === 'object') {
     player.backpackCapacity = Math.max(player.backpackCapacity || 0, 1000)
+    if (typeof data.at === 'number') player.lastSaveAt = Math.max(player.lastSaveAt || 0, data.at)
   }
   return { boss: data.boss, player: migratePlayer(player) }
 }
