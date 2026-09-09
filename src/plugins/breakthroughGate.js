@@ -11,15 +11,16 @@ export const BREAKTHROUGH_CD_FAIL = 30 * 1000
 export const TRIBULATION_CD_FAIL = 60 * 1000
 // 大境界突破失败上限
 export const MAX_STAGE_FAILS = 5
-export const POWER_SCALE = 10
 // 历战道果保底：前 15 次不掉，15 次后逐步提概率，40 次必出
 export const DAO_FRUIT_MIN_RUNS = 15
 export const DAO_FRUIT_PITY = 40
 
-// 境界战力标准：11阶(道祖, Lv~144)≈500万，几何递减到 Lv1≈8000
-export const STANDARD_TOP_POWER = 5000000
+// 境界战力标准：道祖九层(Lv144)=1亿；小境界内每层递增 8%
+export const TOP_REALM_POWER = 100000000
+export const SUB_STAGE_GROWTH = 1.08
+export const STANDARD_TOP_POWER = TOP_REALM_POWER
 export const STANDARD_BOTTOM_POWER = 8000
-// 按 16 大境界阶梯：中高境界战力更高(更丰满)，道祖=500万起步，仅最底层陡降
+// 按 16 大境界阶梯：这里是大境界起始值，小境界内再按 SUB_STAGE_GROWTH 递进
 const STAGE_POWER = [
   24000,   // 炼气
   64000,   // 筑基
@@ -38,10 +39,16 @@ const STAGE_POWER = [
   3200000, // 混元
   4000000  // 道祖
 ]
+// 由「道祖九层=1亿」反推统一缩放，保证所有境界共享同一套标准
+export const POWER_SCALE = TOP_REALM_POWER / (STAGE_POWER[15] * Math.pow(SUB_STAGE_GROWTH, 8))
 export const realmPower = level => {
   const lv = Math.max(1, Math.min(144, Math.floor(level || 1)))
   const stage = Math.max(0, Math.min(15, Math.floor((lv - 1) / 9)))
-  return STAGE_POWER[stage] * POWER_SCALE
+  const sub = (lv - 1) % 9
+  const start = STAGE_POWER[stage] * POWER_SCALE
+  // 段内平滑推进到下一大境界起点；道祖段用 8% 小阶增速外推，保证九层正好 1 亿
+  const next = stage < 15 ? STAGE_POWER[stage + 1] * POWER_SCALE : start * Math.pow(SUB_STAGE_GROWTH, 9)
+  return Math.round(start * Math.pow(next / start, sub / 9))
 }
 
 // 玩家正式战力（与“总体实力/装备评分”一致；不引入 equip 避免循环依赖，公式相同）

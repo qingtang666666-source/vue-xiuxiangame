@@ -32,18 +32,33 @@ export const heroLevelOfRank = rank => {
   return Math.round(144 - ((rank - 1) / (HERO_COUNT - 1)) * 143)
 }
 
-// 排名越靠前战力越高；加成封顶 ×2.0，让道祖顶级约1000万(5M×2)
-export const heroBoostOfRank = rank => Math.min(2.0, 1 + (1 - Math.max(1, Math.min(HERO_COUNT, rank)) / HERO_COUNT) * 1.4)
+// 排名越靠前战力越高：榜首按道祖九层标准(1亿)，榜尾约八成五
+export const heroBoostOfRank = rank => {
+  const r = Math.max(1, Math.min(HERO_COUNT, Math.floor(rank || HERO_COUNT)))
+  const t = 1 - (r - 1) / (HERO_COUNT - 1)
+  return 0.85 + t * 0.15
+}
+
+// 同一小境界内可能有多个名次，再按名次位置拉开一点差距，避免完全同值
+const sameLevelPosition = rank => {
+  const lv = heroLevelOfRank(rank)
+  let lo = rank
+  let hi = rank
+  while (lo > 1 && heroLevelOfRank(lo - 1) === lv) lo--
+  while (hi < HERO_COUNT && heroLevelOfRank(hi + 1) === lv) hi++
+  return hi === lo ? 0 : (rank - lo) / (hi - lo)
+}
 
 export const heroPowerOfRank = rank => {
   const lv = heroLevelOfRank(rank)
-  return Math.floor(realmPower(lv) * heroBoostOfRank(rank))
+  const sameLevelFactor = 1 - sameLevelPosition(rank) * 0.06
+  return Math.floor(realmPower(lv) * heroBoostOfRank(rank) * sameLevelFactor)
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
 export const heroEnemy = (rank, name) => {
   const lv = heroLevelOfRank(rank)
-  const st = enemyStatsForPower(realmPower(lv) * heroBoostOfRank(rank), 1.0)
+  const st = enemyStatsForPower(heroPowerOfRank(rank), 1.0)
   const s2 = Math.min(15, Math.max(0, Math.floor((lv - 1) / 9)))
   return {
     level: lv,
