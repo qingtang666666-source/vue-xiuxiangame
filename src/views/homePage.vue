@@ -1133,21 +1133,51 @@
     </el-dialog>
     <el-drawer title="图鉴与成就" v-model="equipAllShow" direction="rtl" class="equipAll">
       <div class="codex-summary" v-if="codexStat.total">
-        图鉴总收集度 <b>{{ Math.floor(codexStat.percent * 100) }}%</b> ·
-        修为加成 +{{ (codexStat.percent * 10).toFixed(1) }}% · 灵石加成 +{{ (codexStat.percent * 5).toFixed(1) }}%
+        <div class="codex-summary-head">
+          <span>图鉴总收集度 <b>{{ Math.floor(codexStat.percent * 100) }}%</b>（{{ codexStat.owned }}/{{ codexStat.total }}）</span>
+          <span>修为 +{{ (codexStat.percent * 10).toFixed(1) }}% · 灵石 +{{ (codexStat.percent * 5).toFixed(1) }}%</span>
+        </div>
+        <el-progress
+          :percentage="Math.floor(codexStat.percent * 100)"
+          :stroke-width="10"
+          :color="codexStat.percent >= 1 ? '#67c23a' : '#409eff'"
+        />
+        <div class="codex-milestone-list">
+          <div
+            class="codex-milestone"
+            :class="{ 'is-claimed': m.claimed, 'is-ready': m.claimable }"
+            v-for="m in codexMilestones"
+            :key="m.id"
+          >
+            <div class="cm-top"><b>{{ m.name }}</b><span>{{ Math.round(m.percent * 100) }}%</span></div>
+            <div class="cm-reward">{{ codexRewardText(m) }}</div>
+            <el-button
+              size="small"
+              :type="m.claimed ? 'success' : m.claimable ? 'primary' : 'info'"
+              :disabled="!m.claimable"
+              @click="claimCodex(m)"
+            >
+              {{ m.claimed ? '已领取' : m.claimable ? '领取' : '未达成' }}
+            </el-button>
+          </div>
+        </div>
+      </div>
+      <div class="codex-tools">
+        <el-input v-model="codexKeyword" size="small" clearable placeholder="搜索图鉴名称或描述" class="codex-search" />
+        <el-checkbox v-model="codexOnlyMissing" size="small">只看未收集</el-checkbox>
       </div>
       <el-tabs v-model="activeName" type="border-card">
         <el-tab-pane label="装备图鉴" name="illustrations">
           <div class="equipAll-box">
             <el-tabs v-model="illustrationsActive" :stretch="true">
-              <el-tab-pane :label="i.name" :name="i.type" v-for="(i, k) in illustrationsItems" :key="k">
+              <el-tab-pane :label="i.name" :name="i.type" v-for="(i, k) in filteredIllustrationsItems" :key="k">
                 <div class="equipAll-content">
                   <template v-for="(item, index) in i.data">
                     <div
                       class="equipAll-item"
                       v-if="item.type == i.type"
                       :key="index"
-                      @click="illustrationsInfo(k, index)"
+                      @click="illustrationsInfo(item)"
                     >
                       <tag :type="item.quality">
                         {{ item.name }}
@@ -1245,12 +1275,12 @@
         </el-tab-pane>
         <el-tab-pane label="游商专辑" name="trav">
           <div class="equipAll-box">
-            <div class="codex-count">已见 {{ travelerSeen.length }} 种货品</div>
+            <div class="codex-count">已见 {{ filteredTravelerSeen.length }}/{{ travelerSeen.length }} 种货品</div>
             <div class="equipAll-content">
-              <div class="equipAll-item" v-for="t in travelerSeen" :key="t.key" @click="codexInfo(t.name, t.tierName)">
+              <div class="equipAll-item" v-for="t in filteredTravelerSeen" :key="t.key" @click="codexInfo(t.name, t.tierName)">
                 <tag :type="tierOfSeen(t)">{{ t.name }}</tag>
               </div>
-              <el-empty v-if="!travelerSeen.length" description="游商尚未进货" :image-size="60" />
+              <el-empty v-if="!filteredTravelerSeen.length" :description="travelerSeen.length ? '没有符合筛选的货品' : '游商尚未进货'" :image-size="60" />
             </div>
           </div>
         </el-tab-pane>
@@ -1258,10 +1288,10 @@
           <div class="equipAll-box">
             <div class="codex-count">已开 {{ blindBoxStat.opened }} 次 · 出1000倍 {{ blindBoxStat.jackpot }} 次</div>
             <div class="equipAll-content">
-              <div class="equipAll-item" v-for="x in blindBoxItems" :key="x.key" @click="codexInfo(nameOfKey(x.key), '累计开出 ×' + x.qty)">
+              <div class="equipAll-item" v-for="x in filteredBlindBoxItems" :key="x.key" @click="codexInfo(nameOfKey(x.key), '累计开出 ×' + x.qty)">
                 <el-tag size="small" type="warning">{{ nameOfKey(x.key) }} ×{{ x.qty }}</el-tag>
               </div>
-              <el-empty v-if="!blindBoxItems.length" description="还未开过盲盒" :image-size="60" />
+              <el-empty v-if="!filteredBlindBoxItems.length" :description="blindBoxItems.length ? '没有符合筛选的记录' : '还未开过盲盒'" :image-size="60" />
             </div>
           </div>
         </el-tab-pane>
@@ -1455,7 +1485,7 @@
   import { TALISMANS } from '@/plugins/talisman'
   import { performRebirth, rebirthSummaryHtml, fullReset } from '@/plugins/rebirthFlow'
   import { fateInfo } from '@/plugins/fate'
-  import { codexStats } from '@/plugins/codex'
+  import { codexStats, codexMilestoneState, claimCodexMilestone, codexRewardText } from '@/plugins/codex'
   import { collectSetInfo, effectiveBackpackCap, effectivePlayerStats } from '@/plugins/setBonus'
   import { natalArtifactTier } from '@/plugins/natalArtifact'
   import { triggerAdventure, canAdventure, adventureCooldownLeft } from '@/plugins/adventure'
@@ -1514,6 +1544,7 @@
   const calendar = computed(() => gameDate(player.value))
   const fateData = computed(() => fateInfo(player.value))
   const codexStat = computed(() => codexStats(player.value))
+  const codexMilestones = computed(() => codexMilestoneState(player.value))
   const collectSet = computed(() => collectSetInfo(player.value))
   const autoIdlePreset = on => {
     player.value.autoIdle.explore = on
@@ -1800,6 +1831,8 @@
   const equipmentDropdownActive = ref('')
   // —— 图鉴：材料 / 丹药 / 功法 / 符箓 / 阵法 / 天材地宝 ——
   const MATERIALS_TIERS_NEW = MATERIAL_TIERS.map(t => t.name)
+  const codexKeyword = ref('')
+  const codexOnlyMissing = ref(false)
   const matTier = ref(-1)
   const pillTier = ref(-1)
   const techGrade = ref(-1)
@@ -1809,17 +1842,55 @@
   const formationGroups = FORMATION_GROUPS
   const QUALITY_BY_TIER = ['info', 'success', 'primary', 'purple', 'pink', 'warning', 'danger', 'cyan', 'orange', 'gold', 'legendary']
   const qualityOfMaterial = tier => QUALITY_BY_TIER[tier] || 'info'
-  const filteredMats = computed(() => (matTier.value < 0 ? MATERIALS : MATERIALS.filter(m => m.tier === matTier.value)))
-  const filteredPills = computed(() => (pillTier.value < 0 ? RECIPES : RECIPES.filter(r => r.tier === pillTier.value)))
-  const filteredTechs = computed(() => (techGrade.value < 0 ? TECHNIQUES : TECHNIQUES.filter(t => t.grade === techGrade.value)))
-  const filteredTals = computed(() => (talTier.value < 0 ? TALISMANS : TALISMANS.filter(x => x.tier === talTier.value)))
-  const filteredForms = computed(() => (formGroup.value === 'all' ? FORMATIONS : FORMATIONS.filter(f => f.group === formGroup.value)))
-  const filteredTres = computed(() => (treTier.value < 0 ? TREASURES : TREASURES.filter(x => x.tier === treTier.value)))
+  const codexKeywordMatch = (...texts) => {
+    const keyword = codexKeyword.value.trim().toLowerCase()
+    if (!keyword) return true
+    return texts.some(text => String(text || '').toLowerCase().includes(keyword))
+  }
+  const codexVisible = (owned, ...texts) => (!codexOnlyMissing.value || !owned) && codexKeywordMatch(...texts)
+  const filteredIllustrationsItems = computed(() =>
+    illustrationsItems.value.map(group => ({
+      ...group,
+      data: group.data.filter(item => codexKeywordMatch(item.name, genre[item.type]))
+    }))
+  )
+  const filteredMats = computed(() =>
+    (matTier.value < 0 ? MATERIALS : MATERIALS.filter(m => m.tier === matTier.value)).filter(m => codexVisible(ownProp(m.key), m.name, m.desc))
+  )
+  const filteredPills = computed(() =>
+    (pillTier.value < 0 ? RECIPES : RECIPES.filter(r => r.tier === pillTier.value)).filter(r => codexVisible(ownPill(r), r.name, r.effectText))
+  )
+  const filteredTechs = computed(() =>
+    (techGrade.value < 0 ? TECHNIQUES : TECHNIQUES.filter(t => t.grade === techGrade.value)).filter(t => codexVisible(ownTech(t), t.name, t.desc))
+  )
+  const filteredTals = computed(() =>
+    (talTier.value < 0 ? TALISMANS : TALISMANS.filter(x => x.tier === talTier.value)).filter(x => codexVisible(ownTal(x), x.name, x.effectText))
+  )
+  const filteredForms = computed(() =>
+    (formGroup.value === 'all' ? FORMATIONS : FORMATIONS.filter(f => f.group === formGroup.value)).filter(f => codexVisible(ownForm(f), f.name, f.desc))
+  )
+  const filteredTres = computed(() =>
+    (treTier.value < 0 ? TREASURES : TREASURES.filter(x => x.tier === treTier.value)).filter(t => codexVisible(ownTre(t), t.name, t.desc))
+  )
   const codexInfo = (name, desc) => gameNotifys({ title: name, message: desc || '', type: 'info' })
+  const claimCodex = milestone => {
+    const result = claimCodexMilestone(player.value, milestone.id)
+    if (result.ok) {
+      gameNotifys({
+        title: `图鉴里程碑·${milestone.name}`,
+        message: `奖励已领取：${result.rewardText}`,
+        type: 'success'
+      })
+    } else {
+      gameNotifys({ title: '图鉴里程碑', message: result.reason, type: 'warning' })
+    }
+  }
   const travelerSeen = computed(() => Object.entries(player.value.travSeen || {}).map(([key, v]) => ({ key, ...v })))
+  const filteredTravelerSeen = computed(() => travelerSeen.value.filter(t => codexKeywordMatch(t.name, t.tierName)))
   const tierOfSeen = t => ({ prop: 'primary', material: 'info', pill: 'warning', treasure: 'danger' }[t.kind] || 'info')
   const blindBoxStat = computed(() => player.value.blindBoxLog || { opened: 0, jackpot: 0, items: {} })
   const blindBoxItems = computed(() => Object.entries(blindBoxStat.value.items || {}).map(([key, qty]) => ({ key, qty })))
+  const filteredBlindBoxItems = computed(() => blindBoxItems.value.filter(x => codexKeywordMatch(nameOfKey(x.key))))
   const nameOfKey = key => {
     if (key === 'currency') return '混沌石'
     const m = MATERIALS.find(x => x.key === key)
@@ -3037,8 +3108,7 @@
   }
 
   // 图鉴装备信息
-  const illustrationsInfo = (i, ii) => {
-    const info = illustrationsItems.value[i].data[ii]
+  const illustrationsInfo = info => {
     ElMessageBox.confirm('', info.name, {
       center: true,
       message: `<div class="monsterinfo">
@@ -3779,6 +3849,10 @@
       width: 50%;
     }
 
+    .codex-milestone-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .backtop {
       display: flex;
     }
@@ -3829,6 +3903,68 @@
     background: var(--el-fill-color-light);
     color: var(--el-text-color-primary);
     font-size: 13px;
+  }
+  .codex-summary-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .codex-milestone-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .codex-milestone {
+    padding: 6px 8px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+    background: var(--el-bg-color);
+    min-width: 0;
+  }
+  .codex-milestone.is-ready {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+  }
+  .codex-milestone.is-claimed {
+    border-color: var(--el-color-success-light-5);
+    background: var(--el-color-success-light-9);
+  }
+  .cm-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .cm-top b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cm-top span {
+    color: var(--el-color-primary);
+    flex-shrink: 0;
+  }
+  .cm-reward {
+    margin: 4px 0 6px;
+    min-height: 28px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--el-text-color-secondary);
+  }
+  .codex-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .codex-search {
+    flex: 1 1 auto;
+  }
+  .codex-tools :deep(.el-checkbox) {
+    flex: 0 0 auto;
   }
   .season-body {
     min-height: 80vh;

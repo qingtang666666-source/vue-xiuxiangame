@@ -7,15 +7,15 @@
 
     <el-collapse v-model="open">
       <el-collapse-item title="资源" name="res">
-        <div class="row"><span>灵石</span><el-input-number v-model="amt.money" size="small" /><el-button size="small" type="primary" @click="add('money')">加</el-button></div>
-        <div class="row"><span>灵草</span><el-input-number v-model="amt.spiritHerb" size="small" /><el-button size="small" type="primary" @click="add('spiritHerb')">加</el-button></div>
-        <div class="row"><span>炼器石</span><el-input-number v-model="amt.strengtheningStone" size="small" /><el-button size="small" type="primary" @click="add('strengtheningStone')">加</el-button></div>
-        <div class="row"><span>培养丹</span><el-input-number v-model="amt.cultivateDan" size="small" /><el-button size="small" type="primary" @click="add('cultivateDan')">加</el-button></div>
-        <div class="row"><span>悟性丹</span><el-input-number v-model="amt.rootBone" size="small" /><el-button size="small" type="primary" @click="add('rootBone')">加</el-button></div>
-        <div class="row"><span>混沌石</span><el-input-number v-model="amt.currency" size="small" /><el-button size="small" type="primary" @click="add('currency')">加</el-button></div>
-        <div class="row"><span>筹码</span><el-input-number v-model="amt.chips" size="small" /><el-button size="small" type="primary" @click="add('chips')">加</el-button></div>
-        <div class="row"><span>道痕</span><el-input-number v-model="amt.daoMark" size="small" :min="0" /><el-button size="small" type="primary" @click="setDaoMark">加</el-button></div>
-        <div class="row"><span>赛季分</span><el-input-number v-model="amt.seasonPts" size="small" :min="0" /><el-button size="small" type="primary" @click="setSeason">加</el-button></div>
+        <div class="row"><span>灵石</span><el-input-number v-model="amt.money" size="small" /><el-button size="small" type="primary" @click="add('money')">加</el-button><el-button size="small" plain @click="setRes('money')">设为</el-button></div>
+        <div class="row"><span>灵草</span><el-input-number v-model="amt.spiritHerb" size="small" /><el-button size="small" type="primary" @click="add('spiritHerb')">加</el-button><el-button size="small" plain @click="setRes('spiritHerb')">设为</el-button></div>
+        <div class="row"><span>炼器石</span><el-input-number v-model="amt.strengtheningStone" size="small" /><el-button size="small" type="primary" @click="add('strengtheningStone')">加</el-button><el-button size="small" plain @click="setRes('strengtheningStone')">设为</el-button></div>
+        <div class="row"><span>培养丹</span><el-input-number v-model="amt.cultivateDan" size="small" /><el-button size="small" type="primary" @click="add('cultivateDan')">加</el-button><el-button size="small" plain @click="setRes('cultivateDan')">设为</el-button></div>
+        <div class="row"><span>悟性丹</span><el-input-number v-model="amt.rootBone" size="small" /><el-button size="small" type="primary" @click="add('rootBone')">加</el-button><el-button size="small" plain @click="setRes('rootBone')">设为</el-button></div>
+        <div class="row"><span>混沌石</span><el-input-number v-model="amt.currency" size="small" /><el-button size="small" type="primary" @click="add('currency')">加</el-button><el-button size="small" plain @click="setRes('currency')">设为</el-button></div>
+        <div class="row"><span>筹码</span><el-input-number v-model="amt.chips" size="small" /><el-button size="small" type="primary" @click="add('chips')">加</el-button><el-button size="small" plain @click="setRes('chips')">设为</el-button></div>
+        <div class="row"><span>道痕</span><el-input-number v-model="amt.daoMark" size="small" :min="0" /><el-button size="small" type="primary" @click="setDaoMark">加</el-button><el-button size="small" plain @click="setDaoMarkValue">设为</el-button></div>
+        <div class="row"><span>赛季分</span><el-input-number v-model="amt.seasonPts" size="small" :min="0" /><el-button size="small" type="primary" @click="setSeason">加</el-button><el-button size="small" plain @click="setSeasonValue">设为</el-button></div>
       </el-collapse-item>
 
       <el-collapse-item title="装备生成器" name="eq">
@@ -87,12 +87,51 @@
         <div class="row"><el-button type="danger" @click="killWorldBoss">挑战世界Boss(屠)</el-button></div>
       </el-collapse-item>
 
-      <el-collapse-item title="折腾 / 备份" name="misc">
+      <el-collapse-item title="存档 / 备份" name="misc">
         <div class="row"><el-button @click="clearBag">清空背包</el-button><el-button type="danger" @click="clearAll">清空全部(重开)</el-button></div>
-        <div class="row"><el-button @click="exportSave">导出存档(加密)</el-button></div>
+        <div class="row">
+          <el-button @click="exportSave">导出存档(加密)</el-button>
+          <el-upload
+            action="#"
+            :http-request="importSave"
+            :show-file-list="false"
+            accept=".json,application/json,text/plain"
+          >
+            <el-button type="warning">导入存档</el-button>
+          </el-upload>
+          <el-button type="primary" plain @click="backupNow">立即备份</el-button>
+        </div>
+        <div class="backup-box">
+          <div class="backup-head">
+            <span>备份（{{ backups.length }}）</span>
+            <el-button size="small" text @click="refreshBackups">刷新</el-button>
+          </div>
+          <div class="backup-row" v-for="b in backups" :key="b.key">
+            <span class="backup-name">{{ b.label }}</span>
+            <el-button size="small" text type="primary" @click="restoreSave(b)">回滚</el-button>
+          </div>
+          <div class="backup-empty" v-if="!backups.length">暂无备份</div>
+          <el-button size="small" plain v-if="backups.length" @click="dropSaves">清空备份</el-button>
+        </div>
       </el-collapse-item>
 
       <el-collapse-item title="更多功能" name="more">
+        <div class="codex-panel">
+          <div class="codex-head">
+            <span>图鉴进度</span>
+            <b>{{ codexStat.owned }}/{{ codexStat.total }}（{{ Math.floor(codexStat.percent * 100) }}%）</b>
+          </div>
+          <el-progress
+            :percentage="Math.floor(codexStat.percent * 100)"
+            :stroke-width="10"
+            :color="codexStat.percent >= 1 ? '#67c23a' : '#409eff'"
+          />
+          <div class="codex-milestones">
+            <span v-for="m in codexMilestones" :key="m.id" :class="{ ready: m.claimable, claimed: m.claimed }">
+              {{ m.name }} {{ Math.round(m.percent * 100) }}%
+            </span>
+          </div>
+        </div>
         <div class="row">
           <el-button type="success" @click="doStory">随机剧情</el-button>
           <el-button type="success" @click="doAdventure">奇遇</el-button>
@@ -100,6 +139,8 @@
         </div>
         <div class="row">
           <el-button type="primary" @click="fillCodex">一键点亮全部图鉴</el-button>
+          <el-button type="success" :disabled="!hasClaimableCodex" @click="claimCodexAll">领取图鉴里程碑</el-button>
+          <el-button plain @click="resetCodexRewards">重置里程碑领取</el-button>
           <el-button type="danger" @click="unlockAllAchievements">解锁全部成就</el-button>
           <el-button type="success" @click="refreshTrav">刷新游商</el-button>
         </div>
@@ -110,14 +151,25 @@
       </el-collapse-item>
     </el-collapse>
 
-    <div class="current">当前：{{ levelNames(player.level) }} · 灵石{{ formatNumberToChineseUnit(player.props.money) }} · 攻{{ formatNumberToChineseUnit(player.attack) }} · 血{{ formatNumberToChineseUnit(player.maxHealth) }} · 转世{{ player.reincarnation }}</div>
+    <div class="current">当前：{{ levelNames(player.level) }} · 灵石{{ formatNumberToChineseUnit(player.props.money) }} · 攻{{ formatNumberToChineseUnit(player.attack) }} · 血{{ formatNumberToChineseUnit(player.maxHealth) }} · 转世{{ player.reincarnation }} · 图鉴{{ Math.floor(codexStat.percent * 100) }}%</div>
   </div>
 </template>
 
 <script setup>
-  import { ref, reactive } from 'vue'
+  import { ref, reactive, computed } from 'vue'
   import { useMainStore } from '@/plugins/store'
-  import { flushPersistence, wipeSave, exportSaveText } from '@/plugins/persistence'
+  import {
+    flushPersistence,
+    wipeSave,
+    exportSaveText,
+    importSaveText,
+    backupSave,
+    listBackups,
+    restoreBackup,
+    dropBackups,
+    stopPersistence,
+    writeVault
+  } from '@/plugins/persistence'
   import { formatNumberToChineseUnit, gameNotifys, computeMaxCultivation, gradeNames, levelNames } from '@/plugins/game'
   import { drawTalentForPlayer } from '@/plugins/talent'
   import { RECIPES } from '@/plugins/alchemy'
@@ -139,6 +191,8 @@
   import { CHEST_SET, CHEST_SET2 } from '@/plugins/equipSetDb'
   import { refreshTravelingMerchant } from '@/plugins/travelingMerchant'
   import { rollFate, rollWorldRule, applyMetaBuffs } from '@/plugins/fate'
+  import { codexStats, codexMilestoneState, claimAllCodexMilestones } from '@/plugins/codex'
+  import { ElMessageBox } from 'element-plus'
 
   const store = useMainStore()
   const router = useRouter()
@@ -169,11 +223,18 @@
   const cTal = ref(player.value.skills?.talisman || 0)
   const cForm = ref(player.value.skills?.formation || 0)
   const drawN = ref(5)
+  const backups = ref([])
+  const codexStat = computed(() => codexStats(player.value))
+  const codexMilestones = computed(() => codexMilestoneState(player.value))
+  const hasClaimableCodex = computed(() => codexMilestones.value.some(m => m.claimable))
 
   const note = m => gameNotifys({ title: 'GM', message: m, type: 'success' })
   const add = key => { player.value.props[key] = (player.value.props[key] || 0) + (amt[key] || 0); note('资源已加') }
+  const setRes = key => { player.value.props[key] = amt[key] || 0; note('资源已设置') }
   const setDaoMark = () => { player.value.daoMark = (player.value.daoMark || 0) + (amt.daoMark || 0); note('道痕已加') }
+  const setDaoMarkValue = () => { player.value.daoMark = amt.daoMark || 0; note('道痕已设置') }
   const setSeason = () => { if (!player.value.season) player.value.season = { points: 0 }; player.value.season.points = (player.value.season.points || 0) + (amt.seasonPts || 0); note('赛季分已加') }
+  const setSeasonValue = () => { if (!player.value.season) player.value.season = { points: 0 }; player.value.season.points = amt.seasonPts || 0; note('赛季分已设置') }
   const rerollFate = () => { player.value.buffs = (player.value.buffs || []).filter(b => !b.meta); applyMetaBuffs(player.value, rollFate(player.value), rollWorldRule(player.value)); note('命运/天道已重随') }
   const boostNatal = () => { if (!player.value.natalArtifact) player.value.natalArtifact = { level: 1, stage: -1, affixes: [] }; player.value.natalArtifact.level = (player.value.natalArtifact.level || 1) + 10; note('本命法宝 +10 级') }
   const killWorldBoss = () => { if (!Array.isArray(player.value.worldBosses)) player.value.worldBosses = []; if (!player.value.worldBosses.length) player.value.worldBosses = [{ id: 'wb-0', rewards: {}, hp: 0, maxHp: 1, dead: false }]; const b = player.value.worldBosses.find(x => !x.dead) || player.value.worldBosses[0]; b.rewards = b.rewards || {}; b.rewards.kill = (b.rewards.kill || 0) + 100000; b.hp = 0; b.maxHp = b.maxHp || 1; b.dead = true; note('世界Boss已讨伐(+10万灵石奖励)') }
@@ -220,6 +281,16 @@
     TECHNIQUES.forEach(t => { if (!player.value.methods) player.value.methods = {}; if (!player.value.methods[t.id]) player.value.methods[t.id] = { chapter: 1, proficiency: 1 } })
     TREASURES.forEach(t => addTreasure(player.value, t.key, 1))
     note('图鉴已点亮（每种各1件）')
+  }
+  const claimCodexAll = () => {
+    const claimed = claimAllCodexMilestones(player.value)
+    if (!claimed.length) return note('暂无可领取的图鉴里程碑')
+    note(`已领取 ${claimed.length} 个图鉴里程碑：${claimed.map(x => `${x.milestone.name}（${x.rewardText}）`).join('；')}`)
+  }
+  const resetCodexRewards = () => {
+    if (!player.value.codexRewards) player.value.codexRewards = { claimed: [] }
+    player.value.codexRewards.claimed = []
+    note('图鉴里程碑领取状态已重置（已发放的永久属性不会回收）')
   }
   const fillMaterials = () => {
     MATERIALS.forEach(m => { player.value.props[m.key] = 999 })
@@ -273,7 +344,90 @@
     note('游商已进一批新货（回首页冒险→游商查看）')
   }
   const clearBag = () => { player.value.inventory = []; player.value.equipment = { sutra: {}, armor: {}, weapon: {}, accessory: {} }; note('背包已清空') }
-  const clearAll = () => { wipeSave(store); setTimeout(() => location.reload(), 300) }
+  const clearAll = () => {
+    ElMessageBox.confirm('将清空全部存档并重新开始。删除前会自动留一份可回滚备份，确定继续？', 'GM 清档', {
+      type: 'warning',
+      confirmButtonText: '确定清档',
+      cancelButtonText: '取消'
+    })
+      .then(() => {
+        wipeSave(store)
+        note('存档已清空，即将重开')
+        setTimeout(() => location.reload(), 400)
+      })
+      .catch(() => {})
+  }
+  const refreshBackups = () => {
+    backups.value = listBackups()
+      .map(b => {
+        const rest = b.key.replace(/^vuex\.bak-/, '')
+        const tag = rest.replace(/-\d{13}$/, '')
+        const time = b.at ? new Date(b.at).toLocaleString('zh-CN', { hour12: false }) : ''
+        return { key: b.key, label: `${tag} · ${time}` }
+      })
+      .reverse()
+  }
+  const backupNow = () => {
+    try {
+      flushPersistence(store)
+    } catch (e) {
+      /* 落盘失败也照样备份当前可读物 */
+    }
+    const key = backupSave('gm-manual')
+    refreshBackups()
+    note(key ? '当前进度已备份' : '备份失败：浏览器存储空间不足')
+  }
+  const importSave = payload => {
+    const file = payload?.file
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = e => {
+      const result = importSaveText(e.target.result)
+      if (!result.ok) {
+        gameNotifys({ title: 'GM 导入失败', message: `${result.reason || '存档无效'}（当前进度未改动）`, type: 'error', duration: 9000 })
+        return
+      }
+      stopPersistence()
+      backupSave('gm-before-import')
+      writeVault(result.boss || store.boss, result.player)
+      note('存档已导入，即将刷新')
+      setTimeout(() => location.reload(), 700)
+    }
+    reader.onerror = () => gameNotifys({ title: 'GM 导入失败', message: '文件读取失败', type: 'error' })
+    reader.readAsText(file)
+  }
+  const restoreSave = backup => {
+    ElMessageBox.confirm(`回滚到「${backup.label}」？当前进度会先自动备份一份。`, 'GM 回滚存档', {
+      type: 'warning',
+      confirmButtonText: '回滚',
+      cancelButtonText: '取消'
+    })
+      .then(() => {
+        const result = restoreBackup(backup.key)
+        if (!result.ok) {
+          gameNotifys({ title: 'GM 回滚失败', message: result.reason, type: 'error' })
+          return
+        }
+        stopPersistence()
+        note('已回滚，即将刷新')
+        setTimeout(() => location.reload(), 700)
+      })
+      .catch(() => {})
+  }
+  const dropSaves = () => {
+    ElMessageBox.confirm('将删除全部备份副本（不影响当前存档），确定？', 'GM 清空备份', {
+      type: 'warning',
+      confirmButtonText: '清空',
+      cancelButtonText: '取消'
+    })
+      .then(() => {
+        dropBackups()
+        refreshBackups()
+        note('备份已清空')
+      })
+      .catch(() => {})
+  }
+  refreshBackups()
   const exportSave = () => {
     try {
       flushPersistence(store)
@@ -287,6 +441,7 @@
     a.download = `xiuxian-save-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
+    note('存档已导出')
   }
 </script>
 
@@ -306,6 +461,57 @@
   }
   .row > .el-button { flex-shrink: 0; }
   .current { margin-top: 14px; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; }
+  .backup-box {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+  }
+  .backup-head,
+  .backup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .backup-head { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+  .backup-row { font-size: 12px; color: var(--el-text-color-secondary); margin: 4px 0; }
+  .backup-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .backup-empty { font-size: 12px; color: var(--el-text-color-secondary); margin: 4px 0 8px; }
+  .codex-panel {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+  }
+  .codex-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .codex-milestones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+  }
+  .codex-milestones span {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-secondary);
+  }
+  .codex-milestones span.ready {
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+  }
+  .codex-milestones span.claimed {
+    background: var(--el-color-success-light-9);
+    color: var(--el-color-success);
+  }
   @media only screen and (max-width: 768px) {
     .gm { padding: 0 2px; }
     .row { flex-direction: column; align-items: stretch; gap: 4px; }

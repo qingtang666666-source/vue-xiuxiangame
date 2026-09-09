@@ -163,6 +163,9 @@ export const useMainStore = defineStore('main', {
         life: [],
         craft: []
       },
+      codexRewards: {
+        claimed: []
+      },
       script: '',
       cultivation: 0,
       currentTitle: null,
