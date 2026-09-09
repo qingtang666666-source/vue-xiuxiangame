@@ -20,6 +20,17 @@ function preflopStrength(h) {
   return Math.max(0.28, Math.min(0.7, s))
 }
 
+// 对手强度档位：只调整 AI 性格与决策纪律，不改牌、不改发牌结果
+const AI_PROFILES = [
+  { tight: [0.1, 0.3], aggr: [0.28, 0.63], skill: 0 },
+  { tight: [0.18, 0.34], aggr: [0.45, 0.72], skill: 0.25 },
+  { tight: [0.24, 0.4], aggr: [0.6, 0.85], skill: 0.5 },
+  { tight: [0.3, 0.46], aggr: [0.75, 0.95], skill: 0.8 },
+  { tight: [0.36, 0.52], aggr: [0.9, 1.1], skill: 1 },
+  { tight: [0.42, 0.58], aggr: [1.0, 1.2], skill: 1.15 }
+]
+const lerp = (a, b, t) => a + (b - a) * t
+
 export function createPokerEngine(opts) {
   // opts: playerCount, ante, potCap, isTexas, communityPerStreet[], maxStreet,
   //       evalBest(hole, community), makeName(i)
@@ -27,6 +38,8 @@ export function createPokerEngine(opts) {
   const ante = opts.ante
   const potCap = opts.potCap
   const deck = shuffle(mkDeck())
+  const aiLevel = Math.max(0, Math.min(AI_PROFILES.length - 1, Math.floor(opts.aiLevel || 0)))
+  const aiProfile = AI_PROFILES[aiLevel]
 
   const players = Array.from({ length: playerCount }, (_, i) => ({
     i,
@@ -40,8 +53,9 @@ export function createPokerEngine(opts) {
     allIn: false,
     acted: false,
     revealed: false,
-    tight: 0.1 + Math.random() * 0.2, // 松紧度：AI 性格（0.10~0.30，更松）
-    aggr: 0.28 + Math.random() * 0.35 // 激进程度：AI 性格（0.28~0.63，偏主动）
+    tight: i === 0 ? 0 : lerp(aiProfile.tight[0], aiProfile.tight[1], Math.random()), // 松紧度：AI 性格
+    aggr: i === 0 ? 0 : lerp(aiProfile.aggr[0], aiProfile.aggr[1], Math.random()), // 激进程度：AI 性格
+    skill: i === 0 ? 0 : aiProfile.skill // 决策纪律：只影响策略，不影响牌
   }))
 
   const totalCommunity = opts.communityPerStreet.reduce((a, b) => a + b, 0)
@@ -114,6 +128,7 @@ export function createPokerEngine(opts) {
     const str = strengthOf(p)
     const tight = p.tight || 0.5
     const aggr = p.aggr || 0.5
+    const skill = p.skill || 0
     const pot = state.pot || 0
     const stack = p.stack || 0
     // 阈值收紧：67o / K7o 等低杂连张被归为“弱牌”
@@ -137,11 +152,11 @@ export function createPokerEngine(opts) {
     // 面对下注：先判断要不要被 "吓" 到弃牌
     if (toCall > 0) {
       let foldP = 0.05
-      if (isWeak) foldP += 0.16
-      else if (isMed) foldP += 0.04
+      if (isWeak) foldP += 0.16 + skill * 0.12
+      else if (isMed) foldP += 0.04 - skill * 0.02
       if (bigBet) foldP -= 0.06
       if (profitable) foldP -= 0.24
-      if (isStrong) foldP = 0.02
+      if (isStrong) foldP = Math.max(0.005, 0.02 - skill * 0.015)
       if (allInBet && !isGood) foldP -= 0.12
       foldP += (tight - 0.5) * 0.3
       foldP = Math.max(0.02, Math.min(0.95, foldP))
@@ -156,10 +171,10 @@ export function createPokerEngine(opts) {
       const slowPlay = isStrong && Math.random() < 0.25 + (1 - aggr) * 0.25 // 强牌慢打陷阱
       const valueBet = (isGood || isStrong) && Math.random() < 0.45 + (aggr - 0.5) * 0.4
       // 松弱：少诈唬、少加注，多数过牌看牌
-      const semiBluff = isMed && Math.random() < 0.12 + (aggr - 0.5) * 0.12
-      const bluff = isWeak && canBet && Math.random() < (0.02 + (1 - tight) * 0.05) * aggr * 2
-      if (isStrong && valueBet) return { action: 'raise', raiseTo: target(0.7 + Math.random() * 1.1) }
-      if (isGood && valueBet) return { action: 'raise', raiseTo: target(0.4 + Math.random() * 0.4) }
+      const semiBluff = isMed && Math.random() < 0.12 + (aggr - 0.5) * 0.12 - skill * 0.03
+      const bluff = isWeak && canBet && Math.random() < (0.02 + (1 - tight) * 0.05) * aggr * 2 * (1 - skill * 0.5)
+      if (isStrong && valueBet) return { action: 'raise', raiseTo: target(0.7 + Math.random() * 1.1 + skill * 0.2) }
+      if (isGood && valueBet) return { action: 'raise', raiseTo: target(0.4 + Math.random() * 0.4 + skill * 0.15) }
       if (semiBluff && canBet) return { action: 'raise', raiseTo: target(0.3 + Math.random() * 0.3) }
       if (bluff && canBet) return { action: 'raise', raiseTo: target(0.2 + Math.random() * 0.25) }
       return { action: 'check' }
@@ -169,19 +184,19 @@ export function createPokerEngine(opts) {
     if (allInBet) {
       const looseBias = Math.max(0, 0.45 - tight) // 越松，接全下概率越高（0~0.27）
       let callP
-      if (str >= 0.7) callP = 0.92
-      else if (str >= 0.55) callP = 0.7 + looseBias * 0.3
-      else if (str >= 0.42) callP = 0.44 + looseBias * 0.5
-      else callP = 0.05 + looseBias * 0.2 // 弱牌(67o/K7o)极低概率接，接了多半输
+      if (str >= 0.7) callP = 0.92 + skill * 0.06
+      else if (str >= 0.55) callP = 0.7 + looseBias * 0.3 + skill * 0.08
+      else if (str >= 0.42) callP = 0.44 + looseBias * 0.5 + skill * 0.04
+      else callP = (0.05 + looseBias * 0.2) * (1 - skill * 0.5) // 弱牌极低概率接
       // 若下注相对底池极离谱，再压低一点；但保留一定“接单”率使其看起来像真人
       if (potOdds > 0.8 && str < 0.5) callP *= 0.6
       if (Math.random() < Math.min(0.95, callP)) return { action: 'allin' }
       return { action: 'fold' }
     }
     // 加注：仅强/好牌，且面对的不是过于巨大的注码
-    if (isStrong && Math.random() < 0.35 + aggr * 0.15) return { action: 'raise', raiseTo: target(0.7 + Math.random() * 1.1) }
-    if (isGood && Math.random() < 0.15 + aggr * 0.1) return { action: 'raise', raiseTo: target(0.45 + Math.random() * 0.4) }
-    if (isMed && canBet && toCall <= pot * 0.5 && Math.random() < 0.03 + (1 - tight) * 0.03) return { action: 'raise', raiseTo: target(0.3 + Math.random() * 0.3) }
+    if (isStrong && Math.random() < 0.35 + aggr * 0.15 + skill * 0.15) return { action: 'raise', raiseTo: target(0.7 + Math.random() * 1.1 + skill * 0.2) }
+    if (isGood && Math.random() < 0.15 + aggr * 0.1 + skill * 0.1) return { action: 'raise', raiseTo: target(0.45 + Math.random() * 0.4 + skill * 0.1) }
+    if (isMed && canBet && toCall <= pot * 0.5 && Math.random() < 0.03 + (1 - tight) * 0.03 - skill * 0.01) return { action: 'raise', raiseTo: target(0.3 + Math.random() * 0.3) }
     // 松弱：跟注得更宽松——中注只要牌不差就咬，小额注几乎都跟
     if (profitable) return { action: 'call' }
     if (toCall <= pot * 0.6 && str >= 0.3) return { action: 'call' }

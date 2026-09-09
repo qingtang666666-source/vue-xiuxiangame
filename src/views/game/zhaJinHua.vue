@@ -21,6 +21,13 @@
       <span>玩家筹码：<b>{{ chips }}</b></span>
       <span>当前底注：{{ currentAnte }}</span>
       <span>封顶：{{ potCapOf(currentAnte) }}</span>
+      <span v-if="mode === 'solo'">单挑连胜：<b>{{ soloWinStreak }}</b></span>
+      <span v-if="mode === 'solo'">
+        对手强度：<b :class="{ 'ai-strong': aiDifficulty > 0 }">{{ aiDifficultyLabel }}</b>
+      </span>
+    </div>
+    <div class="fair-hint" v-if="mode === 'solo' && aiDifficulty > 0">
+      单挑连胜后只会匹配更强的 NPC 策略，不会修改发牌或牌局结果。
     </div>
     <div class="table" v-if="state.phase !== 'idle'">
       <div class="players-row">
@@ -98,6 +105,18 @@
   const anteList = computed(() => ANTE_LIST)
   const currentAnte = computed(() => ANTE_LIST[anteIdx.value])
   const playerCount = computed(() => MODES[mode.value])
+  const soloWinStreak = computed(() => player.value.zjhSoloWinStreak || 0)
+  const soloOnlyStreak = computed(() => player.value.zjhSoloOnlyStreak || 0)
+  // 单挑固定高强度；连胜后继续升档，但仍只调整 NPC 策略
+  const aiDifficulty = computed(() => {
+    if (mode.value !== 'solo') return 0
+    const only = soloOnlyStreak.value
+    const win = soloWinStreak.value
+    if (only >= 3 && win >= 3) return 5
+    return 4
+  })
+  const aiDifficultyLabel = computed(() => ['普通', '强敌', '高手', '宗师', '顶尖', '无双'][aiDifficulty.value])
+  const aiNamePrefix = computed(() => ['', '强敌·', '高手·', '宗师·', '顶尖·', '无双·'][aiDifficulty.value])
 
   const potCapOf = ante => ante * (6 + playerCount.value * 2)
 
@@ -133,7 +152,8 @@
       chipsPerPlayer: Math.min(chips.value, Math.max(currentAnte.value, Math.floor(potCapOf(currentAnte.value) / playerCount.value))),
       maxType: 6,
       evalBest: hole => evalThreeSafe(hole),
-      makeName: i => (i === 0 ? '你' : '玩家' + i)
+      aiLevel: aiDifficulty.value,
+      makeName: i => (i === 0 ? '你' : aiNamePrefix.value + '玩家' + i)
     })
     engine.startHand()
     state.value = engine.snapshot()
@@ -164,11 +184,27 @@
     if (state.value && state.value.phase === 'over' && !settled.value) {
       settled.value = true
       const net = state.value.humanNet
+      if (mode.value === 'solo') {
+        player.value.zjhSoloOnlyStreak = (player.value.zjhSoloOnlyStreak || 0) + 1
+        player.value.zjhSoloRounds = (player.value.zjhSoloRounds || 0) + 1
+        player.value.zjhSoloNet = (player.value.zjhSoloNet || 0) + net
+        if (net > 0) player.value.zjhSoloWinStreak = (player.value.zjhSoloWinStreak || 0) + 1
+        else if (net < 0) player.value.zjhSoloWinStreak = 0
+      } else {
+        player.value.zjhSoloOnlyStreak = 0
+        player.value.zjhSoloWinStreak = 0
+      }
       emit('game-result', { success: net >= 0, reward: Math.abs(net), currency: 'chips' })
     }
   }
 
   watch(state, () => settleIfOver())
+  watch(mode, value => {
+    if (value !== 'solo') {
+      player.value.zjhSoloOnlyStreak = 0
+      player.value.zjhSoloWinStreak = 0
+    }
+  })
 
   const emptyState = () => ({
     phase: 'idle',
@@ -234,6 +270,20 @@
     gap: 22px;
     font-size: 15px;
     color: #606266;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ai-strong { color: #f56c6c; }
+  .fair-hint {
+    max-width: 680px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(245, 108, 108, 0.1);
+    border: 1px solid rgba(245, 108, 108, 0.3);
+    color: #d94b4b;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
   }
 
   .table {

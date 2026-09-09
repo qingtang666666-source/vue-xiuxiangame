@@ -86,6 +86,7 @@
 | 寿元/衰老 | `src/plugins/time.js` | `DAYS_PER_SECOND`、`REALM_LIFESPANS` |
 | 奇遇CD | `src/plugins/adventure.js` | `ADVENTURE_COOLDOWN = 30000` |
 | 纸牌底注 | `game/texasPoker.vue`、`zhaJinHua.vue`、`douDizhu.vue` | `ANTE_LIST`（含百万~五百万档） |
+| 炸金花单挑 AI | `src/views/game/pokerEngine.js`、`zhaJinHua.vue` | `AI_PROFILES` 0~5 档；单挑基础第 4 档（顶尖），单挑 3 连胜升第 5 档（无双）；只调整策略，不改牌 |
 
 ## 八、常见修改场景
 
