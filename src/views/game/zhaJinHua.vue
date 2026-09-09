@@ -92,7 +92,7 @@
   const emit = defineEmits(['game-result'])
 
   const MODES = { solo: 2, four: 4, six: 6 }
-  const ANTE_LIST = [10, 50, 100, 200, 300, 500, 800, 1200, 2000, 3000, 5000, 10000, 200000, 300000, 500000, 1000000, 2000000, 3000000, 4000000, 5000000]
+  const ANTE_LIST = [10, 50, 100, 200, 300, 500, 800, 1200, 2000, 3000, 5000, 10000, 200000, 300000, 500000, 1000000]
 
   const mode = ref('solo')
   const anteIdx = ref(0)
