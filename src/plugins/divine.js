@@ -19,6 +19,8 @@ import {
 import { DIVINE_KINDS, divineKind } from './technique.js'
 
 const methodsOf = player => (player && player.methods) || {}
+const mpCostOf = (g, chapter, proficiency) =>
+  Math.max(15, Math.floor((18 + g * 6) * (1 + (chapter || 0) * 0.02 + Math.max(0, (proficiency || 1) - 1) * 0.03)))
 
 // 威力/耗灵/触发率的算法与 battleEngine.getPlayerAbilities 完全一致
 export const divineAbilityInfo = (player, id) => {
@@ -42,7 +44,8 @@ export const divineAbilityInfo = (player, id) => {
     rarityName: t.rarityName,
     base: t.divine.dmg,
     power: t.divine.dmg * (1 + chapter * 0.04) * (kind === 'control' ? 0.8 : 1),
-    mpCost: Math.max(15, Math.floor(18 + g * 6)),
+    // 功法升级后灵力消耗小幅增加：重数 +2%/重，熟练度 +3%/级
+    mpCost: mpCostOf(g, chapter, proficiency),
     chance,
     stunChance: kind === 'control' ? Math.min(0.3, chance * 0.35) : 0,
     chapter,
@@ -88,7 +91,7 @@ export const divineTipForTech = (player, id) => {
       familyName: t.familyName,
       gradeName: t.gradeName,
       power: t.divine.dmg * (kind === 'control' ? 0.8 : 1),
-      mpCost: Math.max(15, Math.floor(18 + g * 6)),
+      mpCost: mpCostOf(g, 0, 1),
       chance,
       stunChance: kind === 'control' ? Math.min(0.3, chance * 0.35) : 0,
       chapter: 0
@@ -110,6 +113,8 @@ export const proficiencyPreview = (player, id) => {
   const chapter = methodChapter(player, id)
   const cm = profMult(cur)
   const nm = profMult(next)
+  const curMp = mpCostOf(g, chapter, cur)
+  const nextMp = mpCostOf(g, chapter, next)
   const rows = []
   ;[t.passive, t.passive2].forEach((k, i) => {
     if (!k) return
@@ -127,6 +132,7 @@ export const proficiencyPreview = (player, id) => {
     nextName: profName(next),
     curMult: cm,
     nextMult: nm,
+    mpCost: { cur: curMp, next: nextMp },
     maxed: cur >= PROF_MAX,
     needChapter: cur * 4,
     chapterOk: chapter >= cur * 4,
@@ -143,6 +149,8 @@ export const chapterPreview = (player, id) => {
   const g = TECH_GRADES[t.grade - 1]?.mult || 1
   const chapter = methodChapter(player, id)
   const pm = profMult(m.proficiency || 1)
+  const curMp = mpCostOf(g, chapter, m.proficiency || 1)
+  const nextMp = mpCostOf(g, chapter + 1, m.proficiency || 1)
   const rows = []
   ;[t.passive, t.passive2].forEach((k, i) => {
     if (!k) return
@@ -154,6 +162,7 @@ export const chapterPreview = (player, id) => {
     chapter,
     next: Math.min(TECH_MAX_CHAPTER, chapter + 1),
     maxed: chapter >= TECH_MAX_CHAPTER,
+    mpCost: { cur: curMp, next: nextMp },
     rows,
     divineGain: t.divine ? t.divine.dmg * (1 + (chapter + 1) * 0.04) : 0
   }

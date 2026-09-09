@@ -16,7 +16,7 @@
       <div class="cultivate-flavor" v-if="flavorText">{{ flavorText }}</div>
       <div class="cultivate-stats">
         <span class="stat">修炼速度 ×<b>{{ cultSpeed.toFixed(2) }}</b></span>
-        <span class="stat">道果 <b>{{ player.props.daoFruit || 0 }}</b>（大境界突破用）</span>
+        <span class="stat">道果 <b>{{ player.props.daoFruit || 0 }}</b>（大境界突破用）· 历战保底 {{ Math.min(DAO_FRUIT_PITY, player.ladderFruitPity || 0) }}/{{ DAO_FRUIT_PITY }}</span>
         <span class="stat" v-if="breakthroughInfo">下一境界：<b>{{ breakthroughInfo.next }}</b> · 还需 {{ formatNumberToChineseUnit(breakthroughInfo.remain) }} · {{ breakthroughInfo.reqText }}</span>
         <span class="stat" v-if="nextTrib">渡劫将至：<b class="trib">{{ nextTrib.name }}</b></span>
       </div>
@@ -54,7 +54,7 @@
   import { ensureWorldNpcs } from '@/plugins/npcSystem'
   import { ensureSect } from '@/plugins/sect'
   import { isTribulationLevel, tribulationOf, conductTribulation } from '@/plugins/tribulation'
-  import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState } from '@/plugins/breakthroughGate'
+  import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState, DAO_FRUIT_PITY } from '@/plugins/breakthroughGate'
   import { bumpDaily } from '@/plugins/dailyGoals'
   import BreakthroughTrial from '@/components/BreakthroughTrial.vue'
   import { checkAchievements } from '@/plugins/achievementChecker'
@@ -73,6 +73,7 @@
   const breakthroughTrialShow = ref(false)
   let trialPassed = false
   let pendingMajor = false
+  let pendingBreakCost = null
   const buttonsFor = computed(() => {
     return [
       { text: '开始修炼', click: () => startCultivate(), disabled: !isStart.value },
@@ -121,13 +122,19 @@
     const prevStage = realmStageOf(p.level)
     const targetStage = realmStageOf(nextLv)
     const willCross = targetStage > prevStage
-    if (willCross) req.push('道果×1')
+    if (willCross) req.push(`道果×1（${p.props.daoFruit || 0}/1）`)
     if (willCross && p.level >= 19) {
       const danNeed = Math.max(1, Math.ceil(p.level / 15))
-      req.push(`培养丹×${danNeed}`)
+      req.push(`培养丹×${danNeed}（${p.props.cultivateDan || 0}/${danNeed}）`)
       const treq = 30 + targetStage * 15
       const rem = playerLifespan(p) - gameAge(p)
-      req.push(`余寿≥${treq}`)
+      req.push(`余寿≥${treq}（当前${Math.max(0, Math.floor(rem))}）`)
+    }
+    if (p.level >= 9 && (p.level + 1) % 3 === 1) {
+      const need = breakthroughPowerNeed(p.level)
+      const power = playerPowerScore(p)
+      req.push(`战力≥${need.toLocaleString('zh-CN')}（当前${power.toLocaleString('zh-CN')}）`)
+      req.push('突破试炼胜2场')
     }
     return { next: levelNames(nextLv), remain, reqText: req.length ? '需 ' + req.join('、') : '可直接突破' }
   })
@@ -262,39 +269,33 @@
         const prevStage = realmStageOf(player.value.level)
         const targetStage = realmStageOf(nextLv)
         const willCross = targetStage > prevStage
+        const firstPass = !trialPassed
+        const needsTrial = player.value.level >= 9 && (player.value.level + 1) % 3 === 1
+        const danNeed = willCross && player.value.level >= 19 ? Math.max(1, Math.ceil(player.value.level / 15)) : 0
         // 高阶：关键境界节点需渡劫
-        if (isTribulationLevel(nextLv) && !(player.value.passedTribulation || []).includes(nextLv)) {
+        if (firstPass && isTribulationLevel(nextLv) && !(player.value.passedTribulation || []).includes(nextLv)) {
           stopCultivate()
           isStop.value = false
           isStart.value = false
           texts.value.push(`<span style="color: #F56C6C">天劫将至！请先渡【${tribulationOf(nextLv).name}】方可突破</span>`)
           return
         }
-        // 中阶以上冲击大境界：需吞服丹药（培养丹）；低阶(1~18)及小境界内突破自由
-        if (willCross && player.value.level >= 19 && !trialPassed) {
-          const danNeed = Math.max(1, Math.ceil(player.value.level / 15))
-          if ((player.value.props.cultivateDan || 0) < danNeed) {
-            stopCultivate()
-            isStop.value = false
-            isStart.value = false
-            texts.value.push(`<span style="color: #E6A23C">突破需 ${danNeed} 枚培养丹（当前 ${player.value.props.cultivateDan || 0}），可先炼丹或获取</span>`)
-            return
-          }
-          player.value.props.cultivateDan -= danNeed
+        // 先完整校验条件，试炼失败不损失道果/培养丹
+        if (firstPass && danNeed && (player.value.props.cultivateDan || 0) < danNeed) {
+          stopCultivate()
+          isStop.value = false
+          isStart.value = false
+          texts.value.push(`<span style="color: #E6A23C">突破需 ${danNeed} 枚培养丹（当前 ${player.value.props.cultivateDan || 0}），可先炼丹或获取</span>`)
+          return
         }
-        // 灵石买不到的「道果」：每次跨大境界需 1 枚，仅历战掉落
-        if (willCross) {
-          if ((player.value.props.daoFruit || 0) < 1) {
-            stopCultivate()
-            isStop.value = false
-            isStart.value = false
-            texts.value.push(`<span style="color: #E6A23C">突破大境界需 1 枚「道果」（当前 ${player.value.props.daoFruit || 0}），道果只从历战掉落，灵石买不到！</span>`)
-            return
-          }
-          player.value.props.daoFruit -= 1
+        if (firstPass && willCross && (player.value.props.daoFruit || 0) < 1) {
+          stopCultivate()
+          isStop.value = false
+          isStart.value = false
+          texts.value.push(`<span style="color: #E6A23C">突破大境界需 1 枚「道果」（当前 ${player.value.props.daoFruit || 0}），道果只从历战掉落，灵石买不到！</span>`)
+          return
         }
-        // 寿元不足无法冲击更高境界
-        if (willCross) {
+        if (firstPass && willCross) {
           const req = 30 + targetStage * 15 // 越高境界，突破所需余寿越多
           const rem = playerLifespan(player.value) - gameAge(player.value)
           if (rem < req) {
@@ -306,7 +307,7 @@
           }
         }
         // 大境界突破门槛：需正式战力击败同阶对手，失败计次并进入冷却，超过上限此生无法再突破
-        if (player.value.level >= 9 && (player.value.level + 1) % 3 === 1) {
+        if (firstPass && needsTrial) {
           const stage = targetStage
           const fails = player.value.stageFails[stage] || 0
           if (willCross && fails >= MAX_STAGE_FAILS) {
@@ -334,8 +335,9 @@
             return
           }
         }
-        if (player.value.level >= 9 && (player.value.level + 1) % 3 === 1 && !trialPassed) {
+        if (needsTrial && !trialPassed) {
           pendingMajor = willCross
+          pendingBreakCost = { dan: danNeed, dao: willCross ? 1 : 0 }
           stopCultivate()
           isStop.value = false
           isStart.value = false
@@ -348,6 +350,15 @@
             .then(() => { breakthroughTrialShow.value = true })
             .catch(() => {})
           return
+        }
+        // 试炼成功后再扣资源；不需要试炼的突破则在条件全部通过后直接扣除
+        if (trialPassed && pendingBreakCost) {
+          if (pendingBreakCost.dan) player.value.props.cultivateDan = Math.max(0, (player.value.props.cultivateDan || 0) - pendingBreakCost.dan)
+          if (pendingBreakCost.dao) player.value.props.daoFruit = Math.max(0, (player.value.props.daoFruit || 0) - pendingBreakCost.dao)
+          pendingBreakCost = null
+        } else if (firstPass && !needsTrial) {
+          if (danNeed) player.value.props.cultivateDan -= danNeed
+          if (willCross) player.value.props.daoFruit -= 1
         }
         player.value.taskNum = 0
         player.value.level++
@@ -476,6 +487,7 @@
   }
 
   const onTrialFail = () => {
+    pendingBreakCost = null
     player.value.btCdUntil = Date.now() + BREAKTHROUGH_CD_FAIL
     if (!pendingMajor) {
       texts.value.push(`突破试炼失败！请提升战力后再挑战`)

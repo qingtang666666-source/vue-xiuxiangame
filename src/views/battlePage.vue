@@ -5,7 +5,7 @@
       <div class="resources">
         <el-tag type="warning">灵石 {{ formatNumberToChineseUnit(player.props.money || 0) }}</el-tag>
         <el-tag type="primary">培养丹 {{ player.props.cultivateDan || 0 }}</el-tag>
-        <el-tag type="success">道果 {{ player.props.daoFruit || 0 }}（突破大境界用）</el-tag>
+        <el-tag type="success">道果 {{ player.props.daoFruit || 0 }} · 保底 {{ Math.min(DAO_FRUIT_PITY, player.ladderFruitPity || 0) }}/{{ DAO_FRUIT_PITY }}</el-tag>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
         </el-radio-group>
       </div>
       <el-button type="primary" size="large" @click="startFight" class="fight-btn">开始战斗</el-button>
-      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。历战胜利有概率掉落「道果」，突破大境界必备（灵石买不到）。</div>
+      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。历战胜利有概率掉落「道果」：前 {{ DAO_FRUIT_MIN_RUNS }} 次不掉，之后概率递增，最多 {{ DAO_FRUIT_PITY }} 次必出（灵石买不到）。</div>
     </div>
 
     <!-- 战斗主体 -->
@@ -105,6 +105,7 @@
             <div>灵石 +{{ formatNumberToChineseUnit(state.reward?.money || 0) }}</div>
             <div>培养丹 +{{ state.reward?.dan || 0 }}</div>
             <div v-if="state.reward?.dao" class="res-fruit">道果 +{{ state.reward.dao }}（历战专属·突破大境界用）</div>
+            <div class="res-sub">道果保底进度 {{ Math.min(DAO_FRUIT_PITY, state.reward?.daoPity || 0) }}/{{ DAO_FRUIT_PITY }}</div>
             <div>灵草 +{{ state.reward?.herb || 0 }} · 炼器石 +{{ state.reward?.stone || 0 }}</div>
           </div>
         </template>
@@ -130,6 +131,7 @@
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
   import { divineTipText } from '@/plugins/divine'
+  import { DAO_FRUIT_MIN_RUNS, DAO_FRUIT_PITY } from '@/plugins/breakthroughGate'
   import battleArenaBg from '@/assets/images/battle-arena-bg.png'
   import {
     startBattle,

@@ -144,13 +144,13 @@
     if (!p || p.maxed) return ''
     const bits = p.rows.map(r => `${r.stat} ${r.cur}→${r.next}`).join('，')
     const d = p.divine ? `，神通威力 ×${p.divine.cur.toFixed(2)}→×${p.divine.next.toFixed(2)}` : ''
-    return `升「${p.nextName}」：${bits}${d}${p.chapterOk ? '' : `（需先修至 ${p.needChapter} 重）`}`
+    return `升「${p.nextName}」：${bits}${d}，耗灵 ${p.mpCost.cur}→${p.mpCost.next}${p.chapterOk ? '' : `（需先修至 ${p.needChapter} 重）`}`
   }
   const gainLineNext = t => {
     const c = chapterPreview(player.value, t.id)
     if (!c || c.maxed) return ''
     const bits = c.rows.map(r => `${r.stat} ${r.gain}`).join('，')
-    return `再修 1 重（→${c.next} 重）：${bits}${c.divineGain ? `，神通威力 ×${c.divineGain.toFixed(2)}` : ''}`
+    return `再修 1 重（→${c.next} 重）：${bits}${c.divineGain ? `，神通威力 ×${c.divineGain.toFixed(2)}` : ''}，耗灵 ${c.mpCost.cur}→${c.mpCost.next}`
   }
   const statName = s => ({ attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石' }[s] || s)
 

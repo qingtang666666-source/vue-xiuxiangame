@@ -14,6 +14,7 @@ import { techniqueById } from './technique.js'
 import { divineAbilityInfo } from './divine.js'
 import { ladderEnemies } from './enemyScale.js'
 import { realmSuppressionMult } from './game.js'
+import { DAO_FRUIT_MIN_RUNS, DAO_FRUIT_PITY } from './breakthroughGate.js'
 import { applyDotDamage, isStunned, clearStun, aggregatePlayerEffects, resolveHitEffects, applyLifesteal } from './effectCombat.js'
 
 const clamp0 = v => Math.max(0, v)
@@ -479,13 +480,13 @@ const awardVictory = st => {
   p.props.cultivateDan = (p.props.cultivateDan || 0) + dan
   p.props.spiritHerb = (p.props.spiritHerb || 0) + herb
   p.props.strengtheningStone = (p.props.strengtheningStone || 0) + stone
-  // —— 突破「道果」：只有历战掉落，灵石买不到；约 20~100 场必掉 ——
+  // —— 突破「道果」：只有历战掉落，灵石买不到；15 次后提概率，40 次必掉 ——
   let dao = 0
   if (st.ladder) {
     st.realPlayer.ladderWins = (st.realPlayer.ladderWins || 0) + 1
     const pity = (st.realPlayer.ladderFruitPity || 0) + 1
-    const chance = Math.min(1, 0.035 + Math.max(0, pity - 60) * 0.02)
-    if (pity >= 100 || Math.random() < chance) {
+    const chance = pity < DAO_FRUIT_MIN_RUNS ? 0 : pity >= DAO_FRUIT_PITY ? 1 : 0.05 + (pity - DAO_FRUIT_MIN_RUNS) * 0.038
+    if (Math.random() < chance) {
       dao = 1
       st.realPlayer.props.daoFruit = (st.realPlayer.props.daoFruit || 0) + 1
       st.realPlayer.ladderFruitPity = 0
@@ -493,5 +494,5 @@ const awardVictory = st => {
       st.realPlayer.ladderFruitPity = pity
     }
   }
-  st.reward = { exp, money, dan, herb, stone, dao, enemies: st.enemies.length }
+  st.reward = { exp, money, dan, herb, stone, dao, daoPity: st.realPlayer.ladderFruitPity || 0, enemies: st.enemies.length }
 }

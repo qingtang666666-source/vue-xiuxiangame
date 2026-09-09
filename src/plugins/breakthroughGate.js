@@ -12,6 +12,9 @@ export const TRIBULATION_CD_FAIL = 60 * 1000
 // 大境界突破失败上限
 export const MAX_STAGE_FAILS = 5
 export const POWER_SCALE = 10
+// 历战道果保底：前 15 次不掉，15 次后逐步提概率，40 次必出
+export const DAO_FRUIT_MIN_RUNS = 15
+export const DAO_FRUIT_PITY = 40
 
 // 境界战力标准：11阶(道祖, Lv~144)≈500万，几何递减到 Lv1≈8000
 export const STANDARD_TOP_POWER = 5000000

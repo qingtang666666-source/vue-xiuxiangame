@@ -16,12 +16,14 @@
           <span class="pv-tag">升「{{ profPrev.nextName }}」</span>
           <span class="pv-chip" v-for="r in profPrev.rows" :key="r.stat">{{ r.stat }} {{ r.cur }} → {{ r.next }}</span>
           <span class="pv-chip" v-if="profPrev.divine">神通威力 ×{{ profPrev.divine.cur.toFixed(2) }} → ×{{ profPrev.divine.next.toFixed(2) }}</span>
+          <span class="pv-chip">耗灵 {{ profPrev.mpCost.cur }} → {{ profPrev.mpCost.next }}</span>
           <span class="pv-warn" v-if="!profPrev.chapterOk">需先修至 {{ profPrev.needChapter }} 重</span>
         </div>
         <div class="pv-line" v-if="chPrev && !chPrev.maxed">
           <span class="pv-tag">再修 1 重</span>
           <span class="pv-chip" v-for="r in chPrev.rows" :key="r.stat">{{ r.stat }} {{ r.gain }}</span>
           <span class="pv-chip" v-if="chPrev.divineGain">神通威力 → ×{{ chPrev.divineGain.toFixed(2) }}</span>
+          <span class="pv-chip">耗灵 → {{ chPrev.mpCost.next }}</span>
         </div>
       </div>
       <el-progress v-if="isCultivateMine" :percentage="myTask.percent" :stroke-width="6" :show-text="false" class="tpbar" />
