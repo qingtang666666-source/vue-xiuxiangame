@@ -18,13 +18,20 @@
         >领取前100奖励(每日)</el-button>
         <el-tag v-else size="small" type="info">排名100外无奖励</el-tag>
       </div>
-      <div class="hb-hint">击败排名高于你的豪杰即可晋升；胜则与之交换名次。前100名每日可领奖励，越靠前越好(但不过分)。</div>
+      <div class="hb-hint">击败排名高于你的豪杰即可晋升；你会取代其名次，对方与后续豪杰顺延一位，不会从榜上消失。豪杰同样穿戴强化灵器，前排名次战力可超过境界标准。前100名每日可领奖励。</div>
       <div class="hb-list">
         <div v-for="h in board" :key="h.id" class="hb-row" :class="{ me: h.isPlayer }">
           <span class="hb-rank">{{ h.rank }}</span>
           <span class="hb-name2">{{ h.name }}</span>
           <span class="hb-lv">{{ h.realm }}</span>
-          <span class="hb-power">{{ h.power.toLocaleString('zh-CN') }}</span>
+          <el-tooltip
+            v-if="!h.isPlayer"
+            :content="`装备：${h.gear} +${h.strengthen}（${h.gradeName}）`"
+            placement="top"
+          >
+            <span class="hb-power">{{ h.power.toLocaleString('zh-CN') }}</span>
+          </el-tooltip>
+          <span v-else class="hb-power">{{ h.power.toLocaleString('zh-CN') }}</span>
           <el-button
             v-if="!h.isPlayer && canChallenge(h.rank)"
             size="small"
@@ -97,6 +104,10 @@
   const onWin = () => {
     challengeShow.value = false
     const res = applyWin(player, targetRank.value)
+    if (!res.ok) {
+      gameNotifys({ title: '豪杰战胜利', message: '名次未发生变化，请刷新后重试', type: 'warning' })
+      return
+    }
     gameNotifys({ title: '豪杰战胜利', message: `你击败了【${targetName.value}】，晋升至第 ${res.to} 名！`, type: 'success' })
   }
   const onLose = () => {

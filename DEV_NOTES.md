@@ -51,9 +51,10 @@
 - 文件：`src/plugins/heroBoard.js`、`src/components/HeroBoardPanel.vue`
 - 300 名豪杰，等级 1~144 全覆盖（第1名=道祖、第300名=炼气）。
 - `heroLevelOfRank(rank)`：由名次映射等级（等级 1~144）。
-- `heroBoostOfRank(rank)`：排名加成，**封顶 ×2.0**（道祖顶级 = 400万×2 = 800万）。
-- `heroPowerOfRank(rank)` = `realmPower(等级) × 加成`。
-- 挑战：打赢排名更高者 → 与之**交换名次**（`applyWin`）。
+- `heroBoostOfRank(rank)`：榜尾约 ×0.85，榜首批次 ×1.0，再叠加同名次位置差。
+- 豪杰也穿装备：按排名配置黄阶~道阶、+0~+30 强化、下品~绝品细分级（`heroGearOfRank` / `heroEquipmentStats`）。
+- `heroPowerOfRank(rank)` = `realmPower(等级) + 等效装备属性战力`，**后期限定可超过境界标准上限**；顶级豪杰约 11~12 亿。
+- 挑战：打赢排名更高者 → 玩家取代该名次，目标及后续豪杰顺延一位；榜尾仍保留在 301 名，不会消失（`applyWin` / `boardList`）。
 - 前 100 名每日可领奖励（`heroReward`），越高越好但不过分；战败名次不变。
 - 页面在首页左侧"⚔️ 豪杰"按钮打开（右侧抽屉）。
 
