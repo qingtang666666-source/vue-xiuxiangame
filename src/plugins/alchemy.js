@@ -218,6 +218,7 @@ const buildRecipe = (tier, cat) => {
     recipe.permanent = cat.effect(m, p)
   }
   recipe.effectText = effectTextOf(recipe)
+  recipe.detail = effectDetailOf(recipe)
   return recipe
 }
 
@@ -226,10 +227,10 @@ const effectTextOf = recipe => {
   const parts = []
   if (recipe.buff) {
     const min = recipe.buff.minutes
-    if (recipe.buff.cultivation) parts.push(`修炼速度 +${Math.round(recipe.buff.cultivation * 100)}%（${min}分钟）`)
-    if (recipe.buff.moneyMult) parts.push(`灵石收益 +${Math.round(recipe.buff.moneyMult * 100)}%（${min}分钟）`)
-    if (recipe.buff.offlineMult) parts.push(`离线收益 +${Math.round(recipe.buff.offlineMult * 100)}%（${min}分钟）`)
-    return parts.join('，')
+    if (recipe.buff.cultivation) parts.push(`修炼速度 +${Math.round(recipe.buff.cultivation * 100)}%`)
+    if (recipe.buff.moneyMult) parts.push(`灵石收益 +${Math.round(recipe.buff.moneyMult * 100)}%`)
+    if (recipe.buff.offlineMult) parts.push(`离线收益 +${Math.round(recipe.buff.offlineMult * 100)}%`)
+    return `${parts.join('，')}（限时 ${min} 分钟）`
   }
   const p = recipe.permanent || {}
   if (p.cultivationSpeed) parts.push(`修炼速度 +${Math.round(p.cultivationSpeed * 100)}%`)
@@ -241,7 +242,18 @@ const effectTextOf = recipe => {
   if (p.moneyMult) parts.push(`灵石收益 ×${p.moneyMult.toFixed(2)}`)
   if (p.offlineMult) parts.push(`离线收益 ×${p.offlineMult.toFixed(2)}`)
   if (p.lifespan) parts.push(`寿元 +${p.lifespan} 年`)
-  return parts.join('，')
+  return `${parts.join('，')}（永久生效）`
+}
+
+// 丹药详细说明：把服用方式、叠加规则和耐药性写清楚
+const effectDetailOf = recipe => {
+  if (recipe.buff) {
+    return `功效：服用后立即获得上述限时增益，持续 ${recipe.buff.minutes} 分钟。同名丹药重复服用会延长剩余时间；所有限时增益合计受上限保护，超过上限的部分不会继续叠加。`
+  }
+  if (recipe.permanent?.lifespan) {
+    return '功效：服用后永久增加寿元上限。同类永久丹药存在耐药性，达到服用次数上限后无法继续获得效果。'
+  }
+  return '功效：服用后永久增加对应属性。同类永久丹药存在耐药性，达到服用次数上限后无法继续获得效果。'
 }
 
 // 丹方库：120 种

@@ -64,6 +64,7 @@
         </template>
         <p class="desc">{{ r.desc }}</p>
         <p class="effect">{{ r.effectText }}</p>
+        <p class="detail">{{ r.detail }}</p>
         <div class="cost">
           <div class="cost-head">
             <span>炼制消耗</span>
@@ -213,7 +214,7 @@ import PageNav from '@/components/PageNav.vue'
         { k: '类型', v: r.category === 'buff' ? '限时' : '永久' },
         { k: '库存', v: p.count }
       ],
-      effects: [r.effectText]
+      effects: [r.effectText, r.detail]
     }
     infoShow.value = true
   }
@@ -378,6 +379,13 @@ import PageNav from '@/components/PageNav.vue'
     font-size: 12px;
     color: var(--el-color-success);
     margin-bottom: 8px;
+  }
+
+  .detail {
+    font-size: 11px;
+    color: var(--el-text-color-secondary);
+    line-height: 1.55;
+    margin: 0 0 8px;
   }
 
   .cost {

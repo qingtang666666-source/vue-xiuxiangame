@@ -27,7 +27,7 @@ export const realmLifespanBase = level => {
 export const breakthroughLifespanNeed = level => {
   const lv = Math.max(1, Math.floor(level || 1))
   const stage = Math.min(15, Math.floor((lv - 1) / 9))
-  const ratio = Math.min(0.35, 0.12 + stage * 0.015)
+  const ratio = Math.min(0.3, 0.12 + stage * 0.012)
   return Math.max(15, Math.round(REALM_LIFESPANS[stage] * ratio))
 }
 

@@ -332,7 +332,7 @@
   }
   const eqTip = it => `【${it.name}】${it.gradeName || ''}${it.level || ''}级\n攻击 ${Math.round(it.attack || 0)} · 防御 ${Math.round(it.defense || 0)} · 气血 ${Math.round(it.health || 0)} · 暴击 ${((it.critical || 0) * 100).toFixed(1)}%\n价值 ${equipSellPrice(it)} 灵石`
   const propTip = p => `${propItemNames[p.key]?.name || p.key}\n${propItemNames[p.key]?.desc || ''}\n价值 ${propValue(p)} 灵石`
-  const pillTip = p => `【${p.recipe.name}】${p.recipe.effectText || ''}${buffLeftText(p.recipe.name) ? `\n${buffLeftText(p.recipe.name)}` : ''}\n价值 ${pillPrice(p.recipe)} 灵石`
+  const pillTip = p => `【${p.recipe.name}】${p.recipe.effectText || ''}\n${p.recipe.detail || ''}${buffLeftText(p.recipe.name) ? `\n${buffLeftText(p.recipe.name)}` : ''}\n价值 ${pillPrice(p.recipe)} 灵石`
   const talTip = t => `【${t.recipe.name}】${t.recipe.effectText || ''}${buffLeftText(t.recipe.name) ? `\n${buffLeftText(t.recipe.name)}` : ''}\n价值 ${talismanPrice(t.recipe)} 灵石`
 
   const valueOf = it => {
@@ -511,7 +511,7 @@
   const showPillInfo = p => {
     const rows = [{ k: '品阶', v: p.recipe.tierName }, { k: '类型', v: p.recipe.category === 'buff' ? '限时' : '永久' }, { k: '库存', v: p.count }]
     if (buffLeftText(p.recipe.name)) rows.push({ k: '当前加成', v: buffLeftText(p.recipe.name) })
-    infoData.value = { title: p.recipe.name, rows, effects: [p.recipe.effectText] }
+    infoData.value = { title: p.recipe.name, rows, effects: [p.recipe.effectText, p.recipe.detail] }
     infoShow.value = true
   }
   const showTalInfo = t => {

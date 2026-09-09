@@ -295,7 +295,7 @@
       if (m) { nm = m.name; info.push(m.tierName || '', m.desc || '', `价值 ${m.price} 灵石`) }
     } else if (kind === 'pill') {
       const r = RECIPES.find(x => x.id === key)
-      if (r) { nm = r.name; info.push(r.tierName || '', r.effectText || '') }
+      if (r) { nm = r.name; info.push(r.tierName || '', r.effectText || '', r.detail || '') }
     } else if (kind === 'treasure') {
       const t = TREASURES.find(x => x.key === key)
       if (t) { nm = t.name; info.push(t.tierName || '', t.desc || '', `价值 ${t.price} 灵石`) }
@@ -315,7 +315,10 @@
   const travTip = it => {
     let desc = ''
     if (it.kind === 'material') desc = MATERIALS.find(x => x.key === it.key)?.desc || ''
-    else if (it.kind === 'pill') desc = RECIPES.find(x => x.id === it.key)?.effectText || ''
+    else if (it.kind === 'pill') {
+      const r = RECIPES.find(x => x.id === it.key)
+      desc = `${r?.effectText || ''}${r?.detail ? `\n${r.detail}` : ''}`
+    }
     else if (it.kind === 'treasure') desc = TREASURES.find(x => x.key === it.key)?.desc || ''
     else if (it.kind === 'scroll') desc = '功法卷轴，参悟以根骨资质 × 悟性判定成败'
     else if (it.kind === 'blindbox') desc = '开箱：5% 千倍暴击 / 45% 等值 / 30% 返还灵石 / 20% 低值'

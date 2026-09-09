@@ -479,7 +479,7 @@ export const itemTip = it => {
   if (!it) return ''
   if (it.kind === 'pill' && it.refId) {
     const r = RECIPES.find(x => x.id === it.refId)
-    return `【${it.name}】${r?.tierName || ''}\n${r?.effectText || ''}\n市价约 ${pillPrice(r || {})} 灵石`
+    return `【${it.name}】${r?.tierName || ''}\n${r?.effectText || ''}${r?.detail ? `\n${r.detail}` : ''}\n市价约 ${pillPrice(r || {})} 灵石`
   }
   if (it.kind === 'talisman' && it.refId) {
     const t = TALISMANS.find(x => x.id === it.refId)

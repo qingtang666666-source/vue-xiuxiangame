@@ -274,6 +274,7 @@
         const firstPass = !trialPassed
         const needsTrial = player.value.level >= 9 && (player.value.level + 1) % 3 === 1
         const danNeed = willCross && player.value.level >= 19 ? Math.max(1, Math.ceil(player.value.level / 15)) : 0
+        const lifespanNeed = willCross ? breakthroughLifespanNeed(player.value.level) : 0
         // 高阶：关键境界节点需渡劫
         if (firstPass && isTribulationLevel(nextLv) && !(player.value.passedTribulation || []).includes(nextLv)) {
           stopCultivate()
@@ -298,7 +299,7 @@
           return
         }
         if (firstPass && willCross) {
-          const req = breakthroughLifespanNeed(player.value.level)
+          const req = lifespanNeed
           const rem = playerLifespan(player.value) - gameAge(player.value)
           if (rem < req) {
             stopCultivate()
@@ -363,7 +364,17 @@
           if (willCross) player.value.props.daoFruit -= 1
         }
         player.value.taskNum = 0
+        const lifespanBefore = playerLifespan(player.value)
         player.value.level++
+        let lifespanGain = playerLifespan(player.value) - lifespanBefore
+        if (willCross) {
+          const minGain = Math.ceil(lifespanNeed * 1.5)
+          if (lifespanGain < minGain) {
+            const fateMult = Math.max(0.1, 1 + (player.value.fateLifespanMult || 0))
+            player.value.lifespanBonus = (player.value.lifespanBonus || 0) + Math.ceil((minGain - lifespanGain) / fateMult)
+            lifespanGain = playerLifespan(player.value) - lifespanBefore
+          }
+        }
         bumpDaily(player.value, 'cultivate')
         // 寿元大增提示(跨越新大境界)
         if (realmStageOf(player.value.level) > prevStage) {
@@ -372,15 +383,15 @@
             `<div style="text-align:center;line-height:1.9">
               <div style="font-size:22px;font-weight:bold;color:#E6A23C">✨ 突破成功 ✨</div>
               <div style="font-size:16px;margin-top:6px">你踏入了 <b style="color:#409EFF">${levelNames(player.value.level)}</b></div>
-              <div style="color:#67C23A;font-size:14px">寿元大增！提升至 ${playerLifespan(player.value)} 年 · 境界点 +3</div>
+              <div style="color:#67C23A;font-size:14px">寿元 +${lifespanGain} 年（突破需求 ${lifespanNeed} 年）· 当前 ${playerLifespan(player.value)} 年 · 境界点 +3</div>
             </div>`,
             '境界突破',
             { dangerouslyUseHTMLString: true, confirmButtonText: '继续修行' }
           ).catch(() => {})
-          texts.value.push(`<span style="color: #E6A23C">寿元大增！你的寿元提升至 ${playerLifespan(player.value)} 年</span>`)
+          texts.value.push(`<span style="color: #E6A23C">寿元 +${lifespanGain} 年，你的寿元提升至 ${playerLifespan(player.value)} 年</span>`)
           gameNotifys({
             title: '寿元大增',
-            message: `突破【${levelNames(player.value.level)}】，寿元提升至 ${playerLifespan(player.value)} 年`,
+            message: `突破【${levelNames(player.value.level)}】，寿元 +${lifespanGain} 年（需求 ${lifespanNeed} 年），当前 ${playerLifespan(player.value)} 年`,
             type: 'success'
           })
         }
