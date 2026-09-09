@@ -10,7 +10,7 @@
     <div class="tech-body">
       <div class="tech-hint">
         主动功法（≤{{ ACTIVE_MAX }}）战斗出手，被动功法（≤{{ PASSIVE_MAX }}）常驻增益。
-        参悟成败取决于根骨资质 × 悟性，失败仅耗损半数资源。
+        参悟成败取决于根骨资质 × 悟性，失败仅耗损半数资源。点每门功法的「上阵 / 辅修」即可选择出战功法。
       </div>
       <div class="tech-res">
         <el-tag type="warning">灵石 {{ formatNumberToChineseUnit(player.props.money || 0) }}</el-tag>
@@ -29,24 +29,26 @@
         </div>
       </div>
 
-      <el-tabs v-model="tab">
-        <el-tab-pane :label="`主动 · ${activeOwned.length}`" name="active">
-          <template v-if="!activeOwned.length">
-            <el-empty description="尚未获得任何主动功法" :image-size="70" />
-          </template>
-          <div class="tech-item" v-for="t in activeOwned" :key="t.id">
-            <TechniqueCard :t="t" :player="player" :active="activeTask" />
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="`被动 · ${passiveOwned.length}`" name="passive">
-          <template v-if="!passiveOwned.length">
-            <el-empty description="尚未获得任何被动功法" :image-size="70" />
-          </template>
-          <div class="tech-item" v-for="t in passiveOwned" :key="t.id">
-            <TechniqueCard :t="t" :player="player" :active="activeTask" />
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+      <div class="tech-list-scroll">
+        <el-tabs v-model="tab">
+          <el-tab-pane :label="`主动 · ${activeOwned.length}`" name="active">
+            <template v-if="!activeOwned.length">
+              <el-empty description="尚未获得任何主动功法" :image-size="70" />
+            </template>
+            <div class="tech-item" v-for="t in activeOwned" :key="t.id">
+              <TechniqueCard :t="t" :player="player" :active="activeTask" />
+            </div>
+          </el-tab-pane>
+          <el-tab-pane :label="`被动 · ${passiveOwned.length}`" name="passive">
+            <template v-if="!passiveOwned.length">
+              <el-empty description="尚未获得任何被动功法" :image-size="70" />
+            </template>
+            <div class="tech-item" v-for="t in passiveOwned" :key="t.id">
+              <TechniqueCard :t="t" :player="player" :active="activeTask" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
     </div>
   </el-drawer>
 </template>
@@ -117,11 +119,26 @@
 
 <style scoped>
   .technique-drawer :deep(.el-drawer__body) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+  .tech-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-height: 0; padding-bottom: 0; }
+  .tech-list-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100vh - 260px);
+    max-height: calc(100dvh - 260px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    touch-action: pan-y;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
-  .tech-body { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding-bottom: 8px; }
+  .technique-drawer :deep(.el-tabs__content) {
+    overflow: visible;
+  }
   .tech-hint { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; }
   .tech-res { display: flex; flex-wrap: wrap; gap: 6px; }
   .tech-set-banner { display: flex; gap: 12px; font-size: 13px; color: var(--el-text-color-primary); background: var(--el-fill-color-light); border-radius: 8px; padding: 8px 12px; }
@@ -130,4 +147,12 @@
   .sum-line { display: flex; gap: 4px; }
   .sum-line b { color: var(--el-color-success); font-weight: 600; }
   .tech-item { margin-bottom: 8px; }
+  @media only screen and (max-width: 768px) {
+    .tech-body { gap: 6px; }
+    .tech-hint { font-size: 11px; line-height: 1.5; }
+    .tech-res { gap: 4px; }
+    .tech-set-banner { padding: 6px 8px; font-size: 12px; }
+    .tech-summary { font-size: 11px; }
+    .tech-item { margin-bottom: 6px; }
+  }
 </style>
