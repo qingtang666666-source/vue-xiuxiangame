@@ -357,7 +357,16 @@ html.dark .el-progress-bar__inner::after {
 /* ---------- 7. 手机端整屏化密度层（配合底部 Dock / 锁定视口） ---------- */
 @media only screen and (max-width: 768px) {
   .page-viewport {
-    padding: 4px 2px 6px;
+    padding: 4px 2px 12px;
+  }
+
+  /* 页面内部滚动区统一给底部留白，避免被底部 Dock / 安全区裁切 */
+  .page-viewport .el-tab-pane {
+    padding-bottom: 14px;
+  }
+
+  .el-drawer__body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
 
   .title {

@@ -3228,7 +3228,19 @@
     .index-box, .left-fabs { display: none !important; }
     .index { display: flex; flex-direction: column; height: 100%; min-height: 0; }
     .money-banner { position: static; margin: 4px auto 0; padding: 4px 10px; font-size: 12px; justify-content: center; }
-    .m-dash { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; padding: 0 4px; overflow: hidden; }
+    .m-dash {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+      padding: 0 4px calc(12px + env(safe-area-inset-bottom, 0px));
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
     .m-guide { font-size: 11px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
     .m-newbie { font-size: 11px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; }
     .m-anniversary { font-size: 11px; color: #9a5b00; background: linear-gradient(90deg, #fff1c2, #ffe0a3); border: 1px solid #f0b84b; border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; text-align: center; }

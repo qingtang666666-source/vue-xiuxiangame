@@ -128,13 +128,14 @@
   .tech-list-scroll {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: calc(100vh - 260px);
-    max-height: calc(100dvh - 260px);
+    max-height: calc(100vh - 240px);
+    max-height: calc(100dvh - 240px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
-    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
   .technique-drawer :deep(.el-tabs__content) {
     overflow: visible;

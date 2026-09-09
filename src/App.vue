@@ -686,7 +686,7 @@
       height: 100dvh;
       min-height: 0;
       min-width: 0;
-      padding: 48px 8px calc(66px + env(safe-area-inset-bottom, 0px));
+      padding: 48px 8px calc(82px + env(safe-area-inset-bottom, 0px));
       display: flex;
       flex-direction: column;
       overflow: hidden;
