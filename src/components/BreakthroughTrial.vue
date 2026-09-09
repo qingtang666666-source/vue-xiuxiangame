@@ -1,19 +1,19 @@
 <template>
   <TurnCombat
-    :visible="visible && !!enemy"
+    :visible="combatVisible && !!enemy"
     :enemy="enemy"
     :award="false"
     hide-reward
     :title="`突破试炼 ${round}/2 · 击败同阶对手`"
-    @update:visible="v => emit('update:visible', v)"
+    @update:visible="handleCombatVisible"
     @win="onWin"
     @lose="onLose"
-    @flee="emit('update:visible', false)"
+    @flee="handleFlee"
   />
 </template>
 
 <script setup>
-  import { ref, computed, watch } from 'vue'
+  import { ref, computed, watch, nextTick } from 'vue'
   import TurnCombat from './TurnCombat.vue'
   import { isTribulationLevel } from '@/plugins/tribulation'
   import { realmStageOf } from '@/plugins/game'
@@ -26,6 +26,8 @@
   const player = store.player
 
   const round = ref(1)
+  const combatVisible = ref(false)
+  const pendingNext = ref(false)
   const enemies = ref([])
   const enemy = computed(() => enemies.value[round.value - 1] || null)
 
@@ -50,9 +52,36 @@
   watch(
     () => props.visible,
     v => {
-      if (v) spawn()
+      if (v) {
+        pendingNext.value = false
+        spawn()
+        combatVisible.value = true
+      } else {
+        combatVisible.value = false
+      }
     }
   )
+
+  const handleCombatVisible = v => {
+    if (v) {
+      combatVisible.value = true
+      return
+    }
+    if (pendingNext.value) {
+      pendingNext.value = false
+      combatVisible.value = false
+      nextTick(() => { combatVisible.value = true })
+      return
+    }
+    combatVisible.value = false
+    emit('update:visible', false)
+  }
+
+  const handleFlee = () => {
+    pendingNext.value = false
+    combatVisible.value = false
+    emit('update:visible', false)
+  }
 
   const onWin = () => {
     if (round.value >= 2) {
@@ -79,10 +108,13 @@
         emit('success')
       }
     } else {
+      pendingNext.value = true
+      combatVisible.value = false
       round.value++
     }
   }
   const onLose = () => {
+    pendingNext.value = false
     emit('update:visible', false)
     emit('fail')
   }
