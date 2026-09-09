@@ -4,6 +4,9 @@
     <div class="m-dash">
       <div v-if="guide && guide.title" class="m-guide" @click="doGuide">📌 {{ guide.title }} · <span class="m-guide-desc">{{ guide.desc }}</span></div>
       <div v-if="!player.isNewbie" class="m-newbie" @click="newbiePack()">🎁 新手大礼包未领取 · 点击开包</div>
+      <div v-if="anniversary.claimable" class="m-anniversary" @click="claimAnniversary">
+        🎉 正式版本纪念日 · 领取 10 万灵石 + 5 万筹码
+      </div>
       <div class="m-status">
         <div class="m-status-row"><span class="m-k">境界</span><span class="m-v">{{ levelNames(player.level) }} <b class="m-realm">{{ currentRealmName }}</b></span></div>
         <div class="m-status-row"><span class="m-k">修为</span><span class="m-v">{{ calculatePercentageDifference(player.maxCultivation, player.cultivation) }}%</span></div>
@@ -79,6 +82,9 @@
       </div>
       <div v-if="!player.isNewbie" class="newbie-cta" @click="newbiePack()">
         🎁 新手大礼包未领取 · 点击去开包
+      </div>
+      <div v-if="anniversary.claimable" class="anniversary-banner" @click="claimAnniversary">
+        🎉 正式版本纪念日 · 领取 100,000 灵石 + 50,000 筹码
       </div>
       <div class="story">
         <p v-html="storyText" />
@@ -1513,6 +1519,7 @@
   import { performRebirth, rebirthSummaryHtml, fullReset } from '@/plugins/rebirthFlow'
   import { fateInfo } from '@/plugins/fate'
   import { codexStats, codexMilestoneState, claimCodexMilestone, codexRewardText } from '@/plugins/codex'
+  import { anniversaryInfo, claimAnniversaryReward } from '@/plugins/anniversary'
   import { collectSetInfo, effectiveBackpackCap, effectivePlayerStats } from '@/plugins/setBonus'
   import { natalArtifactTier } from '@/plugins/natalArtifact'
   import { triggerAdventure, canAdventure, adventureCooldownLeft } from '@/plugins/adventure'
@@ -1580,6 +1587,7 @@
   const fateData = computed(() => fateInfo(player.value))
   const codexStat = computed(() => codexStats(player.value))
   const codexMilestones = computed(() => codexMilestoneState(player.value))
+  const anniversary = computed(() => anniversaryInfo(player.value))
   const collectSet = computed(() => collectSetInfo(player.value))
   const autoIdlePreset = on => {
     player.value.autoIdle.explore = on
@@ -1700,6 +1708,16 @@
       return
     }
     if (guide.value.route) router.push(guide.value.route)
+  }
+  const claimAnniversary = () => {
+    const result = claimAnniversaryReward(player.value)
+    if (!result.ok) return gameNotifys({ title: '正式版本纪念日', message: result.reason, type: 'warning' })
+    gameNotifys({
+      title: '正式版本纪念日',
+      message: `已领取：灵石 +${formatNumberToChineseUnit(result.reward.money)}、筹码 +${formatNumberToChineseUnit(result.reward.chips)}`,
+      type: 'success',
+      duration: 8000
+    })
   }
   const actionGroups = ref([])
   // 当前生效的限时增益
@@ -3212,6 +3230,7 @@
     .m-dash { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; padding: 0 4px; overflow: hidden; }
     .m-guide { font-size: 11px; color: var(--el-color-primary); background: var(--el-fill-color-light); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
     .m-newbie { font-size: 11px; color: #e6a23c; background: rgba(230,162,60,.14); border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; }
+    .m-anniversary { font-size: 11px; color: #9a5b00; background: linear-gradient(90deg, #fff1c2, #ffe0a3); border: 1px solid #f0b84b; border-radius: 10px; padding: 5px 8px; margin-bottom: 0; cursor: pointer; text-align: center; }
     .m-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px; background: var(--el-fill-color-light); border-radius: 10px; margin-bottom: 0; box-shadow: inset 0 0 0 1px var(--el-border-color-lighter); }
     .m-status-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; padding: 3px 5px; border-radius: 6px; background: var(--el-bg-color); font-size: 11px; color: var(--el-text-color-primary); }
     .m-status-row.m-pet-row { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -3379,6 +3398,19 @@
     background: linear-gradient(90deg, #ffe9c7, #fff3e0);
     border: 1px solid #ffcc80;
     color: #b8860b;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .anniversary-banner {
+    background: linear-gradient(90deg, #fff1c2, #ffe0a3);
+    border: 1px solid #f0b84b;
+    color: #9a5b00;
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;

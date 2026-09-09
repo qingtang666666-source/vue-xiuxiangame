@@ -188,7 +188,8 @@ export const useMainStore = defineStore('main', {
       checkinStreak: 0,
       lastCheckinDate: null,
       fortuneTellingDate: null,
-      checkedInToday: false
+      checkedInToday: false,
+      anniversaryClaims: []
     },
     // 怪物信息
     monster: {
