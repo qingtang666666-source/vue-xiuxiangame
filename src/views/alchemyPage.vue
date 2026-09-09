@@ -18,20 +18,6 @@
       </el-tag>
     </div>
 
-    <div class="pills" v-if="pills.length">
-      <div class="section-title">丹药背包</div>
-      <div class="pill-strip">
-        <el-card class="pill-card" v-for="p in pills" :key="p.id" shadow="never">
-          <div class="pill-row">
-            <el-tag :type="p.recipe.quality" effect="dark" class="clickable" @click="showPill(p)">{{ p.recipe.name }}</el-tag>
-            <span class="pill-count">×{{ p.count }}</span>
-            <span class="pill-val">价值 {{ formatNumberToChineseUnit(pillVal(p.recipe)) }} 灵石</span>
-            <el-button size="small" type="primary" @click.stop="use(p)">服用</el-button>
-          </div>
-        </el-card>
-      </div>
-    </div>
-
     <div class="section-title">
       丹方
       <span class="count">共 {{ recipes.length }} 种</span>
@@ -106,7 +92,7 @@
   import { useRouter } from 'vue-router'
   import { useMainStore } from '@/plugins/store'
   import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
-  import { RECIPES, TIERS, recipeById, canCraft, usePill, activeBuffs } from '@/plugins/alchemy'
+  import { RECIPES, TIERS, recipeById, canCraft, activeBuffs } from '@/plugins/alchemy'
   import { buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
   import { sourceOfPill } from '@/plugins/itemSource'
   import { beginAction, actionTask, finishNow } from '@/plugins/actionTimer'
@@ -152,12 +138,6 @@ import PageNav from '@/components/PageNav.vue'
   const buffs = computed(() => {
     buffNow.value
     return activeBuffs(player.value)
-  })
-
-  const pills = computed(() => {
-    return (player.value.pills || [])
-      .map(p => ({ ...p, recipe: recipeById(p.id) }))
-      .filter(p => p.recipe)
   })
 
   // 各丹方是否可炼制，用于按钮置灰
@@ -209,20 +189,6 @@ import PageNav from '@/components/PageNav.vue'
     if (out) gameNotifys({ title: '工坊', message: out.message, type: out.type })
   }
 
-  const showPill = p => {
-    const r = p.recipe
-    infoData.value = {
-      title: r.name,
-      rows: [
-        { k: '品阶', v: r.tierName },
-        { k: '类型', v: r.category === 'buff' ? '限时' : '永久' },
-        { k: '库存', v: p.count }
-      ],
-      effects: [r.effectText, r.detail, sourceOfPill()]
-    }
-    infoShow.value = true
-  }
-
   const showRecipe = r => {
     infoData.value = {
       title: r.name,
@@ -237,18 +203,6 @@ import PageNav from '@/components/PageNav.vue'
 
   const pillVal = r => pillPrice(r)
 
-  const use = p => {
-    const res = usePill(player.value, p.id)
-    if (res.ok) {
-      gameNotifys({
-        title: '丹药服用',
-        message: res.buff ? `服下【${p.recipe.name}】，${p.recipe.effectText}` : `服下【${p.recipe.name}】，${p.recipe.effectText}`,
-        type: 'success'
-      })
-    } else {
-      gameNotifys({ title: '丹药服用', message: res.reason, type: 'error' })
-    }
-  }
 </script>
 
 <style scoped>
@@ -336,41 +290,6 @@ import PageNav from '@/components/PageNav.vue'
 
   .buff-tag {
     font-size: 12px;
-  }
-
-  .pills {
-    display: block;
-  }
-
-  .pill-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .pill-card {
-    width: 200px;
-    cursor: pointer;
-  }
-
-  .clickable {
-    cursor: pointer;
-  }
-
-  .pill-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .pill-count {
-    font-weight: bold;
-  }
-
-  .pill-val {
-    font-size: 12px;
-    color: var(--el-color-warning);
   }
 
   .recipe-grid {
@@ -559,14 +478,6 @@ import PageNav from '@/components/PageNav.vue'
     .title { font-size: 17px; margin-bottom: 4px; }
     .resources { gap: 4px; }
     .count { display: none; }
-    .pills { flex: 0 0 auto; margin-bottom: 4px; }
-    .pills .section-title { margin: 0 0 4px; }
-    .pill-strip { flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-    .pill-card { flex: 0 0 132px; width: auto; }
-    .pill-card :deep(.el-card__body) { padding: 6px 8px; }
-    .pill-row { gap: 6px; }
-    .pill-count { font-size: 12px; }
-    .pill-val { display: none; }
     .section-title { margin: 6px 0 4px; font-size: 14px; }
     .filter-bar { gap: 3px; margin-bottom: 4px; }
     .chips-row { flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding-bottom: 2px; }
