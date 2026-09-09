@@ -295,7 +295,7 @@
           stopCultivate()
           isStop.value = false
           isStart.value = false
-          texts.value.push(`<span style="color: #E6A23C">突破大境界需 1 枚「道果」（当前 ${player.value.props.daoFruit || 0}），道果只从历战掉落，灵石买不到！</span>`)
+          texts.value.push(`<span style="color: #E6A23C">突破大境界需 1 枚「道果」（当前 ${player.value.props.daoFruit || 0}），道果可从历战获得。</span>`)
           return
         }
         if (firstPass && willCross) {

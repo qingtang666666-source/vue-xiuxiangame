@@ -77,6 +77,7 @@
   import { beginAction, actionTask } from '@/plugins/actionTimer'
   import { matNameOf } from '@/plugins/materialDb'
   import { talismanPrice } from '@/plugins/market'
+  import { sourceOfTalisman } from '@/plugins/itemSource'
   import itemInfo from '@/components/itemInfo.vue'
 
   const store = useMainStore()
@@ -126,7 +127,7 @@
     infoData.value = {
       title: r.name,
       rows: [{ k: '品阶', v: r.tierName }, { k: '库存', v: o.count }],
-      effects: [r.effectText]
+      effects: [r.effectText, sourceOfTalisman()]
     }
     infoShow.value = true
   }

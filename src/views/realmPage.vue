@@ -77,6 +77,7 @@
   import { REALMS, realmEnemy, realmWin, realmLose } from '@/plugins/secretRealm'
   import TurnCombat from '@/components/TurnCombat.vue'
   import { TREASURES, treasureCount, useTreasure, treasureById } from '@/plugins/treasure'
+  import { sourceOfTreasure } from '@/plugins/itemSource'
   import itemInfo from '@/components/itemInfo.vue'
   import realmBg from '@/assets/images/realm-card-bg.png'
 
@@ -148,7 +149,7 @@
     infoData.value = {
       title: t.name,
       rows: [{ k: '品阶', v: t.tierName }, { k: '库存', v: t.count }],
-      effects: [t.desc]
+      effects: [t.desc, sourceOfTreasure()]
     }
     infoShow.value = true
   }

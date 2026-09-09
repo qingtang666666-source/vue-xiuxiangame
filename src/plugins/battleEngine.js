@@ -480,7 +480,7 @@ const awardVictory = st => {
   p.props.cultivateDan = (p.props.cultivateDan || 0) + dan
   p.props.spiritHerb = (p.props.spiritHerb || 0) + herb
   p.props.strengtheningStone = (p.props.strengtheningStone || 0) + stone
-  // —— 突破「道果」：只有历战掉落，灵石买不到；15 次后提概率，40 次必掉 ——
+  // —— 突破「道果」：历战掉落；15 次后提概率，40 次必掉 ——
   let dao = 0
   if (st.ladder) {
     st.realPlayer.ladderWins = (st.realPlayer.ladderWins || 0) + 1

@@ -143,7 +143,7 @@ export const propItemNames = {
   xuanTie: { name: '玄铁', desc: '炼器天材，可在坊市购得' },
   yaoDan: { name: '妖丹', desc: '妖兽内丹，可在坊市购得' },
   money: { name: '灵石', desc: '可以通过分解获得装备获得' },
-  daoFruit: { name: '道果', desc: '历战专属掉落的大道机缘，突破大境界所需，灵石无法购买' },
+  daoFruit: { name: '道果', desc: '可从历战获得的大道机缘，突破大境界所需' },
   flying: { name: '传送符', desc: '可以通过赠送礼物给NPC获得' },
   rootBone: { name: '悟性丹', desc: '可以通过击败世界BOSS获得' },
   qingyuan: { name: '情缘', desc: '可以通过赠送礼物给NPC获得' },

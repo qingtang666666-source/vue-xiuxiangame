@@ -5,6 +5,7 @@
       <span class="ttype">{{ t.type === 'active' ? '主动' : '被动' }}</span>
     </div>
     <div class="tmeta">{{ t.familyName }} · {{ t.rarityName }} · {{ t.gradeName }}</div>
+    <div class="tsource">{{ sourceOfTechnique() }}</div>
     <div class="tstat">{{ passiveText }}</div>
     <div v-if="t.divine" class="tdivine" @click="showDivine">神通：{{ t.divine.name }} <span class="tdivine-more">详情</span></div>
 
@@ -88,6 +89,7 @@
     statName
   } from '@/plugins/technique'
   import { divineTipForTech } from '@/plugins/divine'
+  import { sourceOfTechnique } from '@/plugins/itemSource'
 
   const props = defineProps({ t: Object, player: Object, active: { type: Object, default: null } })
   const t = computed(() => props.t)
@@ -191,6 +193,7 @@
   .thead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .ttype { font-size: 12px; color: var(--el-text-color-placeholder); }
   .tmeta { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 2px; }
+  .tsource { font-size: 11px; color: var(--el-text-color-placeholder); margin-bottom: 2px; }
   .tstat { font-size: 12px; color: var(--el-color-success); margin-bottom: 2px; }
   .tdivine { font-size: 12px; color: var(--el-color-warning); margin-bottom: 4px; cursor: pointer; }
   .tdivine-more { font-size: 11px; color: var(--el-color-primary); margin-left: 4px; }

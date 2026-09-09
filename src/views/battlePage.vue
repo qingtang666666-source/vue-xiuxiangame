@@ -27,7 +27,7 @@
         </el-radio-group>
       </div>
       <el-button type="primary" size="large" @click="startFight" class="fight-btn">开始战斗</el-button>
-      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。历战胜利有概率掉落「道果」，突破大境界必备（灵石买不到）。</div>
+      <div class="tip">提示：速度决定行动顺序；使用主动功法神通需消耗灵力；防御可减伤并蓄灵；打不过可逃跑。历战胜利有概率掉落「道果」，突破大境界必备。</div>
     </div>
 
     <!-- 战斗主体 -->

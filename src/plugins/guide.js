@@ -36,7 +36,7 @@ export const nextObjective = player => {
 // —— 玩法模块引导：把每个功能模块都讲清「是什么、去哪点、怎么算体验过」——
 export const MODULE_GUIDES = [
   { key: 'cultivate', icon: '🌀', name: '修炼突破', route: '/cultivate', desc: '打坐积累修为，满了就突破；跨大境界需要历战掉落的「道果」并满足战力/寿元。', done: p => (p.level || 0) >= 2 },
-  { key: 'battle', icon: '⚔️', name: '历战', route: '/battle', desc: '挑战不同强度敌人，刷修为、灵石、培养丹，并有概率掉「道果」（突破大境界必用，灵石买不到）。', done: p => (p.ladderWins || 0) >= 1 },
+  { key: 'battle', icon: '⚔️', name: '历战', route: '/battle', desc: '挑战不同强度敌人，刷修为、灵石、培养丹，并有概率掉「道果」（突破大境界必用）。', done: p => (p.ladderWins || 0) >= 1 },
   { key: 'tech', icon: '📖', name: '功法阁', route: '/home', desc: '首页打开功法阁：参悟功法卷轴、修炼提升重数、立主修；主动功法要「上阵」才能在战斗里用。', done: p => Object.keys(p.methods || {}).length >= 1 },
   { key: 'explore', icon: '🗺️', name: '大世界探索', route: '/worldmap', desc: '闯荡地图、击败野怪，攒修为与会遇到的材料。', done: p => (p.exploreWins || 0) >= 1 },
   { key: 'realm', icon: '🌌', name: '秘境', route: '/realm', desc: '探索秘境寻宝，有几率触发奇遇。', done: p => (p.realmTimes || 0) >= 1 },
@@ -49,7 +49,7 @@ export const MODULE_GUIDES = [
   { key: 'formation', icon: '⛩️', name: '阵法', route: '/formation', desc: '按类型×品阶布阵，多座同时生效的常驻被动。', done: p => (p.skills?.formation || 0) >= 1 },
   { key: 'sect', icon: '🏯', name: '宗门', route: '/sect', desc: '过入门考核后拜入宗门，升职领俸禄、换奖励。', done: p => (p.sect?.position || 0) >= 1 },
   { key: 'npc', icon: '👤', name: 'NPC 奇缘', route: '/npc', desc: '结识修士、赠礼刷情缘，触发专属机缘。', done: null },
-  { key: 'market', icon: '🧧', name: '坊市', route: '/market', desc: '用灵石买消耗材料；注意：道果在坊市买不到。', done: null },
+  { key: 'market', icon: '🧧', name: '坊市', route: '/market', desc: '用灵石购买各类消耗材料与物品。', done: null },
   { key: 'backpack', icon: '🎒', name: '背包', route: '/backpack', desc: '查看装备与道具，强化、穿戴、锻造成长。', done: null },
   { key: 'game', icon: '🎲', name: '休闲小游戏', route: '/game', desc: '放松一下，稳赢小奖励。', done: p => ((p.gameWins || 0) + (p.gameLosses || 0)) >= 1 },
   { key: 'ascension', icon: '✨', name: '飞升转生', route: '/ascension', desc: '走到当前界域尽头后的更高追求。', done: p => (p.realm?.stage || 0) >= 1 || (p.reincarnation || 0) >= 1 }

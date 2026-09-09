@@ -134,6 +134,7 @@
   import { TREASURES } from './plugins/treasure'
   import { propItemNames } from './plugins/game'
   import { formatNumberToChineseUnit } from './plugins/game'
+  import { sourceOfMaterial, sourceOfPill, sourceOfProp, sourceOfTreasure } from './plugins/itemSource'
   import MoneyBar from './components/MoneyBar.vue'
 
   const player = ref({})
@@ -292,18 +293,18 @@
     let info = []
     if (kind === 'material') {
       const m = MATERIALS.find(x => x.key === key)
-      if (m) { nm = m.name; info.push(m.tierName || '', m.desc || '', `价值 ${m.price} 灵石`) }
+      if (m) { nm = m.name; info.push(m.tierName || '', m.desc || '', sourceOfMaterial(m), `价值 ${m.price} 灵石`) }
     } else if (kind === 'pill') {
       const r = RECIPES.find(x => x.id === key)
-      if (r) { nm = r.name; info.push(r.tierName || '', r.effectText || '', r.detail || '') }
+      if (r) { nm = r.name; info.push(r.tierName || '', r.effectText || '', r.detail || '', sourceOfPill()) }
     } else if (kind === 'treasure') {
       const t = TREASURES.find(x => x.key === key)
-      if (t) { nm = t.name; info.push(t.tierName || '', t.desc || '', `价值 ${t.price} 灵石`) }
+      if (t) { nm = t.name; info.push(t.tierName || '', t.desc || '', sourceOfTreasure(), `价值 ${t.price} 灵石`) }
     } else if (kind === 'scroll') {
       info.push(tierName ? `${tierName}功法卷轴` : '功法卷轴', '参悟以根骨资质 × 悟性判定成败')
     } else {
       const p = propItemNames[key]
-      if (p) { nm = p.name; info.push(p.desc || '') }
+      if (p) { nm = p.name; info.push(p.desc || '', sourceOfProp(key)) }
     }
     ElMessageBox.alert(
       `<div style="text-align:left"><b>${nm}</b>${tierName ? '（' + tierName + '）' : ''}<br>${info.filter(Boolean).join('<br>')}</div>`,

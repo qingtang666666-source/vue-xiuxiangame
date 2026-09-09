@@ -67,6 +67,7 @@
         <p class="desc">{{ r.desc }}</p>
         <p class="effect">{{ r.effectText }}</p>
         <p class="detail">{{ r.detail }}</p>
+        <p class="source">{{ sourceOfPill() }}</p>
         <div class="cost">
           <div class="cost-head">
             <span>炼制消耗</span>
@@ -107,6 +108,7 @@
   import { formatNumberToChineseUnit, levelNames, gameNotifys } from '@/plugins/game'
   import { RECIPES, TIERS, recipeById, canCraft, usePill, activeBuffs } from '@/plugins/alchemy'
   import { buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
+  import { sourceOfPill } from '@/plugins/itemSource'
   import { beginAction, actionTask, finishNow } from '@/plugins/actionTimer'
   import { recipeCostList, recipeShortfall } from '@/plugins/alchemy'
   import { pillPrice } from '@/plugins/market'
@@ -216,7 +218,7 @@ import PageNav from '@/components/PageNav.vue'
         { k: '类型', v: r.category === 'buff' ? '限时' : '永久' },
         { k: '库存', v: p.count }
       ],
-      effects: [r.effectText, r.detail]
+      effects: [r.effectText, r.detail, sourceOfPill()]
     }
     infoShow.value = true
   }
@@ -228,7 +230,7 @@ import PageNav from '@/components/PageNav.vue'
         { k: '品阶', v: r.tierName },
         { k: '类型', v: r.category === 'buff' ? '限时' : '永久' }
       ],
-      effects: [r.effectText, r.detail]
+      effects: [r.effectText, r.detail, sourceOfPill()]
     }
     infoShow.value = true
   }
@@ -407,6 +409,12 @@ import PageNav from '@/components/PageNav.vue'
     margin: 0 0 8px;
   }
 
+  .source {
+    font-size: 11px;
+    color: var(--el-text-color-placeholder);
+    margin: 0 0 8px;
+  }
+
   .cost {
     display: flex;
     flex-wrap: wrap;
@@ -567,7 +575,7 @@ import PageNav from '@/components/PageNav.vue'
     .recipe-card { cursor: pointer; }
     .recipe-card :deep(.el-card__header) { padding: 6px 8px; }
     .recipe-card :deep(.el-card__body) { padding: 6px 8px; }
-    .desc, .detail, .cost { display: none; }
+    .desc, .detail, .source, .cost { display: none; }
     .effect { min-height: 0; margin-bottom: 4px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .verdict { font-size: 10px; padding: 2px 4px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .craft-btn { min-height: 26px; font-size: 11px; padding: 4px 8px; }

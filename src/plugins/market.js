@@ -10,6 +10,7 @@ import equip from './equip.js'
 import { MATERIALS, materialByKey } from './materialDb.js'
 import { totalGameDays } from './time.js'
 import { craftLevelOfTier } from './craft.js'
+import { sourceOfEquip, sourceOfMaterial, sourceOfPill, sourceOfTalisman } from './itemSource.js'
 
 export const MARKET_SCALES = [
   { idx: 0, name: '凡级', minLevel: 1, buy: 1.0, sell: 0.55, fair: 0.9, black: 1.7, auction: 1.2 },
@@ -479,18 +480,18 @@ export const itemTip = it => {
   if (!it) return ''
   if (it.kind === 'pill' && it.refId) {
     const r = RECIPES.find(x => x.id === it.refId)
-    return `【${it.name}】${r?.tierName || ''}\n${r?.effectText || ''}${r?.detail ? `\n${r.detail}` : ''}\n市价约 ${pillPrice(r || {})} 灵石`
+    return `【${it.name}】${r?.tierName || ''}\n${r?.effectText || ''}${r?.detail ? `\n${r.detail}` : ''}\n${sourceOfPill()}\n市价约 ${pillPrice(r || {})} 灵石`
   }
   if (it.kind === 'talisman' && it.refId) {
     const t = TALISMANS.find(x => x.id === it.refId)
-    return `【${it.name}】${t?.tierName || ''}\n${t?.effectText || ''}\n市价约 ${talismanPrice(t || {})} 灵石`
+    return `【${it.name}】${t?.tierName || ''}\n${t?.effectText || ''}\n${sourceOfTalisman()}\n市价约 ${talismanPrice(t || {})} 灵石`
   }
   if (it.kind === 'equip') {
     const eq = it.equip || it
-    return `【${eq.name}】${eq.gradeName || ''}${eq.level || ''}级\n攻击 ${Math.round(eq.attack || 0)} · 防御 ${Math.round(eq.defense || 0)} · 气血 ${Math.round(eq.health || 0)} · 暴击 ${((eq.critical || 0) * 100).toFixed(1)}%`
+    return `【${eq.name}】${eq.gradeName || ''}${eq.level || ''}级\n攻击 ${Math.round(eq.attack || 0)} · 防御 ${Math.round(eq.defense || 0)} · 气血 ${Math.round(eq.health || 0)} · 暴击 ${((eq.critical || 0) * 100).toFixed(1)}%\n${sourceOfEquip(eq)}`
   }
   const db = itemDb(it.key || it.refId) || (it.minScale != null ? it : null)
-  return `${db?.name || it.name}${db?.tierName ? '（' + db.tierName + '）' : ''}\n${db?.desc || ''}\n市价约 ${it.price ?? db?.price ?? 0} 灵石`
+  return `${db?.name || it.name}${db?.tierName ? '（' + db.tierName + '）' : ''}\n${db?.desc || ''}\n${sourceOfMaterial(db)}\n市价约 ${it.price ?? db?.price ?? 0} 灵石`
 }
 
 // 寄售：把自己的丹药/符箓/装备卖出

@@ -1414,6 +1414,7 @@
   import { manorEnhanceBonus } from '@/plugins/manor'
   import { activeBuffs } from '@/plugins/alchemy'
   import { buffStats, buffEffectText, formatBuffRemaining, useBuffClock } from '@/plugins/buffs'
+  import { sourceOfEquip } from '@/plugins/itemSource'
   import { RECIPES } from '@/plugins/alchemy'
   import { setSummary } from '@/plugins/setBonus'
   import { setRewardStatus, setRewardSummary } from '@/plugins/setReward'
@@ -1598,7 +1599,8 @@
         a.type === 'stat'
           ? { name: a.name, text: a.value, desc: '' }
           : { name: a.name, text: (a.triggerChance * 100).toFixed(1) + '% 触发', desc: a.desc }
-      )
+      ),
+      effects: [sourceOfEquip(it)]
     }
     infoShow.value = true
   }
