@@ -20,14 +20,16 @@
 
     <div class="pills" v-if="pills.length">
       <div class="section-title">丹药背包</div>
-      <el-card class="pill-card" v-for="p in pills" :key="p.id" shadow="never">
-        <div class="pill-row">
-          <el-tag :type="p.recipe.quality" effect="dark" class="clickable" @click="showPill(p)">{{ p.recipe.name }}</el-tag>
-          <span class="pill-count">×{{ p.count }}</span>
-          <span class="pill-val">价值 {{ formatNumberToChineseUnit(pillVal(p.recipe)) }} 灵石</span>
-          <el-button size="small" type="primary" @click="use(p)">服用</el-button>
-        </div>
-      </el-card>
+      <div class="pill-strip">
+        <el-card class="pill-card" v-for="p in pills" :key="p.id" shadow="never">
+          <div class="pill-row">
+            <el-tag :type="p.recipe.quality" effect="dark" class="clickable" @click="showPill(p)">{{ p.recipe.name }}</el-tag>
+            <span class="pill-count">×{{ p.count }}</span>
+            <span class="pill-val">价值 {{ formatNumberToChineseUnit(pillVal(p.recipe)) }} 灵石</span>
+            <el-button size="small" type="primary" @click.stop="use(p)">服用</el-button>
+          </div>
+        </el-card>
+      </div>
     </div>
 
     <div class="section-title">
@@ -53,7 +55,7 @@
       <el-button size="small" type="primary" @click="skipCraft">跳 过</el-button>
     </div>
     <div class="recipe-grid">
-      <el-card v-for="r in recipeItems" :key="r.id" class="recipe-card" shadow="hover">
+      <el-card v-for="r in recipeItems" :key="r.id" class="recipe-card" shadow="hover" @click="showRecipe(r)">
         <template #header>
           <div class="card-head">
             <el-tag :type="r.quality" effect="dark">{{ r.name }}</el-tag>
@@ -84,7 +86,7 @@
           class="craft-btn"
           type="primary"
           :disabled="!canCraftMap[r.id]"
-          @click="craft(r)"
+          @click.stop="craft(r)"
         >
           炼制
         </el-button>
@@ -219,6 +221,18 @@ import PageNav from '@/components/PageNav.vue'
     infoShow.value = true
   }
 
+  const showRecipe = r => {
+    infoData.value = {
+      title: r.name,
+      rows: [
+        { k: '品阶', v: r.tierName },
+        { k: '类型', v: r.category === 'buff' ? '限时' : '永久' }
+      ],
+      effects: [r.effectText, r.detail]
+    }
+    infoShow.value = true
+  }
+
   const pillVal = r => pillPrice(r)
 
   const use = p => {
@@ -323,6 +337,10 @@ import PageNav from '@/components/PageNav.vue'
   }
 
   .pills {
+    display: block;
+  }
+
+  .pill-strip {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -331,6 +349,7 @@ import PageNav from '@/components/PageNav.vue'
 
   .pill-card {
     width: 200px;
+    cursor: pointer;
   }
 
   .clickable {
@@ -531,12 +550,28 @@ import PageNav from '@/components/PageNav.vue'
     .alchemy-header { margin-bottom: 6px; }
     .title { font-size: 17px; margin-bottom: 4px; }
     .resources { gap: 4px; }
-    .pills, .count { display: none; }
+    .count { display: none; }
+    .pills { flex: 0 0 auto; margin-bottom: 4px; }
+    .pills .section-title { margin: 0 0 4px; }
+    .pill-strip { flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+    .pill-card { flex: 0 0 132px; width: auto; }
+    .pill-card :deep(.el-card__body) { padding: 6px 8px; }
+    .pill-row { gap: 6px; }
+    .pill-count { font-size: 12px; }
+    .pill-val { display: none; }
     .section-title { margin: 6px 0 4px; font-size: 14px; }
-    .filter-bar { gap: 4px; margin-bottom: 6px; }
-    .recipe-card :deep(.el-card__header) { padding: 8px 10px; }
-    .recipe-card :deep(.el-card__body) { padding: 8px 10px; }
-    .effect { min-height: 28px; }
+    .filter-bar { gap: 3px; margin-bottom: 4px; }
+    .chips-row { flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding-bottom: 2px; }
+    .chip { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; }
+    .recipe-grid { flex: 1; min-height: 0; grid-template-columns: repeat(2, 1fr); gap: 6px; overflow-y: auto; }
+    .recipe-card { cursor: pointer; }
+    .recipe-card :deep(.el-card__header) { padding: 6px 8px; }
+    .recipe-card :deep(.el-card__body) { padding: 6px 8px; }
+    .desc, .detail, .cost { display: none; }
+    .effect { min-height: 0; margin-bottom: 4px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .verdict { font-size: 10px; padding: 2px 4px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .craft-btn { min-height: 26px; font-size: 11px; padding: 4px 8px; }
+    .actions { display: none; }
     .crafting-bar { margin-bottom: 6px; padding: 6px 10px; }
   }
 </style>
