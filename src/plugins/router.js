@@ -23,6 +23,7 @@ import quest from '../views/questPage.vue'
 import backpack from '../views/backpackPage.vue'
 import gm from '../views/gmPage.vue'
 import rebirthShop from '../views/rebirthShopPage.vue'
+import petGacha from '../views/petGachaPage.vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
@@ -229,6 +230,14 @@ const routes = [
       keepAlive: true
     },
     component: rebirthShop
+  },
+  {
+    path: '/petGacha',
+    name: 'petGacha',
+    meta: {
+      keepAlive: true
+    },
+    component: petGacha
   }
 ]
 const router = createRouter({

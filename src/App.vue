@@ -15,6 +15,7 @@
       <div class="nav-btn" @click="router.push('/backpack')">🎒背包</div>
       <div class="nav-btn" @click="openTrav">🗺️游商<span v-if="travNew" class="trav-dot">●</span></div>
       <div class="nav-btn" @click="router.push('/game')">🎮休闲</div>
+      <div class="nav-btn" @click="router.push('/petGacha')">🎰灵宠</div>
       <div class="nav-btn" @click="router.push('/worldmap')">🗺️地图</div>
       <div class="nav-btn" @click="router.push('/battle')">⚔️历战</div>
       <el-switch size="small" v-model="player.dark">
@@ -161,6 +162,7 @@
     ]},
     { title: '资源', items: [
       { icon: '🎒', name: '背包', route: '/backpack' },
+      { icon: '🎰', name: '灵宠抽奖', route: '/petGacha' },
       { icon: '🏪', name: '贸易市场', route: '/market' },
       { icon: '👥', name: '下界坊市', route: '/npc' },
       { icon: '🗿', name: '游商', action: () => openTrav() }
