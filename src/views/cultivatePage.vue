@@ -16,7 +16,7 @@
       <div class="cultivate-flavor" v-if="flavorText">{{ flavorText }}</div>
       <div class="cultivate-stats">
         <span class="stat">修炼速度 ×<b>{{ cultSpeed.toFixed(2) }}</b></span>
-        <span class="stat">道果 <b>{{ player.props.daoFruit || 0 }}</b>（大境界突破用）· 历战保底 {{ Math.min(DAO_FRUIT_PITY, player.ladderFruitPity || 0) }}/{{ DAO_FRUIT_PITY }}</span>
+        <span class="stat">道果 <b>{{ player.props.daoFruit || 0 }}</b>（大境界突破用）</span>
         <span class="stat" v-if="breakthroughInfo">下一境界：<b>{{ breakthroughInfo.next }}</b> · 还需 {{ formatNumberToChineseUnit(breakthroughInfo.remain) }} · {{ breakthroughInfo.reqText }}</span>
         <span class="stat" v-if="nextTrib">渡劫将至：<b class="trib">{{ nextTrib.name }}</b></span>
       </div>
@@ -54,7 +54,7 @@
   import { ensureWorldNpcs } from '@/plugins/npcSystem'
   import { ensureSect } from '@/plugins/sect'
   import { isTribulationLevel, tribulationOf, conductTribulation } from '@/plugins/tribulation'
-  import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState, DAO_FRUIT_PITY } from '@/plugins/breakthroughGate'
+  import { playerPowerScore, breakthroughPowerNeed, MAX_STAGE_FAILS, BREAKTHROUGH_CD_FAIL, initGateState } from '@/plugins/breakthroughGate'
   import { bumpDaily } from '@/plugins/dailyGoals'
   import BreakthroughTrial from '@/components/BreakthroughTrial.vue'
   import { checkAchievements } from '@/plugins/achievementChecker'

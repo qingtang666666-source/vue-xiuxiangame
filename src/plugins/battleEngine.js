@@ -494,5 +494,5 @@ const awardVictory = st => {
       st.realPlayer.ladderFruitPity = pity
     }
   }
-  st.reward = { exp, money, dan, herb, stone, dao, daoPity: st.realPlayer.ladderFruitPity || 0, enemies: st.enemies.length }
+  st.reward = { exp, money, dan, herb, stone, dao, enemies: st.enemies.length }
 }

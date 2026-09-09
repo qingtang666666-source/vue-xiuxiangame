@@ -9,25 +9,24 @@
       </div>
     </div>
 
-    <div class="eq-section" v-if="equippedSlots.length">
-      <div class="section-title">已装备</div>
-      <div class="grid">
-        <div class="cell" v-for="s in equippedSlots" :key="s.key">
-          <tag :type="s.item.quality" @click="showItem(s.item)">{{ s.item.name }}</tag>
-          <div class="sub">{{ genre[s.key] }} · +{{ s.item.strengthen || 0 }}</div>
-          <div class="v">价值 {{ formatNumberToChineseUnit(valueOf(s.item)) }} 灵石</div>
-          <div class="ops">
-            <el-button size="small" type="warning" plain @click="unequipItem(s.key)">卸下</el-button>
-            <el-button size="small" type="primary" plain @click="goForge">强化</el-button>
-            <el-button size="small" type="info" plain @click="rerollItem(s.item)">洗练</el-button>
-            <el-button size="small" type="success" plain @click="enchantItem(s.item)">附魔</el-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <el-tabs v-model="tab" stretch>
       <el-tab-pane label="装备" name="equip">
+        <div class="eq-section" v-if="equippedSlots.length">
+          <div class="section-title">已装备</div>
+          <div class="grid">
+            <div class="cell equipped-cell" v-for="s in equippedSlots" :key="s.key">
+              <tag :type="s.item.quality" @click="showItem(s.item)">{{ s.item.name }}</tag>
+              <div class="sub">{{ genre[s.key] }} · +{{ s.item.strengthen || 0 }}</div>
+              <div class="v">价值 {{ formatNumberToChineseUnit(valueOf(s.item)) }} 灵石</div>
+              <div class="ops">
+                <el-button size="small" type="warning" plain @click="unequipItem(s.key)">卸下</el-button>
+                <el-button size="small" type="primary" plain @click="goForge">强化</el-button>
+                <el-button size="small" type="info" plain @click="rerollItem(s.item)">洗练</el-button>
+                <el-button size="small" type="success" plain @click="enchantItem(s.item)">附魔</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="batch-bar">
           <el-button size="small" type="primary" plain :disabled="!player.inventory.length" @click="sortInventory">一键整理</el-button>
           <el-button size="small" type="danger" plain :disabled="!player.inventory.length" @click="batchDecompose">批量分解</el-button>
@@ -290,7 +289,7 @@
 
   const equippedSlots = computed(() => {
     const eq = player.value.equipment || {}
-    return ['weapon', 'armor', 'accessory', 'sutra'].map(k => ({ key: k, item: eq[k] })).filter(s => s.item && s.item.id)
+    return ['weapon', 'armor', 'accessory', 'sutra'].map(k => ({ key: k, item: eq[k] })).filter(s => s.item && s.item.name)
   })
 
   const showItem = it => {
@@ -529,6 +528,7 @@
   .resources { display: flex; gap: 8px; margin-bottom: 8px; }
   .section-title { font-size: 15px; font-weight: bold; margin: 12px 0 8px; }
   .eq-section { margin-bottom: 6px; }
+  .equipped-cell { border: 1px solid var(--el-color-primary-light-7); }
   .grid { display: flex; flex-wrap: wrap; gap: 8px; }
   .cell { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 4px; background: var(--el-fill-color-light); }
   .sub { font-size: 12px; color: var(--el-text-color-secondary); }
@@ -544,11 +544,11 @@
     .page-header { flex: 0 0 auto; margin-bottom: 6px; }
     .title { font-size: 17px; margin-bottom: 4px; }
     .resources { gap: 4px; margin-bottom: 4px; }
-    .eq-section, .hint { display: none; }
+    .hint { display: none; }
     .back :deep(.el-tabs) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
     .back :deep(.el-tabs__header) { margin: 0; }
     .back :deep(.el-tabs__content) { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-    .back :deep(.el-tab-pane) { height: 100%; }
+    .back :deep(.el-tab-pane) { height: 100%; overflow-y: auto; }
     .grid { gap: 6px; }
     .cell { padding: 6px 8px; gap: 3px; }
     .cell .ops { flex-wrap: wrap; }
