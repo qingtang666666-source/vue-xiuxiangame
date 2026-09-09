@@ -26,7 +26,7 @@
             <div class="tc-bars">
               <div class="tc-bar hp"><span :style="{ width: pct(state.player.maxHp, state.player.hp) + '%' }" /></div>
               <div class="tc-bar mp"><span :style="{ width: pct(state.player.maxMp, state.player.mp) + '%' }" /></div>
-              <div class="tc-num">血 <b>{{ Math.max(0, Math.floor(state.player.hp)) }}</b>/{{ state.player.maxHp }} · 灵 {{ Math.floor(state.player.mp) }}</div>
+              <div class="tc-num">血 <b>{{ Math.max(0, Math.floor(state.player.hp)) }}</b>/{{ state.player.maxHp }} · 灵 {{ Math.floor(state.player.mp) }}/{{ state.player.maxMp }}</div>
             </div>
             <div class="tc-pct">{{ pct(state.player.maxHp, state.player.hp).toFixed(1) }}%</div>
           </div>

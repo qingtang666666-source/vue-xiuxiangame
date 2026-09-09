@@ -18,12 +18,22 @@ import { applyDotDamage, isStunned, clearStun, aggregatePlayerEffects, resolveHi
 
 const clamp0 = v => Math.max(0, v)
 const clamp01 = v => Math.min(1, Math.max(0, v))
+const MP_REGEN_RATE = 0.04
+
+// 战斗灵力池按本场可上阵神通的消耗总额生成：约等于一轮半技能量。
+// 不再跟随气血无限膨胀，避免后期灵力永远用不完。
+const battleMaxMp = abilities => {
+  const totalCost = (abilities || []).reduce((sum, ab) => sum + Math.max(0, ab.mpCost || 0), 0)
+  return Math.max(150, Math.floor(totalCost * 1.2))
+}
 
 // —— 把玩家快照成战斗实体 ——
 export const createPlayerEntity = player => {
   const eff = effectivePlayerStats(player)
   const ex = eff.extras || {}
   const maxHp = eff.maxHealth || player.maxHealth || 1000
+  const abilities = getPlayerAbilities(player)
+  const maxMp = battleMaxMp(abilities)
   return {
     id: '__player__',
     isPlayer: true,
@@ -31,8 +41,8 @@ export const createPlayerEntity = player => {
     level: player.level || 1,
     hp: maxHp,
     maxHp,
-    mp: Math.floor(maxHp * 0.5),
-    maxMp: Math.floor(maxHp * 0.5),
+    mp: maxMp,
+    maxMp,
     atk: eff.attack || 1,
     def: eff.defense || 0,
     spd: 10 + (ex.speed || 0) * 20 + (player.level || 0) * 0.1,
@@ -49,7 +59,7 @@ export const createPlayerEntity = player => {
     shield: ex.shield || 0,
     slow: ex.slow || 0,
     effects: aggregatePlayerEffects(player),
-    abilities: getPlayerAbilities(player),
+    abilities,
     _stunned: false, _dot: {}, _defending: false
   }
 }
@@ -153,7 +163,7 @@ const addLog = (st, html, cls = '') => {
 
 const actorMpRegen = (st, actor) => {
   if (!actor.isPlayer) return
-  actor.mp = Math.min(actor.maxMp, actor.mp + Math.floor(actor.maxMp * 0.06))
+  actor.mp = Math.min(actor.maxMp, actor.mp + Math.max(1, Math.floor(actor.maxMp * MP_REGEN_RATE)))
 }
 
 // 世界压制：玩家 vs 敌人按各自境界

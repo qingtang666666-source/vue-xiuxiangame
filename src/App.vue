@@ -146,37 +146,37 @@
   const mMenu = ref(false)
   const go = path => { mMenu.value = false; router.push(path) }
   const mobileGroups = [
-    { title: '战斗', items: [
+    { title: '修行', items: [
+      { icon: '🏡', name: '洞府', route: '/manor' },
+      { icon: '✨', name: '飞升', route: '/ascension' },
+      { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+    ]},
+    { title: '冒险', items: [
       { icon: '🚶', name: '探索', route: '/explore' },
       { icon: '🌌', name: '秘境', route: '/realm' },
       { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
-      { icon: '☠️', name: '世界Boss', route: '/boss' },
       { icon: '🗺️', name: '大地图', route: '/worldmap' },
       { icon: '🏝️', name: '洞天', route: '/map' }
     ]},
     { title: '资源', items: [
       { icon: '🎒', name: '背包', route: '/backpack' },
-      { icon: '🧧', name: '坊市', route: '/market' },
+      { icon: '🏪', name: '贸易市场', route: '/market' },
+      { icon: '👥', name: '下界坊市', route: '/npc' },
       { icon: '🗿', name: '游商', action: () => openTrav() }
     ]},
     { title: '炼制', items: [
       { icon: '💊', name: '炼丹', route: '/alchemy' },
       { icon: '🔨', name: '炼器', route: '/forge' },
       { icon: '📃', name: '制符', route: '/talisman' },
-      { icon: '⛩️', name: '阵法', route: '/formation' },
-      { icon: '📕', name: '功法', route: '/home' }
+      { icon: '⛩️', name: '阵法', route: '/formation' }
     ]},
     { title: '势力', items: [
       { icon: '🏯', name: '宗门', route: '/sect' },
-      { icon: '👥', name: '仙盟', route: '/guild' },
-      { icon: '🏡', name: '洞府', route: '/manor' },
-      { icon: '👤', name: 'NPC', route: '/npc' }
+      { icon: '👥', name: '仙盟', route: '/guild' }
     ]},
-    { title: '杂项', items: [
+    { title: '其他', items: [
       { icon: '📜', name: '任务', route: '/quest' },
-      { icon: '🎲', name: '休闲', route: '/game' },
-      { icon: '✨', name: '飞升', route: '/ascension' },
-      { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+      { icon: '🎲', name: '休闲', route: '/game' }
     ]}
   ]
   watch(() => route.path, () => { mMenu.value = false })

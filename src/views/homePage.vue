@@ -22,10 +22,10 @@
           <button v-if="spentPoints > 0" class="m-reset" @click="resetPoints">重置（返还{{ spentPoints }}点）</button>
         </div>
       </div>
-      <div class="m-panel">
-        <div class="m-panel-title">面板工具</div>
+      <div class="m-panel" v-for="section in mTileGroups" :key="section.title">
+        <div class="m-panel-title">{{ section.title }}</div>
         <div class="m-grid-tiles">
-          <button v-for="t in mTiles" :key="t.name" class="m-tile" @click="mTileTap(t)">
+          <button v-for="t in section.items" :key="t.name" class="m-tile" @click="mTileTap(t)">
             <span class="m-tile-ico">{{ t.icon }}</span>
             <span class="m-tile-name">{{ t.name }}</span>
           </button>
@@ -101,7 +101,7 @@
               })
             "
           >
-            修为: {{ calculatePercentageDifference(player.maxCultivation, player.cultivation) }}
+            修为: {{ calculatePercentageDifference(player.maxCultivation, player.cultivation) }}%
             <div class="cult-bar"><div class="cult-bar-in" :style="{ width: calculatePercentageDifference(player.maxCultivation, player.cultivation) + '%' }"></div></div>
           </div>
           <div class="tag attribute attr-health">
@@ -1502,15 +1502,20 @@
   const wbShow = ref(false)
   const techniqueShow = ref(false)
   const mTiles = [
-    { icon: '⭐', name: '豪杰', dialog: 'heroShow' },
-    { icon: '📖', name: '图鉴', dialog: 'equipAllShow' },
-    { icon: '📕', name: '功法', dialog: 'techniqueShow' },
-    { icon: '💠', name: '本命', dialog: 'naShow' },
-    { icon: '🏆', name: '赛季', dialog: 'seasonShow' },
-    { icon: '🌍', name: '世界', dialog: 'wbShow' },
-    { icon: '🗂️', name: '批量', dialog: 'batch' },
-    { icon: '⚙️', name: '设置', dialog: 'show' }
+    { icon: '⭐', name: '豪杰', dialog: 'heroShow', group: '成长收藏' },
+    { icon: '📖', name: '图鉴', dialog: 'equipAllShow', group: '成长收藏' },
+    { icon: '📕', name: '功法', dialog: 'techniqueShow', group: '成长收藏' },
+    { icon: '💠', name: '本命', dialog: 'naShow', group: '成长收藏' },
+    { icon: '🏆', name: '赛季', dialog: 'seasonShow', group: '成长收藏' },
+    { icon: '🌍', name: '世界', dialog: 'wbShow', group: '系统工具' },
+    { icon: '⚙️', name: '设置', dialog: 'show', group: '系统工具' }
   ]
+  const mTileGroups = computed(() => {
+    const titles = ['成长收藏', '系统工具']
+    return titles
+      .map(title => ({ title, items: mTiles.filter(t => t.group === title) }))
+      .filter(g => g.items.length)
+  })
   const mTileTap = t => {
     if (t.route) { router.push(t.route); return }
     if (t.dialog === 'batch') { sellingEquipmentBox(); return }
@@ -2969,11 +2974,11 @@
   }
   // 计算所需修为相差百分比
   const calculatePercentageDifference = (num1, num2) => {
-    let difference = Math.abs(num1 - num2)
-    let percentage = (difference / num1) * 100
-    const num3 = player.value.maxCultivation - player.value.cultivation > 0 ? 100 - percentage : 100
-    // return percentage < 0 ? 100 : 100 - percentage;
-    return `${num3.toFixed(2)}%`
+    if (!num1) return '0.00'
+    const difference = Math.abs(num1 - num2)
+    const percentage = (difference / num1) * 100
+    const value = player.value.maxCultivation - player.value.cultivation > 0 ? 100 - percentage : 100
+    return Math.max(0, Math.min(100, value)).toFixed(2)
   }
   const copyContent = type => {
     const content = type == 'qq' ? '920930589' : 'https://github.com/setube/vue-XiuXianGame'
@@ -3214,7 +3219,7 @@
     .m-k { color: var(--el-text-color-secondary); }
     .m-v { font-weight: bold; }
     .m-realm { color: var(--el-color-primary); }
-    .m-grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .m-grid-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
     .m-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 7px 2px; min-height: 46px; background: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-radius: 12px; cursor: pointer; }
     .m-tile:active { transform: scale(0.95); background: var(--el-fill-color); }
     .m-tile-ico { font-size: 19px; line-height: 1; }
