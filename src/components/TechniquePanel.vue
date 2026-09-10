@@ -119,26 +119,21 @@
 
 <style scoped>
   .technique-drawer :deep(.el-drawer__body) {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-bottom: 0;
-  }
-  .tech-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-height: 0; padding-bottom: 0; }
-  .tech-list-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: calc(100vh - 180px);
-    max-height: calc(100dvh - 180px);
-    overflow-y: auto;
+    display: block;
+    height: 100%;
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    touch-action: pan-y;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-    scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .tech-body { display: block; min-height: 0; padding-bottom: 0; }
+  .tech-list-scroll {
+    overflow: visible;
+    max-height: none;
+    padding-bottom: 0;
   }
   .technique-drawer :deep(.el-tabs__content) {
-    overflow: visible;
+    overflow: visible !important;
   }
   .tech-hint { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; }
   .tech-res { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -149,7 +144,6 @@
   .sum-line b { color: var(--el-color-success); font-weight: 600; }
   .tech-item { margin-bottom: 8px; }
   @media only screen and (max-width: 768px) {
-    .tech-body { gap: 6px; }
     .tech-hint { font-size: 11px; line-height: 1.5; }
     .tech-res { gap: 4px; }
     .tech-set-banner { padding: 6px 8px; font-size: 12px; }

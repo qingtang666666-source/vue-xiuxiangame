@@ -374,7 +374,17 @@
   .shop-name { font-size: 14px; }
   .stock { font-size: 12px; color: var(--el-text-color-secondary); margin-left: 6px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+  @media only screen and (max-width: 768px) {
+    .npc { height: auto; min-height: 100%; overflow: visible; padding-bottom: 10px; }
+    .page-header { margin-bottom: 8px; }
+    .skill-panel { padding: 6px 8px; }
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 6px; }
+    .filter-bar :deep(.el-radio-group) { display: flex; flex-wrap: wrap; gap: 4px; }
+    .grid { grid-template-columns: 1fr; gap: 8px; }
+    .card { width: 100%; }
+    .actions { gap: 4px; }
+    .actions :deep(.el-button) { flex: 1 1 44%; margin-left: 0 !important; }
+  }
   .scout-cd {
     font-size: 11px;
     color: var(--el-text-color-secondary);

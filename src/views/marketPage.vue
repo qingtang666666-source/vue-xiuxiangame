@@ -589,14 +589,12 @@ import PageNav from '@/components/PageNav.vue'
   .mk-root :deep(.el-tabs__content), .mk-sub :deep(.el-tabs__content) { min-height: 0; }
 
   @media only screen and (max-width: 768px) {
-    .market { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .market { height: auto; min-height: 100%; display: block; overflow: visible; padding-bottom: 10px; }
     .page-header { flex: 0 0 auto; }
     .scale-hint { display: none; }
-    .mk-root { flex: 1 1 auto; min-height: 0; }
-    .mk-root :deep(.el-tabs__content), .mk-sub :deep(.el-tabs__content) { overflow: hidden; }
-    .mk-root :deep(.el-tab-pane), .mk-sub :deep(.el-tab-pane) { height: 100%; display: flex; flex-direction: column; }
-    .mk-sub { height: 100%; }
-    .mk-sub :deep(.el-tabs__content) { flex: 1 1 auto; }
+    .mk-root, .mk-sub { display: block; height: auto; min-height: 0; }
+    .mk-root :deep(.el-tabs__content), .mk-sub :deep(.el-tabs__content) { overflow: visible !important; min-height: 0; }
+    .mk-root :deep(.el-tab-pane), .mk-sub :deep(.el-tab-pane) { height: auto; display: block; }
     .rows { gap: 4px; }
     .row { padding: 5px 8px; }
     .mini-cat { display: block; width: fit-content; margin: 0 0 2px; }
