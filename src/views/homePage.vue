@@ -1482,7 +1482,7 @@
   // 装备
   import equip from '@/plugins/equip'
   import { applyPlayerAttribute } from '@/plugins/playerAttr'
-  import { wearEquip, removeEquip } from '@/plugins/equipOps'
+  import { wearEquip, removeEquip, dismantleStoneReward } from '@/plugins/equipOps'
   import { playerPowerScore } from '@/plugins/breakthroughGate'
   // 数据导出
   import { saveAs } from 'file-saver'
@@ -2807,7 +2807,7 @@
     ElMessageBox.confirm(
       `你确定要分解<span class="el-tag el-tag--${item.quality}">${levels[item.quality]}${item.name}(${
         genre[item.type]
-      })</span>吗?`,
+      })</span>吗?（炼器石按品阶价值结算，单件有上限）`,
       '装备分解通知',
       {
         center: true,
@@ -2817,7 +2817,7 @@
       }
     )
       .then(() => {
-        const num = item.level + Math.floor((item.level * player.value.reincarnation) / 10)
+        const num = dismantleStoneReward(item)
         // 增加炼器石数量
         player.value.props.strengtheningStone += num
         // 删除背包装备

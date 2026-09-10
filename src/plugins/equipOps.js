@@ -2,6 +2,20 @@
 // 属性加减统一走 applyPlayerAttribute，行为与原 homePage 内联逻辑一致。
 
 import { applyPlayerAttribute } from './playerAttr.js'
+import { equipSellPrice } from './market.js'
+
+const QUALITY_INDEX = { info: 0, success: 1, primary: 2, purple: 3, pink: 4, warning: 5, danger: 6, cyan: 7, orange: 8, gold: 9, legendary: 10 }
+
+// 分解炼器石：与装备价值、品阶、等级挂钩；单件设上限，避免高强化装备无限滚石
+export const dismantleStoneReward = eq => {
+  const qi = QUALITY_INDEX[eq?.quality] || 0
+  const lv = Math.max(1, Math.floor(eq?.level || 1))
+  const grade = Math.max(1, Math.min(5, Math.floor(eq?.grade || 1)))
+  const value = Math.max(0, equipSellPrice(eq || {}))
+  const raw = Math.floor(value * 0.001 * (1 + (grade - 1) * 0.15) + qi * 20 + lv * 1.5)
+  const cap = 800 + qi * 400 + lv * 8
+  return Math.max(1, Math.min(cap, raw))
+}
 
 export const findEquip = (id, list) => (list || []).find(x => x.id === id)
 
@@ -34,16 +48,12 @@ export const wearEquip = (player, id, type) => {
   return { ok: true, type }
 }
 
-// 批量分解：按选中品阶，把背包内未锁定装备折成 炼器石(等级和) + 灵石(件数)
+// 批量分解：按选中品阶，把背包内未锁定装备折成 炼器石(品阶价值) + 灵石(件数)
 export const dismantleEquipsByQuality = (player, qualities) => {
   if (!qualities || !qualities.length) return { ok: false, reason: 'noSelection' }
   const sell = (player.inventory || []).filter(i => qualities.includes(i.quality) && !i.lock)
   if (!sell.length) return { ok: false, reason: 'noStock' }
-  const stone = sell.reduce((total, i) => {
-    let level = i.level + (i.level * player.reincarnation) / 10
-    level = Number(level) || 0
-    return total + Math.floor(level)
-  }, 0)
+  const stone = sell.reduce((total, i) => total + dismantleStoneReward(i), 0)
   player.props.money = (player.props.money || 0) + sell.length
   player.props.strengtheningStone = (player.props.strengtheningStone || 0) + stone
   player.inventory = player.inventory.filter(i => !qualities.includes(i.quality) || i.lock)

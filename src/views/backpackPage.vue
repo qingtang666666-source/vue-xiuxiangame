@@ -176,6 +176,7 @@
   import { formatNumberToChineseUnit, levelNames, levels, genre, gameNotifys, maxLv } from '@/plugins/game'
   import { propItemNames } from '@/plugins/game'
   import equip from '@/plugins/equip'
+  import { dismantleStoneReward } from '@/plugins/equipOps'
   import { equipSellPrice, itemDb } from '@/plugins/market'
   import { recipeById, usePill as usePillFn, usePillBatch } from '@/plugins/alchemy'
   import { talismanById, useTalisman as useTalismanFn, useTalismanBatch } from '@/plugins/talisman'
@@ -248,7 +249,7 @@
   })
 
   const decompose = it => {
-    const num = (it.level || 1) + Math.floor((it.level || 1) * (player.value.reincarnation || 0) / 10)
+    const num = dismantleStoneReward(it)
     player.value.props.strengtheningStone = (player.value.props.strengtheningStone || 0) + num
     player.value.inventory = player.value.inventory.filter(x => x.id !== it.id)
     gameNotifys({ title: '分解', message: `分解【${it.name}】，获得 ${num} 炼器石`, type: 'success' })
@@ -262,14 +263,14 @@
   const batchDecompose = () => {
     const list = [...player.value.inventory]
     if (!list.length) return
-    ElMessageBox.confirm(`将分解全部 ${list.length} 件装备，各得炼器石（按等级），确定？`, '批量分解', {
+    ElMessageBox.confirm(`将分解全部 ${list.length} 件装备，炼器石按品阶价值结算（单件有上限），确定？`, '批量分解', {
       confirmButtonText: '分解全部',
       cancelButtonText: '取消'
     })
       .then(() => {
         let total = 0
         list.forEach(it => {
-          const num = (it.level || 1) + Math.floor((it.level || 1) * (player.value.reincarnation || 0) / 10)
+          const num = dismantleStoneReward(it)
           total += num
           player.value.props.strengtheningStone = (player.value.props.strengtheningStone || 0) + num
         })
