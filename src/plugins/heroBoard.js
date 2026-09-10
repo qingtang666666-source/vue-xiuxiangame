@@ -1,12 +1,12 @@
 // 豪杰榜 —— 300 名 NPC，可挑战排名更高者晋升；前100有周期性奖励
-// 豪杰强度 = 境界基准值 + 排名对应的等效装备，不随玩家实时属性缩放
-import { playerPowerScore, realmPower, enemyStatsForPower, POWER_SCALE } from './breakthroughGate'
+// 豪杰强度 = 标准境界战力 ×2 + 排名加成；装备只影响暴击/闪避等战斗属性
+import { playerPowerScore, realmPower, enemyStatsForPower } from './breakthroughGate'
 import { levelNames, gradeMultiplier } from './game'
 import { gearRealmMult } from './craft'
 
 export const HERO_COUNT = 300
-// 豪杰整体战力系数：按当前装备豪杰基准再削 0.4
-export const HERO_POWER_MULT = 0.4
+// 豪杰战力 = 标准体系战力 ×2
+export const HERO_POWER_MULT = 2
 
 // 豪杰也按排名穿戴装备：越靠前品阶越高、强化越高。
 // 后期限定“无视境界标准上限”，让顶级豪杰能跟上玩家+30道装的成长。
@@ -42,6 +42,32 @@ const HERO_GEAR_QUALITY_MULT = {
 const clampRank = rank => Math.max(1, Math.min(HERO_COUNT, Math.floor(rank || HERO_COUNT)))
 export const heroGearOfRank = rank => HERO_GEAR_BRACKETS.find(x => clampRank(rank) <= x.maxRank) || HERO_GEAR_BRACKETS[HERO_GEAR_BRACKETS.length - 1]
 
+// 豪杰神通：按排名匹配，战斗中由 enemyTurn 实际释放
+const HERO_DIVINES = [
+  { name: '裂天剑诀', kind: 'burst', power: 1.65, mpCost: 42, chance: 0.12, desc: '单次高倍率剑气爆发' },
+  { name: '焚天烈焰', kind: 'burst', power: 1.8, mpCost: 50, chance: 0.11, desc: '烈焰灼烧，造成高额伤害' },
+  { name: '冰封万里', kind: 'control', power: 1.35, mpCost: 46, chance: 0.13, desc: '命中后有概率定身' },
+  { name: '长生回元', kind: 'heal', power: 1.25, mpCost: 52, chance: 0.14, desc: '回复自身气血' },
+  { name: '血海无涯', kind: 'lifesteal', power: 1.3, mpCost: 50, chance: 0.13, desc: '造成伤害并吸取气血' },
+  { name: '星河倒卷', kind: 'burst', power: 1.9, mpCost: 58, chance: 0.1, desc: '星河冲击，爆发极高' },
+  { name: '紫霄雷劫', kind: 'burst', power: 2.05, mpCost: 64, chance: 0.1, desc: '雷霆天罚，威力极强' },
+  { name: '不动明王', kind: 'heal', power: 1.35, mpCost: 56, chance: 0.13, desc: '护体回元，回复大量气血' }
+]
+
+export const heroDivineOfRank = rank => {
+  const r = clampRank(rank)
+  const base = HERO_DIVINES[(r - 1) % HERO_DIVINES.length]
+  return {
+    id: `hero-divine-${r}`,
+    name: base.name,
+    kind: base.kind,
+    power: base.power,
+    mpCost: base.mpCost,
+    chance: base.chance,
+    desc: base.desc
+  }
+}
+
 // 确定性姓名（不随刷新变化）
 const SURNAMES = ['王','李','张','刘','陈','杨','赵','黄','周','吴','徐','孙','朱','马','胡','郭','何','高','林','罗','郑','梁','谢','宋','唐','许','韩','冯','邓','曹','彭','曾','萧','尹','黄','任']
 const GIVEN = ['青山','长歌','无涯','玄机','凌云','子夜','明轩','青莲','扶摇','听风','天策','北冥','破军','星痕','问天','承影','夜阑','御风','山河','归鸿','慕白','流云','惊鸿','破晓','君临','飞雪','孤舟','剑心','绯烟','鸿影','守拙','听涛','玄清','宇轩','鹤鸣','未央','离尘','君陌','拂晓','望舒']
@@ -70,8 +96,8 @@ const sameLevelPosition = rank => {
   return hi === lo ? 0 : (rank - lo) / (hi - lo)
 }
 
-// 豪杰装备的“等效属性”：按排名配置品阶/强化/细分级，再用玩家战力同一套权重折算。
-// 这样豪杰后期会跟着 +30 道装一起成长，而不是被 realmPower 的 1 亿上限卡死。
+// 豪杰装备展示与战斗属性：按排名配置品阶/强化/细分级，主要影响暴击/闪避与装备展示。
+// 豪杰面板战力现在统一按标准境界战力 ×2 计算。
 export const heroEquipmentStats = rank => {
   const r = clampRank(rank)
   const lv = heroLevelOfRank(r)
@@ -110,10 +136,8 @@ export const heroEquipmentStats = rank => {
 export const heroPowerOfRank = rank => {
   const r = clampRank(rank)
   const lv = heroLevelOfRank(r)
-  const gear = heroEquipmentStats(r)
-  const gearScore = gear.dodge * 320 + gear.attack * 4 + (gear.health / 100) * 0.4 + gear.defense * 2.4 + gear.critical * 360
   const sameLevelFactor = 1 - sameLevelPosition(r) * 0.06
-  return Math.floor((realmPower(lv) + gearScore * POWER_SCALE) * heroBoostOfRank(r) * sameLevelFactor * HERO_POWER_MULT)
+  return Math.floor(realmPower(lv) * HERO_POWER_MULT * heroBoostOfRank(r) * sameLevelFactor)
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
@@ -121,6 +145,7 @@ export const heroEnemy = (rank, name) => {
   const r = clampRank(rank)
   const lv = heroLevelOfRank(r)
   const gear = heroEquipmentStats(r)
+  const divine = heroDivineOfRank(r)
   const st = enemyStatsForPower(heroPowerOfRank(r), 1.0)
   const s2 = Math.min(15, Math.max(0, Math.floor((lv - 1) / 9)))
   return {
@@ -128,6 +153,9 @@ export const heroEnemy = (rank, name) => {
     name: name || '无名单客',
     gear: gear.gear,
     strengthen: gear.strengthen,
+    divine: divine.name,
+    abilities: [divine],
+    skillChance: r <= 20 ? 0.55 : r <= 90 ? 0.44 : 0.34,
     health: st.health,
     maxHp: st.health,
     hp: st.health,
@@ -154,6 +182,7 @@ export const generateHeroes = () => {
       gear: gear.gear,
       strengthen: gear.strengthen,
       gradeName: gear.gradeName,
+      divine: heroDivineOfRank(i).name,
       power: heroPowerOfRank(i)
     })
   }

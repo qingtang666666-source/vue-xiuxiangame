@@ -145,6 +145,8 @@ export const monsterToEntity = (m, idx = 0) => {
     block: 0,
     damageReduction: 0,
     effects: { paralyze: 0, freeze: 0, stun: 0, poison: 0, burn: 0, lifesteal: 0 },
+    abilities: Array.isArray(m?.abilities) ? m.abilities.map(a => ({ ...a })) : [],
+    skillChance: m?.skillChance || 0,
     _stunned: false,
     _dot: {},
     _defending: false
@@ -302,6 +304,40 @@ export const playerFlee = st => {
   }
 }
 
+const pickEnemyAbility = e => {
+  const list = (e.abilities || []).filter(a => e.mp >= (a.mpCost || 0))
+  if (!list.length) return null
+  if (e.hp / Math.max(1, e.maxHp) < 0.45) {
+    const heal = list.find(a => a.kind === 'heal')
+    if (heal) return heal
+  }
+  return list[Math.floor(Math.random() * list.length)]
+}
+
+const enemyUseAbility = (st, e, p, ability) => {
+  e.mp -= ability.mpCost || enemySkillCost(e)
+  if (ability.kind === 'heal') {
+    const amount = Math.floor(e.maxHp * 0.12 * (ability.power || 1))
+    heal(st, e, amount)
+    addLog(st, `<span class="skill">${e.name}施展【${ability.name}】，回复 ${amount} 点气血！</span>`, 'heal')
+    return
+  }
+  const hit = dealDamage(st, e, p, ability.power || 1.2)
+  if (hit.miss) {
+    addLog(st, `<span class="dim">${e.name}施展【${ability.name}】，被你避开。</span>`, 'dodge')
+    return
+  }
+  addLog(st, `<span class="skill">${e.name}施展【${ability.name}】，造成 <b>${hit.dmg}</b> 点伤害${hit.crit ? '（暴击）' : ''}！</span>`, 'skill')
+  if (ability.kind === 'lifesteal') {
+    const ls = applyLifesteal(e, hit.dmg, 0.35)
+    if (ls > 0) addLog(st, `<span class="ok">${e.name}吸取 ${ls} 点气血。</span>`, 'heal')
+  }
+  if (ability.kind === 'control' && Math.random() < Math.min(0.3, (ability.chance ?? 0.1) * 0.35)) {
+    p._stunned = true
+    addLog(st, `<span class="warn">你被【${ability.name}】定身，下回合无法行动！</span>`, 'debuff')
+  }
+}
+
 // 敌人回合：简单 AI，通常普攻；首领有概率释放更强一击或防御
 export const enemyTurn = st => {
   if (st.phase !== 'enemy') return
@@ -316,6 +352,13 @@ export const enemyTurn = st => {
     return
   }
   if (e._defending) e._defending = false
+  const ability = pickEnemyAbility(e)
+  if (ability && Math.random() < (e.skillChance || 0)) {
+    enemyUseAbility(st, e, p, ability)
+    if (ability.kind !== 'heal') applyOnHit(st, e, p)
+    nextTurn(st)
+    return
+  }
   const boss = e.name.includes('首领')
   const skillCost = enemySkillCost(e)
   const r = Math.random()

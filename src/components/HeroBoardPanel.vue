@@ -26,8 +26,9 @@
           <span class="hb-lv">{{ h.realm }}</span>
           <el-tooltip
             v-if="!h.isPlayer"
-            :content="`装备：${h.gear} +${h.strengthen}（${h.gradeName}）`"
+            :content="`装备：${h.gear} +${h.strengthen}（${h.gradeName}）\n神通：${h.divine || '无'}`"
             placement="top"
+            popper-class="hb-tip"
           >
             <span class="hb-power">{{ h.power.toLocaleString('zh-CN') }}</span>
           </el-tooltip>
@@ -127,6 +128,7 @@
 </script>
 
 <style scoped>
+  :global(.hb-tip) { white-space: pre-line; }
   .hb { display: flex; flex-direction: column; height: 100%; }
   .hb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
   .hb-myrank { color: #e6a23c; font-size: 16px; }

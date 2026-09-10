@@ -45,6 +45,7 @@
             </div>
             <div class="tc-pct">{{ pct(foe.maxHp, foe.hp).toFixed(1) }}%</div>
             <div v-if="foe._defending" class="tc-flag">🛡 防御中</div>
+            <div v-if="foe.abilities?.length" class="tc-flag divine">✦ 神通：{{ foe.abilities.map(a => a.name).join('、') }}</div>
           </div>
         </div>
       </div>
@@ -290,6 +291,7 @@
   .tc-num b { font-size: 16px; color: #fff; }
   .tc-pct { position: absolute; top: 20px; right: 22px; font-size: 20px; font-weight: 800; color: rgba(255, 255, 255, 0.92); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
   .tc-flag { font-size: 12px; color: #ffd54f; margin-top: 8px; }
+  .tc-flag.divine { color: #8bb8ff; }
   .tc-vs { display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .tc-vs i { font-size: 30px; font-style: normal; font-weight: 900; color: #ff7043; text-shadow: 0 0 16px rgba(255, 112, 67, 0.7); }
   .tc-vs span { font-size: 12px; color: #cfd0e7; letter-spacing: 2px; }
@@ -347,6 +349,7 @@
   .tc-num b { font-size: 16px; color: #4a4560; }
   .tc-pct { text-align: right; margin-top: 4px; font-size: 14px; font-weight: 700; color: #8a8560; }
   .tc-flag { font-size: 12px; color: #b08a4a; margin-top: 8px; }
+  .tc-flag.divine { color: #4d7fbf; }
   .tc-vs i { font-size: 30px; font-weight: 900; color: #c9a06a; }
   .tc-vs span { font-size: 12px; color: #a29a80; letter-spacing: 2px; }
   .tc-act { flex: 1 1 118px; min-height: 60px; border: none; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff; font-weight: 700; font-size: 14px; background: linear-gradient(160deg, #9b8b74, #b3a180); box-shadow: 0 6px 16px rgba(120, 100, 70, 0.2); transition: transform 0.1s; }

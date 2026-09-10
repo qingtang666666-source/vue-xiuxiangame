@@ -53,7 +53,8 @@
 - `heroLevelOfRank(rank)`：由名次映射等级（等级 1~144）。
 - `heroBoostOfRank(rank)`：榜尾约 ×0.85，榜首批次 ×1.0，再叠加同名次位置差。
 - 豪杰也穿装备：按排名配置黄阶~道阶、+0~+30 强化、下品~绝品细分级（`heroGearOfRank` / `heroEquipmentStats`）。
-- `heroPowerOfRank(rank)` = `realmPower(等级) + 等效装备属性战力`，再乘 `HERO_POWER_MULT = 0.4`；**后期限定可超过境界标准上限**，顶级豪杰约 4.7~4.8 亿。
+- `heroPowerOfRank(rank)` = `realmPower(等级) × HERO_POWER_MULT(2) × 排名加成`；顶级豪杰约 2 亿。装备仍影响暴击/闪避等战斗属性。
+- 豪杰拥有神通（`heroDivineOfRank`），战斗中可按 `skillChance` 实际释放爆发/控制/回复/吸血类技能。
 - 挑战：打赢排名更高者 → 玩家取代该名次，目标及后续豪杰顺延一位；榜尾仍保留在 301 名，不会消失（`applyWin` / `boardList`）。
 - 前 100 名每日可领奖励（`heroReward`），越高越好但不过分；战败名次不变。
 - 页面在首页左侧"⚔️ 豪杰"按钮打开（右侧抽屉）。
