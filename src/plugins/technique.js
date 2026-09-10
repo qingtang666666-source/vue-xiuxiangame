@@ -248,7 +248,8 @@ export const learnTimeMs = (player, id) => {
   const t = techniqueById(id)
   const g = t?.grade || 1
   const base = 5 + g * 1.4 // 秒：黄阶约6s，道阶(11)约20s；再受悟性减免（更快）
-  return Math.min(20000, Math.max(8000, Math.floor(base * (1 - insightDiscount(player))) * 1000)) // 硬性封顶 20s
+  const before = Math.min(20000, Math.max(8000, Math.floor(base * (1 - insightDiscount(player))) * 1000))
+  return Math.max(1000, Math.floor(before * 0.5)) // 参悟时间减半
 }
 
 // 修炼章节时长（毫秒）：随品阶与当前重数提升
