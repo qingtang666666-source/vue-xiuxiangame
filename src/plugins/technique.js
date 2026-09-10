@@ -60,38 +60,38 @@ export const FAMILIES = [
   // ============ 主动：带神通，战斗中触发 ============
   { key: 'sword', type: 'active', name: '剑修', suffix: '剑诀', stems: ['青莲', '万剑', '御风', '无尘', '惊鸿', '紫青', '太虚'], passive: 'attack', per: 4, passive2: 'critical', per2: 0.00003, divine: { name: '万剑归宗', kind: 'burst', dmg: 1.6, chance: 0.10 } },
   { key: 'fire', type: 'active', name: '火修', suffix: '焚天功', stems: ['烈焰', '焚天', '南明', '丹阳', '赤帝', '离火', '祝融'], passive: 'attack', per: 3, passive2: 'critical', per2: 0.00003, divine: { name: '焚天烈焰', kind: 'burst', dmg: 1.8, chance: 0.10 } },
-  { key: 'gold', type: 'active', name: '金修', suffix: '庚金诀', stems: ['庚金', '玄金', '太白', '金鼎', '锐金', '天兵', '金乌'], passive: 'attack', per: 3, passive2: 'defense', per2: 2, divine: { name: '庚金斩天', kind: 'burst', dmg: 1.5, chance: 0.09 } },
-  { key: 'blade', type: 'active', name: '刀修', suffix: '裂空刀', stems: ['裂空', '斩云', '断岳', '霸刀', '天刀', '玄冥', '破军'], passive: 'attack', per: 4, passive2: 'defense', per2: 1.5, divine: { name: '一刀两断', kind: 'burst', dmg: 1.7, chance: 0.10 } },
-  { key: 'ice', type: 'active', name: '冰修', suffix: '冰心诀', stems: ['寒冰', '玄冰', '凝霜', '冰魄', '太阴', '霜天', '幽莲'], passive: 'defense', per: 3, passive2: 'critical', per2: 0.00003, divine: { name: '冰封万里', kind: 'control', dmg: 1.4, chance: 0.12 } },
-  { key: 'armor', type: 'active', name: '甲修', suffix: '玄甲功', stems: ['玄甲', '不动', '磐石', '金钟', '玄武', '镇岳', '铁壁'], passive: 'defense', per: 3, passive2: 'health', per2: 8, divine: { name: '不动明王', kind: 'heal', dmg: 1.2, chance: 0.12 } },
+  { key: 'gold', type: 'active', name: '金修', suffix: '诀', stems: ['庚金', '玄金', '太白', '金鼎', '锐金', '天兵', '金乌'], passive: 'attack', per: 3, passive2: 'defense', per2: 2, divine: { name: '庚金斩天', kind: 'burst', dmg: 1.5, chance: 0.09 } },
+  { key: 'blade', type: 'active', name: '刀修', suffix: '刀', stems: ['裂空', '斩云', '断岳', '霸刀', '天刀', '玄冥', '破军'], passive: 'attack', per: 4, passive2: 'defense', per2: 1.5, divine: { name: '一刀两断', kind: 'burst', dmg: 1.7, chance: 0.10 } },
+  { key: 'ice', type: 'active', name: '冰修', suffix: '心诀', stems: ['寒冰', '玄冰', '凝霜', '冰魄', '太阴', '霜天', '幽莲'], passive: 'defense', per: 3, passive2: 'critical', per2: 0.00003, divine: { name: '冰封万里', kind: 'control', dmg: 1.4, chance: 0.12 } },
+  { key: 'armor', type: 'active', name: '甲修', suffix: '甲功', stems: ['玄甲', '不动', '磐石', '金钟', '玄武', '镇岳', '铁壁'], passive: 'defense', per: 3, passive2: 'health', per2: 8, divine: { name: '不动明王', kind: 'heal', dmg: 1.2, chance: 0.12 } },
   { key: 'thunder', type: 'active', name: '雷修', suffix: '雷诀', stems: ['紫霄', '天雷', '九霄', '震雷', '真武', '都天', '神霄'], passive: 'critical', per: 0.00005, divine: { name: '九天雷劫', kind: 'burst', dmg: 2.0, chance: 0.10 } },
   { key: 'star', type: 'active', name: '星修', suffix: '周天诀', stems: ['周天', '北辰', '南斗', '万星', '天罡', '紫微', '织女'], passive: 'critical', per: 0.00004, passive2: 'attack', per2: 3, divine: { name: '星河倒卷', kind: 'burst', dmg: 1.9, chance: 0.09 } },
   { key: 'illusion', type: 'active', name: '幻修', suffix: '幻心诀', stems: ['幻心', '大梦', '万相', '千幻', '迷离', '蜃楼', '梦蝶'], passive: 'dodge', per: 0.00004, passive2: 'critical', per2: 0.00002, divine: { name: '海市蜃楼', kind: 'control', dmg: 1.4, chance: 0.12 } },
-  { key: 'wind', type: 'active', name: '风修', suffix: '御风诀', stems: ['御风', '扶摇', '长歌', '青冥', '疾风', '太虚', '摩云'], passive: 'dodge', per: 0.00003, passive2: 'cultivationSpeed', per2: 0.0002, divine: { name: '风卷残云', kind: 'burst', dmg: 1.5, chance: 0.10 } },
+  { key: 'wind', type: 'active', name: '风修', suffix: '风诀', stems: ['御风', '扶摇', '长歌', '青冥', '疾风', '太虚', '摩云'], passive: 'dodge', per: 0.00003, passive2: 'cultivationSpeed', per2: 0.0002, divine: { name: '风卷残云', kind: 'burst', dmg: 1.5, chance: 0.10 } },
   { key: 'dao', type: 'active', name: '道修', suffix: '长生诀', stems: ['长生', '坐忘', '无为', '逍遥', '抱元', '混元', '问天'], passive: 'cultivationSpeed', per: 0.0003, passive2: 'moneyMult', per2: 0.00015, divine: { name: '大道归一', kind: 'burst', dmg: 1.7, chance: 0.12 } },
-  { key: 'spirit', type: 'active', name: '神修', suffix: '神识诀', stems: ['神识', '观微', '天眼', '冥思', '灵犀', '神游', '照心'], passive: 'cultivationSpeed', per: 0.00025, passive2: 'critical', per2: 0.00002, divine: { name: '识海焚天', kind: 'control', dmg: 1.5, chance: 0.11 } },
-  { key: 'blood', type: 'active', name: '血修', suffix: '血煞功', stems: ['血煞', '噬灵', '血河', '幽冥', '赤练', '修罗', '饮血'], passive: 'attack', per: 3, passive2: 'health', per2: 10, divine: { name: '血海无涯', kind: 'lifesteal', dmg: 1.3, chance: 0.12 } },
+  { key: 'spirit', type: 'active', name: '神修', suffix: '识诀', stems: ['神识', '观微', '天眼', '冥思', '灵犀', '神游', '照心'], passive: 'cultivationSpeed', per: 0.00025, passive2: 'critical', per2: 0.00002, divine: { name: '识海焚天', kind: 'control', dmg: 1.5, chance: 0.11 } },
+  { key: 'blood', type: 'active', name: '血修', suffix: '玄功', stems: ['血煞', '噬灵', '血河', '幽冥', '赤练', '修罗', '饮血'], passive: 'attack', per: 3, passive2: 'health', per2: 10, divine: { name: '血海无涯', kind: 'lifesteal', dmg: 1.3, chance: 0.12 } },
   { key: 'verdant', type: 'active', name: '木修', suffix: '青帝诀', stems: ['青帝', '长春', '木灵', '扶桑', '苍梧', '建木', '碧梧'], passive: 'attack', per: 2.5, passive2: 'cultivationSpeed', per2: 0.0002, divine: { name: '春回大地', kind: 'heal', dmg: 1.4, chance: 0.12 } },
   { key: 'vajra', type: 'active', name: '体修', suffix: '金刚体', stems: ['金刚', '不坏', '罗汉', '梵圣', '天罡', '丈六', '明王'], passive: 'health', per: 15, passive2: 'defense', per2: 2, divine: { name: '金刚不坏', kind: 'heal', dmg: 1.3, chance: 0.12 } },
   { key: 'merchant', type: 'active', name: '商修', suffix: '聚宝诀', stems: ['聚宝', '金算', '万利', '天宝', '白璧', '润屋', '招财'], passive: 'moneyMult', per: 0.00015, passive2: 'cultivationSpeed', per2: 0.0002, divine: { name: '点石成金', kind: 'burst', dmg: 1.4, chance: 0.10 } },
 
   // ============ 被动：纯增益，不占神通 ============
-  { key: 'earth', type: 'passive', name: '土修', suffix: '厚土功', stems: ['厚土', '山岳', '川岳', '坤元', '后土', '玄黄', '地脉'], passive: 'defense', per: 3, passive2: 'health', per2: 8 },
-  { key: 'water', type: 'passive', name: '水修', suffix: '沧浪诀', stems: ['沧浪', '碧波', '水灵', '沧海', '天河', '止水', '渊深'], passive: 'dodge', per: 0.00003 },
-  { key: 'wood', type: 'passive', name: '木修', suffix: '青木功', stems: ['青木', '春生', '灵木', '枯荣', '百草', '浩然', '长青'], passive: 'cultivationSpeed', per: 0.0003 },
+  { key: 'earth', type: 'passive', name: '土修', suffix: '土功', stems: ['厚土', '山岳', '川岳', '坤元', '后土', '玄黄', '地脉'], passive: 'defense', per: 3, passive2: 'health', per2: 8 },
+  { key: 'water', type: 'passive', name: '水修', suffix: '诀', stems: ['沧浪', '碧波', '水灵', '沧海', '天河', '止水', '渊深'], passive: 'dodge', per: 0.00003 },
+  { key: 'wood', type: 'passive', name: '木修', suffix: '木功', stems: ['青木', '春生', '灵木', '枯荣', '百草', '浩然', '长青'], passive: 'cultivationSpeed', per: 0.0003 },
   { key: 'body', type: 'passive', name: '体修', suffix: '九转玄功', stems: ['九转', '不灭', '金刚', '武体', '浑天', '磐石', '镇狱'], passive: 'health', per: 12, passive2: 'defense', per2: 1.5 },
   { key: 'mountain', type: 'passive', name: '山修', suffix: '移山功', stems: ['移山', '镇岳', '擎天', '泰岳', '横断', '不周', '安澜'], passive: 'defense', per: 2.5, passive2: 'health', per2: 6 },
-  { key: 'thunderp', type: 'passive', name: '雷意', suffix: '霆音诀', stems: ['雷意', '霆音', '惊雷', '紫电', '电母', '郁雷', '云雷'], passive: 'critical', per: 0.00005 },
+  { key: 'thunderp', type: 'passive', name: '雷意', suffix: '音诀', stems: ['雷意', '霆音', '惊雷', '紫电', '电母', '郁雷', '云雷'], passive: 'critical', per: 0.00005 },
   { key: 'starp', type: 'passive', name: '星辉', suffix: '辰光诀', stems: ['星辉', '流萤', '荧惑', '天枢', '暗星', '参宿', '辰光'], passive: 'critical', per: 0.00004, passive2: 'attack', per2: 2 },
   { key: 'swordi', type: 'passive', name: '剑意', suffix: '承影诀', stems: ['剑意', '剑心', '承影', '龙泉', '湛卢', '纯钧', '鱼肠'], passive: 'attack', per: 3, passive2: 'critical', per2: 0.00002 },
-  { key: 'firecore', type: 'passive', name: '火灵', suffix: '真阳诀', stems: ['火灵', '真阳', '地火', '神焰', '火德', '灯芯', '炽阳'], passive: 'attack', per: 2.5, passive2: 'critical', per2: 0.00002 },
+  { key: 'firecore', type: 'passive', name: '火灵', suffix: '阳诀', stems: ['火灵', '真阳', '地火', '神焰', '火德', '灯芯', '炽阳'], passive: 'attack', per: 2.5, passive2: 'critical', per2: 0.00002 },
   { key: 'icec', type: 'passive', name: '寒晶', suffix: '玄霜诀', stems: ['寒晶', '玄霜', '冰髓', '寒玉', '玄阴', '雪魄', '霜华'], passive: 'defense', per: 2.5, passive2: 'dodge', per2: 0.00002 },
   { key: 'windp', type: 'passive', name: '巽风', suffix: '天岚诀', stems: ['巽风', '清风', '天岚', '松风', '玄风', '去留', '枕雪'], passive: 'dodge', per: 0.00003, passive2: 'cultivationSpeed', per2: 0.0002 },
-  { key: 'lotus', type: 'passive', name: '莲修', suffix: '功德莲', stems: ['青莲', '白莲', '金莲', '九品', '净台', '宝幢', '妙华'], passive: 'health', per: 8, passive2: 'dodge', per2: 0.00002 },
+  { key: 'lotus', type: 'passive', name: '莲修', suffix: '功德', stems: ['青莲', '白莲', '金莲', '九品', '净台', '宝幢', '妙华'], passive: 'health', per: 8, passive2: 'dodge', per2: 0.00002 },
   { key: 'dan', type: 'passive', name: '丹修', suffix: '丹元功', stems: ['丹元', '紫丹', '精气', '还丹', '灵台', '九转丹', '道种'], passive: 'health', per: 6, passive2: 'moneyMult', per2: 0.00012 },
   { key: 'coin', type: 'passive', name: '财修', suffix: '如意功', stems: ['如意', '纳福', '聚财', '富贵', '天禄', '生财', '万贯'], passive: 'moneyMult', per: 0.00015, passive2: 'cultivationSpeed', per2: 0.0001 },
-  { key: 'merit', type: 'passive', name: '功德修', suffix: '醮修功', stems: ['功德', '醮修', '焚香', '祈天', '积善', '香火', '登坛'], passive: 'cultivationSpeed', per: 0.00025, passive2: 'moneyMult', per2: 0.0001 },
-  { key: 'moon', type: 'passive', name: '月修', suffix: '月华功', stems: ['月华', '清辉', '桂魄', '望舒', '寒月', '冰轮', '婵娟'], passive: 'dodge', per: 0.00003, passive2: 'cultivationSpeed', per2: 0.00015 },
+  { key: 'merit', type: 'passive', name: '功德修', suffix: '斋', stems: ['功德', '醮修', '焚香', '祈天', '积善', '香火', '登坛'], passive: 'cultivationSpeed', per: 0.00025, passive2: 'moneyMult', per2: 0.0001 },
+  { key: 'moon', type: 'passive', name: '月修', suffix: '诀', stems: ['月华', '清辉', '桂魄', '望舒', '寒月', '冰轮', '婵娟'], passive: 'dodge', per: 0.00003, passive2: 'cultivationSpeed', per2: 0.00015 },
 
   // ============ 核心属性拓展功法（暴伤/破甲/命中/格挡/减伤） ============
   { key: 'rupture', type: 'active', name: '破军', suffix: '裂甲功', stems: ['裂甲', '破军', '穿云', '碎岳', '贯日'], passive: 'armorPen', per: 1.5, divine: { name: '贯日一击', kind: 'burst', dmg: 1.6, chance: 0.10 } },
@@ -100,6 +100,15 @@ export const FAMILIES = [
   { key: 'ward', type: 'passive', name: '坚壁', suffix: '守御诀', stems: ['坚壁', '不动', '磐石', '镇岳', '固元'], passive: 'block', per: 0.00004, passive2: 'damageReduction', per2: 0.00003 }
 ]
 
+// 拼接功法名时合并词干与后缀的重叠部分，避免「厚土厚土功」「万剑剑诀」这类重复
+const mergeTechniqueName = (stem, suffix) => {
+  const max = Math.min(stem.length, suffix.length)
+  for (let n = max; n > 0; n--) {
+    if (stem.slice(-n) === suffix.slice(0, n)) return stem + suffix.slice(n)
+  }
+  return stem + suffix
+}
+
 export const TECHNIQUES = (() => {
   const arr = []
   TECH_GRADES.forEach(g => {
@@ -107,7 +116,7 @@ export const TECHNIQUES = (() => {
       const stem = f.stems[(g.g - 1) % f.stems.length]
       arr.push({
         id: `${g.g}-${f.key}`,
-        name: `${g.name}·${stem}${f.suffix}`,
+        name: `${g.name}·${mergeTechniqueName(stem, f.suffix)}`,
         type: f.type,
         grade: g.g,
         gradeName: g.name,
