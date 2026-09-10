@@ -59,7 +59,7 @@
             <div class="m-group-title">{{ g.title }}</div>
             <div class="m-grid">
               <button class="m-cell" v-for="m in g.items" :key="m.name" @click="m.action ? m.action() : go(m.route)">
-                <span class="m-cell-icon">{{ m.icon }}</span>
+                <span class="m-cell-icon"><img :src="moduleIcon(m.icon)" :alt="m.name" /></span>
                 <span class="m-cell-name">{{ m.name }}</span>
               </button>
             </div>
@@ -147,41 +147,43 @@
   const isHome = computed(() => ['/', '/home'].includes(route.path))
   const mMenu = ref(false)
   const go = path => { mMenu.value = false; router.push(path) }
+  const moduleIconModules = import.meta.glob('./assets/images/icons/*.png', { eager: true, import: 'default' })
+  const moduleIcon = slug => moduleIconModules[`./assets/images/icons/${slug}.png`] || ''
   const mobileGroups = [
     { title: '修行', items: [
-      { icon: '🏡', name: '洞府', route: '/manor' },
-      { icon: '✨', name: '飞升', route: '/ascension' },
-      { icon: '🔄', name: '转生商店', route: '/rebirthShop' }
+      { icon: 'dongfu', name: '洞府', route: '/manor' },
+      { icon: 'feisheng', name: '飞升', route: '/ascension' },
+      { icon: 'zhuansheng', name: '转生商店', route: '/rebirthShop' }
     ]},
     { title: '冒险', items: [
-      { icon: '🚶', name: '探索', route: '/explore' },
-      { icon: '🌌', name: '秘境', route: '/realm' },
-      { icon: '🗼', name: '无尽塔', route: '/endlesstower' },
-      { icon: '🗺️', name: '大地图', route: '/worldmap' },
-      { icon: '🏝️', name: '洞天', route: '/map' }
+      { icon: 'tanxian', name: '探索', route: '/explore' },
+      { icon: 'mijing', name: '秘境', route: '/realm' },
+      { icon: 'wujinta', name: '无尽塔', route: '/endlesstower' },
+      { icon: 'daditu', name: '大地图', route: '/worldmap' },
+      { icon: 'dongtian', name: '洞天', route: '/map' }
     ]},
     { title: '资源', items: [
-      { icon: '🎒', name: '背包', route: '/backpack' },
-      { icon: '🎰', name: '灵宠抽奖', route: '/petGacha' },
-      { icon: '🐾', name: '灵宠培养', route: '/backpack?tab=pet' },
-      { icon: '🏪', name: '贸易市场', route: '/market' },
-      { icon: '👥', name: '下界坊市', route: '/npc' },
-      { icon: '🗿', name: '游商', action: () => openTrav() }
+      { icon: 'beibao', name: '背包', route: '/backpack' },
+      { icon: 'lingchong', name: '灵宠抽奖', route: '/petGacha' },
+      { icon: 'lingchongyang', name: '灵宠培养', route: '/backpack?tab=pet' },
+      { icon: 'shichang', name: '贸易市场', route: '/market' },
+      { icon: 'fangshi', name: '下界坊市', route: '/npc' },
+      { icon: 'youshang', name: '游商', action: () => openTrav() }
     ]},
     { title: '炼制', items: [
-      { icon: '💊', name: '炼丹', route: '/alchemy' },
-      { icon: '🔨', name: '炼器', route: '/forge' },
-      { icon: '🛡️', name: '强化装备', route: '/backpack?tab=equip' },
-      { icon: '📃', name: '制符', route: '/talisman' },
-      { icon: '⛩️', name: '阵法', route: '/formation' }
+      { icon: 'liandan', name: '炼丹', route: '/alchemy' },
+      { icon: 'lianqi', name: '炼器', route: '/forge' },
+      { icon: 'qianghua', name: '强化装备', route: '/backpack?tab=equip' },
+      { icon: 'zhifu', name: '制符', route: '/talisman' },
+      { icon: 'zhenfa', name: '阵法', route: '/formation' }
     ]},
     { title: '势力', items: [
-      { icon: '🏯', name: '宗门', route: '/sect' },
-      { icon: '👥', name: '仙盟', route: '/guild' }
+      { icon: 'zongmen', name: '宗门', route: '/sect' },
+      { icon: 'xianmeng', name: '仙盟', route: '/guild' }
     ]},
     { title: '其他', items: [
-      { icon: '📜', name: '任务', route: '/quest' },
-      { icon: '🎲', name: '休闲', route: '/game' }
+      { icon: 'renwu', name: '任务', route: '/quest' },
+      { icon: 'xiuxian', name: '休闲', route: '/game' }
     ]}
   ]
   watch(() => route.path, () => { mMenu.value = false })
@@ -838,8 +840,17 @@
       background: var(--el-fill-color);
     }
     .m-cell-icon {
-      font-size: 22px;
-      line-height: 1;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .m-cell-icon img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      display: block;
     }
     .m-cell-name {
       font-size: 12px;
