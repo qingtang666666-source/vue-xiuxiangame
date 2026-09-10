@@ -10,7 +10,7 @@
 // 不是密码学意义上不可破解。但手动改 JSON 已经不可能生效。
 
 import CryptoJS from 'crypto-js'
-import { realmPower, playerPowerScore } from './breakthroughGate.js'
+import { playerPowerScore } from './breakthroughGate.js'
 import crypto from './crypto.js'
 
 export const SAVE_KEY = 'vuex'
@@ -19,6 +19,8 @@ const BACKUP_KEEP = 5
 const MAGIC = 'XSYX2'
 const KDF_ITERS = 1300
 const LEGACY_MAGIC = 'XSYX1-legacy'
+export const IMPORT_POWER_LIMIT = 5_000_000_000
+export const IMPORT_CHIP_CAP = 500_000_000
 
 // 主密钥分片：集中成一段可读字符串太容易被直接替换
 const SECRET_PARTS = ['qin', 'gTang', '#xiu', 'Xian', '7z', '9Y', 'DaoZu', '@2026']
@@ -122,14 +124,14 @@ export const auditPlayer = player => {
     if (typeof player[k] === 'number' && (player[k] < 0 || player[k] > 1.5)) issues.push(`${k} 超出概率范围(${player[k]})`)
   })
   const props = player.props || {}
-  ;['money', 'spiritHerb', 'cultivateDan', 'strengtheningStone', 'currency', 'chip'].forEach(k => {
+  ;['money', 'spiritHerb', 'cultivateDan', 'strengtheningStone', 'currency', 'chips'].forEach(k => {
     const v = props[k]
     if (v != null && (!finiteNum(v) || v < 0)) issues.push(`${k} 异常(${v})`)
   })
-  // 战力上限：满配号也远不到境界标准的 8 倍，超出即视为被改
+  // 导入战力上限：统一放宽到 50 亿
   if (lv >= 1 && lv <= 200) {
     const power = playerPowerScore(player)
-    const ceiling = Math.max(5e6, realmPower(Math.min(144, lv)) * 8)
+    const ceiling = IMPORT_POWER_LIMIT
     if (power > ceiling) issues.push(`总体实力超出合理区间(${Math.round(power / 10000)}万 > ${Math.round(ceiling / 10000)}万)`)
   }
   return issues
@@ -225,7 +227,17 @@ export const importSaveText = text => {
   if (!data || !data.player || typeof data.player !== 'object') return { ok: false, reason: '存档里没有玩家数据' }
   const bad = auditPlayer(data.player)
   if (bad.length) return { ok: false, reason: `存档数值异常，已拒绝导入：${bad.slice(0, 3).join('；')}` }
-  return { ok: true, boss: data.boss, player: data.player, legacy: data.v === 1 }
+  const props = data.player.props || (data.player.props = {})
+  const chipsBefore = Number(props.chips) || 0
+  const chipsTrimmed = Math.max(0, chipsBefore - IMPORT_CHIP_CAP)
+  if (chipsTrimmed > 0) props.chips = IMPORT_CHIP_CAP
+  return {
+    ok: true,
+    boss: data.boss,
+    player: data.player,
+    legacy: data.v === 1,
+    chipsTrimmed
+  }
 }
 
 export const wipeVault = () => {
