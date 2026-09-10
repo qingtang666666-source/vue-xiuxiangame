@@ -8,7 +8,7 @@ import { TECHNIQUES, techGradeForLevel } from './technique'
 
 export const HERO_COUNT = 300
 // 豪杰基础属性缩放：让豪杰在同系统加成下保持可追赶，而不是靠裸装数值碾压
-const HERO_BASE_STAT_SCALE = 0.3
+const HERO_BASE_STAT_SCALE = 0.7
 
 // 豪杰也按排名穿戴装备：越靠前品阶越高、强化越高。
 // 后期限定“无视境界标准上限”，让顶级豪杰能跟上玩家+30道装的成长。
