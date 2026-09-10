@@ -41,6 +41,14 @@
       </div>
     </el-card>
 
+    <div class="section-title" v-if="sect.position > 0">职位权限 <span class="hint">当前：{{ positionName(player) }}</span></div>
+    <div class="privilege-grid" v-if="sect.position > 0">
+      <div class="privilege-item" v-for="p in privileges" :key="p.name" :class="{ locked: !p.on }">
+        <span class="pv-name">{{ p.name }}</span>
+        <span class="pv-state">{{ p.text }}</span>
+      </div>
+    </div>
+
     <div class="section-title">职位阶梯 <span class="hint" v-if="next">晋升需 {{ levelNames(next.level) }} · 贡献 {{ next.cost }}</span></div>
     <div class="position-list">
       <div
@@ -74,7 +82,7 @@
       <div class="mission-row" v-for="m in sect.missions" :key="m.id">
         <div class="mission-name">{{ m.name }}</div>
         <div class="mission-desc">{{ m.desc }}</div>
-        <div class="mission-req">需 {{ levelNames(m.reqLevel) }} · +{{ m.contrib }}贡献</div>
+        <div class="mission-req">需 {{ levelNames(m.reqLevel) }} · +{{ missionGain(m) }}贡献</div>
         <el-button size="small" type="success" @click="doMission(m)">执行</el-button>
       </div>
     </div>
@@ -92,7 +100,7 @@
           <div class="ex-name">{{ x.name }} ×{{ x.amount }}</div>
         </el-tooltip>
         <div class="ex-ops">
-          <el-input-number :model-value="exQtyOf(x.key)" :min="1" :max="Math.max(1, Math.floor((sect.contribution || 0) / Math.max(1, x.contrib)))" :step="1" size="small" class="ex-qty" @update:model-value="v => setExQty(x.key, v)" />
+          <el-input-number :model-value="exQtyOf(x.key)" :min="1" :max="exchangeMax(x)" :step="1" size="small" class="ex-qty" @update:model-value="v => setExQty(x.key, v)" />
           <el-button size="small" type="warning" @click="doExchange(x, exQtyOf(x.key))">
             {{ x.contrib }}贡献×{{ exQtyOf(x.key) }}
           </el-button>
@@ -157,6 +165,7 @@
     upgradeSectGrade,
     leaveSect,
     leaveSectCost,
+    sectPrivileges,
     EXCHANGE,
     generateSectChoices,
     joinSect,
@@ -176,6 +185,20 @@
   const gradeInfo = computed(() => sectGradeInfo(player.value))
   const canGrade = computed(() => canUpgradeSectGrade(player.value))
   const leaveCost = computed(() => leaveSectCost(player.value))
+  const privileges = computed(() => {
+    const p = sectPrivileges(player.value)
+    return [
+      { name: '贡献加成', on: p.contributionBonus > 0, text: `+${p.contributionBonus}%` },
+      { name: '兑换额度', on: true, text: `单次 ${p.exchangeLimit} 份` },
+      { name: '任务额度', on: p.missionLimit > 1, text: `${p.missionLimit} 项` },
+      { name: '捐献额度', on: true, text: `${p.donationLimit} 份` },
+      { name: '品级考核', on: p.canGrade, text: p.canGrade ? '已解锁' : '内门长老' },
+      { name: '宗门招募', on: p.canRecruit, text: p.canRecruit ? '已解锁' : '内门长老' },
+      { name: '宗门管理', on: p.canManage, text: p.canManage ? '已解锁' : '峰主' },
+      { name: '全宗公告', on: p.canAnnounce, text: p.canAnnounce ? '已解锁' : '宗主' }
+    ]
+  })
+  const missionGain = m => Math.floor((m.contrib || 0) * (1 + privileges.value.contributionBonus / 100))
   const choices = ref([])
   const donMoney = ref(5000)
   const donPill = ref(null)
@@ -254,9 +277,14 @@
 
   const doExchange = (x, n = 1) => doExchangeN(x, n)
   const exQty = reactive({})
+  const exchangeMax = x => Math.min(privileges.value.exchangeLimit, Math.max(1, Math.floor((sect.value.contribution || 0) / Math.max(1, x.contrib))))
   const exQtyOf = k => exQty[k] || 1
-  const setExQty = (k, v) => { exQty[k] = Math.max(1, Math.floor(v || 1)) }
+  const setExQty = (k, v) => {
+    const item = EXCHANGE.find(x => x.key === k)
+    exQty[k] = Math.max(1, Math.min(exchangeMax(item || { contrib: 1 }), Math.floor(v || 1)))
+  }
   const doExchangeN = (x, n = 1) => {
+    n = Math.max(1, Math.min(exchangeMax(x), Math.floor(n) || 1))
     let ok = 0
     let reason = ''
     for (let i = 0; i < n; i++) {
@@ -320,6 +348,12 @@
   .grade-btn { margin-top: 2px; }
   .section-title { font-size: 15px; font-weight: bold; margin: 16px 0 8px; }
   .hint { font-size: 12px; font-weight: normal; color: var(--el-text-color-secondary); margin-left: 8px; }
+  .privilege-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .privilege-item { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 6px; background: var(--el-color-success-light-9); border: 1px solid var(--el-color-success-light-7); font-size: 12px; }
+  .privilege-item.locked { background: var(--el-fill-color-light); border-color: var(--el-border-color-lighter); opacity: 0.7; }
+  .pv-name { color: var(--el-text-color-secondary); }
+  .pv-state { font-weight: bold; color: var(--el-color-success); }
+  .privilege-item.locked .pv-state { color: var(--el-text-color-placeholder); font-weight: normal; }
   .position-list { display: flex; flex-direction: column; gap: 4px; }
   .position-row { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 4px; background: var(--el-fill-color-light); }
   .position-row.current { background: var(--el-color-success-light-8); }
@@ -347,5 +381,8 @@
   .dsel { width: 200px; }
   .ex-name { font-size: 13px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .exchange-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media only screen and (max-width: 768px) {
+    .privilege-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .exchange-grid { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>

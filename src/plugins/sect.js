@@ -155,6 +155,22 @@ const getSect = player => ensureSect(player)
 export const positionIndex = player => getSect(player).position || 0
 export const positionName = player => POSITIONS[positionIndex(player)]?.name || '外门弟子'
 
+// 职位权限：地位越高，贡献获取越高，并逐步解锁宗门管理权限
+export const sectPrivileges = player => {
+  const idx = Math.min(12, Math.max(0, positionIndex(player)))
+  return {
+    position: idx,
+    contributionBonus: idx * 8,
+    exchangeLimit: 1 + Math.floor(idx / 2),
+    missionLimit: 1 + Math.floor(idx / 3),
+    donationLimit: 1 + Math.floor(idx / 2),
+    canGrade: idx >= 8,
+    canRecruit: idx >= 8,
+    canManage: idx >= 10,
+    canAnnounce: idx >= 12
+  }
+}
+
 const playerPower = player =>
   (player.attack || 0) * 3 + (player.defense || 0) + (player.maxHealth || 0) * 0.1 + (player.level || 0) * 6
 
@@ -231,8 +247,10 @@ export const completeMission = (player, missionId) => {
     const monster = Math.floor(realmPower(mission.reqLevel) * 0.9)
     if (Math.random() > pp / (pp + monster)) return { ok: false, reason: '除妖失利，可再试' }
   }
-  sect.contribution = (sect.contribution || 0) + mission.contrib
-  return { ok: true, contrib: mission.contrib }
+  const priv = sectPrivileges(player)
+  const gain = Math.floor(mission.contrib * (1 + priv.contributionBonus / 100))
+  sect.contribution = (sect.contribution || 0) + gain
+  return { ok: true, contrib: gain, baseContrib: mission.contrib, bonus: priv.contributionBonus }
 }
 
 // 贡献度兑换
@@ -258,41 +276,43 @@ export const exchange = (player, itemKey) => {
 export const donate = (player, kind, payload, value) => {
   const sect = getSect(player)
   if (!sect || sect.position === 0) return { ok: false, reason: '尚未入宗门，无法捐献' }
+  const priv = sectPrivileges(player)
+  const gain = c => Math.floor(c * (1 + priv.contributionBonus / 100))
   const rate = 150 // 贡献 = floor(灵石价值 / 150)
   if (kind === 'money') {
     const amount = Math.max(1, Math.floor(payload || 0))
     if ((player.props.money || 0) < amount) return { ok: false, reason: '灵石不足' }
     player.props.money -= amount
-    const c = Math.max(1, Math.floor(amount / rate))
+    const c = gain(Math.max(1, Math.floor(amount / rate)))
     sect.contribution = (sect.contribution || 0) + c
-    return { ok: true, contrib: c, kind: 'money', amount }
+    return { ok: true, contrib: c, kind: 'money', amount, bonus: priv.contributionBonus }
   }
   if (kind === 'pill') {
     const p = (player.pills || []).find(x => x.id === payload.id)
     if (!p || p.count < payload.qty) return { ok: false, reason: '丹药不足' }
     p.count -= payload.qty
     if (p.count <= 0) player.pills = player.pills.filter(x => x.id !== payload.id)
-    const c = Math.max(1, Math.floor((value || 0) * payload.qty / rate))
+    const c = gain(Math.max(1, Math.floor((value || 0) * payload.qty / rate)))
     sect.contribution = (sect.contribution || 0) + c
-    return { ok: true, contrib: c, kind: 'pill', qty: payload.qty, name: payload.name }
+    return { ok: true, contrib: c, kind: 'pill', qty: payload.qty, name: payload.name, bonus: priv.contributionBonus }
   }
   if (kind === 'talisman') {
     const p = (player.talismans || []).find(x => x.id === payload.id)
     if (!p || p.count < payload.qty) return { ok: false, reason: '符箓不足' }
     p.count -= payload.qty
     if (p.count <= 0) player.talismans = player.talismans.filter(x => x.id !== payload.id)
-    const c = Math.max(1, Math.floor((value || 0) * payload.qty / rate))
+    const c = gain(Math.max(1, Math.floor((value || 0) * payload.qty / rate)))
     sect.contribution = (sect.contribution || 0) + c
-    return { ok: true, contrib: c, kind: 'talisman', qty: payload.qty, name: payload.name }
+    return { ok: true, contrib: c, kind: 'talisman', qty: payload.qty, name: payload.name, bonus: priv.contributionBonus }
   }
   if (kind === 'equip') {
     const idx = (player.inventory || []).findIndex(x => x.id === payload.id)
     if (idx < 0) return { ok: false, reason: '未持有该装备' }
     const eq = player.inventory[idx]
     player.inventory.splice(idx, 1)
-    const c = Math.max(1, Math.floor((value || 0) / rate))
+    const c = gain(Math.max(1, Math.floor((value || 0) / rate)))
     sect.contribution = (sect.contribution || 0) + c
-    return { ok: true, contrib: c, kind: 'equip', name: eq.name }
+    return { ok: true, contrib: c, kind: 'equip', name: eq.name, bonus: priv.contributionBonus }
   }
   return { ok: false, reason: '未知捐献类型' }
 }
