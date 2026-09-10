@@ -37,6 +37,12 @@
         <el-switch v-model="auto" active-text="自动战斗" inline-prompt />
         <span v-if="auto" class="auto-tip">行动将自动进行…</span>
       </div>
+      <div class="sup-banner" v-if="selTarget">
+        境界压制：你攻{{ selTarget.name }}
+        <b :class="supClass(playerSup)">{{ playerSupLabel }}</b>
+        · {{ selTarget.name }}攻你
+        <b :class="supClass(enemySup)">{{ enemySupLabel }}</b>
+      </div>
 
       <div class="battlefield">
         <div class="unit player-unit" :class="{ active: isPlayerTurnV, dead: state.player.hp <= 0 }">
@@ -128,7 +134,7 @@
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useRouter } from 'vue-router'
   import { useMainStore } from '@/plugins/store'
-  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult, realmSuppressionPct, realmSuppressionLabel } from '@/plugins/game'
   import { divineTipText } from '@/plugins/divine'
   import battleArenaBg from '@/assets/images/battle-arena-bg.png'
   import {
@@ -182,6 +188,11 @@
     if (!state.value) return null
     return state.value.enemies.find(e => e.id === target.value && e.hp > 0) || state.value.enemies.find(e => e.hp > 0) || null
   })
+  const playerSup = computed(() => (state.value && selTarget.value ? realmSuppressionPct(state.value.player.level, selTarget.value.level) : 0))
+  const enemySup = computed(() => (state.value && selTarget.value ? realmSuppressionPct(selTarget.value.level, state.value.player.level) : 0))
+  const playerSupLabel = computed(() => realmSuppressionLabel(playerSup.value))
+  const enemySupLabel = computed(() => realmSuppressionLabel(enemySup.value))
+  const supClass = pct => (pct > 0 ? 'up' : pct < 0 ? 'down' : 'even')
   const isPlayerTurnV = computed(() => state.value && isPlayerTurn(state.value))
   const isEnemyTurnV = computed(() => state.value && isEnemyTurn(state.value))
   const battleOverV = computed(() => state.value && battleOver(state.value))
@@ -279,6 +290,11 @@
   .round-bar { font-size: 13px; margin-bottom: 6px; }
   .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .auto-tip { font-size: 12px; color: var(--el-color-success); }
+  .sup-banner { margin-bottom: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(64, 158, 255, 0.1); border: 1px solid rgba(64, 158, 255, 0.25); text-align: center; font-size: 12px; color: var(--el-text-color-secondary); }
+  .sup-banner b { font-weight: bold; }
+  .sup-banner b.up { color: #67c23a; }
+  .sup-banner b.down { color: #f56c6c; }
+  .sup-banner b.even { color: #909399; }
   .battlefield { display: grid; grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr); gap: 10px; align-items: start; margin-bottom: 10px; }
   .enemy-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
   .unit { border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 10px 12px; min-width: 0; background: radial-gradient(circle at 30% 16%, rgba(255, 255, 255, 0.08), transparent 60%), linear-gradient(160deg, #3a3550, #232036); position: relative; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.3); }

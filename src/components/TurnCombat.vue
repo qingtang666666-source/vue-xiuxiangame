@@ -17,6 +17,12 @@
           <span v-if="auto" class="tc-tip">自动进行中…</span>
         </div>
       </div>
+      <div class="tc-sup" v-if="foe">
+        境界压制：你攻{{ foe.name }}
+        <b :class="supClass(supPlayer)">{{ supPlayerLabel }}</b>
+        · {{ foe.name }}攻你
+        <b :class="supClass(supFoe)">{{ supFoeLabel }}</b>
+      </div>
 
       <div class="tc-arena">
         <div class="tc-side">
@@ -99,7 +105,7 @@
   import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
   import { useMainStore } from '@/plugins/store'
   import { bumpDaily } from '@/plugins/dailyGoals'
-  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult } from '@/plugins/game'
+  import { formatNumberToChineseUnit, levelNames, realmSuppressionMult, realmSuppressionPct, realmSuppressionLabel } from '@/plugins/game'
   import { divineTipText } from '@/plugins/divine'
   import battleArenaBg from '@/assets/images/battle-arena-bg.png'
   import {
@@ -155,6 +161,11 @@
   )
 
   const foe = computed(() => (state.value ? state.value.enemies[0] : null))
+  const supPlayer = computed(() => (state.value && foe.value ? realmSuppressionPct(state.value.player.level, foe.value.level) : 0))
+  const supFoe = computed(() => (state.value && foe.value ? realmSuppressionPct(foe.value.level, state.value.player.level) : 0))
+  const supPlayerLabel = computed(() => realmSuppressionLabel(supPlayer.value))
+  const supFoeLabel = computed(() => realmSuppressionLabel(supFoe.value))
+  const supClass = pct => (pct > 0 ? 'up' : pct < 0 ? 'down' : 'even')
   const abilities = computed(() => (state.value ? getPlayerAbilities(store.player) : []))
   const isPlayerTurnV = computed(() => state.value && isPlayerTurn(state.value))
   const battleOverV = computed(() => state.value && battleOver(state.value))
@@ -251,6 +262,11 @@
   .tc-phase.over { color: #8be08b; }
   .tc-controls { display: flex; align-items: center; gap: 8px; }
   .tc-tip { font-size: 12px; color: var(--el-color-success); }
+  .tc-sup { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(64, 158, 255, 0.1); border: 1px solid rgba(64, 158, 255, 0.25); text-align: center; font-size: 12px; color: var(--el-text-color-secondary); }
+  .tc-sup b { font-weight: bold; }
+  .tc-sup b.up { color: #67c23a; }
+  .tc-sup b.down { color: #f56c6c; }
+  .tc-sup b.even { color: #909399; }
   .tc-arena { display: flex; align-items: center; gap: 12px; margin-top: 14px; border-radius: 16px; padding: 12px; background: linear-gradient(rgba(250, 247, 240, 0.8), rgba(242, 237, 227, 0.88)), var(--arena-img, none) center / cover no-repeat; }
   .tc-side { flex: 1; min-width: 0; }
   .tc-unit { position: relative; border-radius: 18px; padding: 18px 22px 16px; border: 1px solid rgba(255, 255, 255, 0.1); background: radial-gradient(circle at 30% 16%, rgba(255, 255, 255, 0.08), transparent 60%), linear-gradient(160deg, #3a3550, #232036); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 10px 28px rgba(0, 0, 0, 0.3); }
