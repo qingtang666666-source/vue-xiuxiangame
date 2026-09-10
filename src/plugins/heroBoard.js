@@ -1,12 +1,14 @@
 // 豪杰榜 —— 300 名 NPC，可挑战排名更高者晋升；前100有周期性奖励
-// 豪杰强度 = 标准境界战力 ×2 + 排名加成；装备只影响暴击/闪避等战斗属性
-import { playerPowerScore, realmPower, enemyStatsForPower } from './breakthroughGate'
+// 豪杰强度 = 与玩家同口径的系统加成总和（装备/阵法/功法/宗门/资质/转世/飞升/本命/技艺）
+import { playerPowerScore, enemyStatsForPower } from './breakthroughGate'
 import { levelNames, gradeMultiplier } from './game'
 import { gearRealmMult } from './craft'
+import { FORMATIONS } from './formation'
+import { TECHNIQUES, techGradeForLevel } from './technique'
 
 export const HERO_COUNT = 300
-// 豪杰战力 = 标准体系战力 ×2
-export const HERO_POWER_MULT = 2
+// 豪杰基础属性缩放：让豪杰在同系统加成下保持可追赶，而不是靠裸装数值碾压
+const HERO_BASE_STAT_SCALE = 0.3
 
 // 豪杰也按排名穿戴装备：越靠前品阶越高、强化越高。
 // 后期限定“无视境界标准上限”，让顶级豪杰能跟上玩家+30道装的成长。
@@ -86,16 +88,6 @@ export const heroBoostOfRank = rank => {
   return 0.85 + t * 0.15
 }
 
-// 同一小境界内可能有多个名次，再按名次位置拉开一点差距，避免完全同值
-const sameLevelPosition = rank => {
-  const lv = heroLevelOfRank(rank)
-  let lo = rank
-  let hi = rank
-  while (lo > 1 && heroLevelOfRank(lo - 1) === lv) lo--
-  while (hi < HERO_COUNT && heroLevelOfRank(hi + 1) === lv) hi++
-  return hi === lo ? 0 : (rank - lo) / (hi - lo)
-}
-
 // 豪杰装备展示与战斗属性：按排名配置品阶/强化/细分级，主要影响暴击/闪避与装备展示。
 // 豪杰面板战力现在统一按标准境界战力 ×2 计算。
 export const heroEquipmentStats = rank => {
@@ -125,19 +117,119 @@ export const heroEquipmentStats = rank => {
     strengthen: gear.strengthen,
     grade: gear.grade,
     gradeName: ['下品', '中品', '上品', '极品', '绝品'][gear.grade - 1] || '下品',
-    attack: Math.floor(attack),
-    health: Math.floor(health),
-    defense: Math.floor(defense),
+    attack: Math.floor(attack * HERO_BASE_STAT_SCALE),
+    health: Math.floor(health * HERO_BASE_STAT_SCALE),
+    defense: Math.floor(defense * HERO_BASE_STAT_SCALE),
     critical,
     dodge
   }
 }
 
+const HERO_DAO_KEYS = [
+  'cultivationSpeed', 'maxHealth', 'attack', 'defense', 'critical', 'dodge',
+  'moneyMult', 'offlineMult', 'lifespan', 'startMoney', 'rootBone', 'daoGain'
+]
+
+const _heroPlayerCache = new Map()
+const _heroPowerCache = new Map()
+
+// 给豪杰生成一套“同玩家口径”的影子角色配置：装备/阵法/功法/宗门/资质/转世/飞升/本命/技艺
+const heroPlayerOfRank = rank => {
+  const r = clampRank(rank)
+  if (_heroPlayerCache.has(r)) return _heroPlayerCache.get(r)
+  const lv = heroLevelOfRank(r)
+  const ratio = (HERO_COUNT - r + 1) / HERO_COUNT // 榜首≈1，榜尾≈0
+  const gear = heroEquipmentStats(r)
+  const gate = techGradeForLevel(lv)
+  const activePool = TECHNIQUES.filter(t => t.type === 'active' && t.grade === gate)
+  const passivePool = TECHNIQUES.filter(t => t.type === 'passive' && t.grade === gate)
+  const active = activePool.slice(0, 5)
+  const passive = passivePool.slice(0, 3)
+  const methods = {}
+  ;[...active, ...passive].forEach(t => {
+    methods[t.id] = {
+      chapter: Math.max(1, Math.round(20 * ratio)),
+      proficiency: Math.max(1, Math.round(5 * ratio))
+    }
+  })
+  const formationLevel = Math.max(0, Math.round(20 * ratio))
+  const daoLevel = Math.max(0, Math.round(15 * ratio))
+  const skillLevel = Math.max(0, Math.round(11 * ratio))
+  const reincarnation = Math.round(20 * ratio)
+  const stage = Math.min(15, Math.floor((lv - 1) / 9))
+  const naLevel = Math.max(1, Math.round((5 + stage * 3) * Math.max(0.2, ratio)))
+  const affixCount = Math.max(0, Math.round(6 * ratio))
+  const hero = {
+    level: lv,
+    attack: gear.attack,
+    defense: gear.defense,
+    maxHealth: gear.health,
+    health: gear.health,
+    critical: gear.critical,
+    dodge: gear.dodge,
+    reincarnation,
+    props: {},
+    equipment: {},
+    inventory: [],
+    formations: Object.fromEntries(FORMATIONS.map(f => [f.id, formationLevel])),
+    methods,
+    techniqueSet: {
+      active: active.map(t => t.id),
+      passive: passive.map(t => t.id)
+    },
+    mainMethod: active[0]?.id || null,
+    techniques: Math.round(60 * ratio),
+    skills: { alchemy: skillLevel, forge: skillLevel, talisman: skillLevel, formation: skillLevel },
+    sect: {
+      reincarnation,
+      gradeIdx: Math.max(0, Math.round(6 * (1 - ratio))),
+      gradeName: '',
+      featureKey: 'sword',
+      position: Math.round(12 * ratio),
+      contribution: 0
+    },
+    aptitudeReincarnation: reincarnation,
+    aptitude: {
+      rootBone: Math.max(0, Math.round(5 * ratio)),
+      constitution: {
+        type: ratio > 0.6 ? 'special' : 'normal',
+        grade: Math.max(1, Math.round(5 * ratio)),
+        awakened: ratio > 0.5,
+        name: ''
+      }
+    },
+    realm: { stage: Math.min(3, Math.round(3 * ratio)) },
+    daoShop: Object.fromEntries(
+      HERO_DAO_KEYS.map(k => [k, k === 'rootBone' ? Math.round(3 * ratio) : daoLevel])
+    ),
+    natalArtifact: {
+      level: naLevel,
+      stage,
+      affixes: Array.from({ length: affixCount }, (_, i) => ({
+        key: i % 2 ? 'crit' : 'dodge',
+        name: i % 2 ? '通明' : '如影',
+        critical: i % 2 ? 0.03 : 0,
+        dodge: i % 2 ? 0 : 0.03
+      }))
+    },
+    buffs: [],
+    pills: [],
+    talents: [],
+    manor: {},
+    treasures: {},
+    worldNpcs: [],
+    heroRank: HERO_COUNT + 1
+  }
+  _heroPlayerCache.set(r, hero)
+  return hero
+}
+
 export const heroPowerOfRank = rank => {
   const r = clampRank(rank)
-  const lv = heroLevelOfRank(r)
-  const sameLevelFactor = 1 - sameLevelPosition(r) * 0.06
-  return Math.floor(realmPower(lv) * HERO_POWER_MULT * heroBoostOfRank(r) * sameLevelFactor)
+  if (_heroPowerCache.has(r)) return _heroPowerCache.get(r)
+  const power = Math.floor(playerPowerScore(heroPlayerOfRank(r)))
+  _heroPowerCache.set(r, power)
+  return power
 }
 
 // 生成挑战用的敌人实体（供 TurnCombat monsterToEntity 使用）
