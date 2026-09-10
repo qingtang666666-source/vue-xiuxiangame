@@ -212,12 +212,12 @@
     return num >= 70 ? 'success' : num >= 30 ? 'warning' : 'exception'
   }
 
-  // 生成当前层的怪物：以玩家自己的战力为锚，按层数无限加压
-  // （旧口径 level = 层数×2 且吃 monster 裸数值，越级如切菜；72 层后又一次跳 480 倍）
+  // 生成当前层的怪物：按 11 阶战力体系轮流递进，不跟随玩家当前战力
   const generateMonster = () => {
     monster.value = towerFloorEnemy(currentFloor.value, player.value)
     const eliteTip = monster.value.elite > 1 ? '（精英/首领层）' : ''
-    battleLogs.value.push(`你遇到了第 ${currentFloor.value} 层守护者: ${monster.value.name}${eliteTip}，战力约 ${formatNumberToChineseUnit(monster.value.power)}`)
+    const tierTip = monster.value.tierName ? ` · ${monster.value.tierName}` : ''
+    battleLogs.value.push(`你遇到了第 ${currentFloor.value} 层守护者: ${monster.value.name}${eliteTip}${tierTip}，战力约 ${formatNumberToChineseUnit(monster.value.power)}`)
   }
   // 打开双方信息弹窗
   const openInfo = type => {

@@ -9,7 +9,7 @@
 
 import monsters from './monster.js'
 import { playerPowerScore, enemyStatsForPower, enemyPowerForLevel, realmPower } from './breakthroughGate.js'
-import { stageOfLevel } from './craft.js'
+import { stageOfLevel, craftLevelOfTier } from './craft.js'
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v))
 
@@ -74,20 +74,24 @@ export const LADDER_DIFFICULTIES = {
   boss: { mult: 1.5, label: '首领（含额外加压）' }
 }
 
-// —— 无尽塔：层数无限，且以玩家战力为锚持续加压 ——
-//   第 1 层 ≈ 玩家 4 成战力；每层 +7%；每 5 层×1.12、10 层×1.4、50 层×1.8
-//   玩家变强 → 锚变高 → 能重新往上推，但层数增长比成长更快，早晚撞墙，符合“无尽塔”。
+// —— 无尽塔：按 11 阶战力体系生成，不再跟随玩家当前战力 ——
+//   每 10 层对应一个品阶档位，11 档走完进入下一轮，整体倍率继续抬升。
 export const towerFloorGrowth = floor => 0.25 + (Math.max(1, floor) - 1) * 0.065
 export const towerElite = floor => (floor % 50 === 0 ? 1.8 : floor % 10 === 0 ? 1.4 : floor % 5 === 0 ? 1.12 : 1)
 
 export const towerFloorEnemy = (floor, player) => {
   const f = Math.max(1, Math.floor(floor) || 1)
-  const ref = anchorPower(player)
+  const tierIdx = Math.floor((f - 1) / 10) % 11
+  const cycle = Math.floor((f - 1) / 110)
+  const tier = tierIdx + 1
+  const baseLevel = craftLevelOfTier(tier)
+  const lv = Math.min(144, Math.max(1, baseLevel + ((f - 1) % 10)))
   const elite = towerElite(f)
-  const power = ref * towerFloorGrowth(f) * elite
-  // 等级只用于名称与境界压制展示：随层数缓慢抬升，上限 144
-  const lv = Math.min(144, Math.max(1, Math.round((player.level || 1) + f / 12)))
-  const m = guardOneShot(enemyFromPower(lv, power, { eliteTag: elite > 1, extra: { floor: f, elite } }), player)
+  // 11 阶基准战力的 2~2.8 倍起步，每轮继续加压；不读取玩家战力
+  const tierMult = 2 + tierIdx * 0.08
+  const cycleMult = 1 + cycle * 0.5
+  const power = Math.floor(realmPower(lv) * tierMult * cycleMult * elite)
+  const m = enemyFromPower(lv, power, { eliteTag: elite > 1, extra: { floor: f, elite, tier, tierName: `第${tier}阶` } })
   if (elite >= 1.4) m.name = `${m.name}·塔${f}`
   return m
 }
