@@ -90,7 +90,8 @@
     techTaskResultMessage,
     sellTechnique,
     forgetTechnique,
-    techniqueSellPrice
+    techniqueSellPrice,
+    passivePer
   } from '@/plugins/technique'
   import { divineTipForTech, proficiencyPreview, chapterPreview } from '@/plugins/divine'
 
@@ -155,11 +156,11 @@
   const statName = s => ({ attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石' }[s] || s)
 
   const passiveText = (t, ch) => {
-    if (!ch) return `每重 ${t.per} ${statName(t.passive)}`
+    if (!ch) return `每重 ${passivePer(t)} ${statName(t.passive)}`
     const g = TECH_GRADES[t.grade - 1]?.mult || 1
-    const v = t.per * ch * g
+    const v = passivePer(t) * ch * g
     const s = `${v}${t.passive === 'critical' || t.passive === 'dodge' ? '%' : ''} ${statName(t.passive)}`
-    return `${s}${t.passive2 ? ` + ${(t.per2 * ch * g * 100).toFixed(1)}% ${statName(t.passive2)}` : ''}`
+    return `${s}${t.passive2 ? ` + ${(passivePer(t, 'per2') * ch * g * 100).toFixed(1)}% ${statName(t.passive2)}` : ''}`
   }
 
   const learn = t => {

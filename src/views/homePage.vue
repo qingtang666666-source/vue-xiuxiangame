@@ -2928,7 +2928,7 @@
     const lvMult = 1 + Math.min(2, Math.floor((player.value.level || 0) / 45))
     return rinMult * lvMult
   }
-  const pointBonus = type => ((type === 'health' ? 150 : 75) * pointNum())
+  const pointBonus = type => ((type === 'health' ? 150 : 75) * pointNum() * 10)
   const spentPoints = computed(() => {
     const a = player.value.pointAlloc || {}
     return (a.attack || 0) + (a.defense || 0) + (a.health || 0)

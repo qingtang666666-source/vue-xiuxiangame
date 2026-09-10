@@ -86,7 +86,8 @@
     sellTechnique,
     forgetTechnique,
     techniqueSellPrice,
-    statName
+    statName,
+    passivePer
   } from '@/plugins/technique'
   import { divineTipForTech } from '@/plugins/divine'
   import { sourceOfTechnique } from '@/plugins/itemSource'
@@ -121,8 +122,8 @@
       if (k === 'cultivationSpeed' || k === 'moneyMult') return `+${base > 0 ? base.toFixed(2) : base} ${statName(k)}`
       return `+${Math.round(base)} ${statName(k)}`
     }
-    const parts = [fmtStat(t.value.passive, t.value.per)]
-    if (t.value.passive2) parts.push(fmtStat(t.value.passive2, t.value.per2))
+    const parts = [fmtStat(t.value.passive, passivePer(t.value))]
+    if (t.value.passive2) parts.push(fmtStat(t.value.passive2, passivePer(t.value, 'per2')))
     return chapter.value ? parts.join('，') : `每重 +${parts.join('，')}`
   })
   const divineTip = computed(() => divineTipForTech(player.value, t.value.id))

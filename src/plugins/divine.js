@@ -14,7 +14,8 @@ import {
   profMult,
   profName,
   statName,
-  methodChapter
+  methodChapter,
+  passivePer
 } from './technique.js'
 import { DIVINE_KINDS, divineKind } from './technique.js'
 
@@ -118,7 +119,7 @@ export const proficiencyPreview = (player, id) => {
   const rows = []
   ;[t.passive, t.passive2].forEach((k, i) => {
     if (!k) return
-    const per = i === 0 ? t.per : t.per2
+    const per = passivePer(t, i === 0 ? 'per' : 'per2')
     const c = per * chapter * g * cm
     const n = per * chapter * g * nm
     if (!n) return
@@ -154,7 +155,7 @@ export const chapterPreview = (player, id) => {
   const rows = []
   ;[t.passive, t.passive2].forEach((k, i) => {
     if (!k) return
-    const per = (i === 0 ? t.per : t.per2) * g * pm
+    const per = passivePer(t, i === 0 ? 'per' : 'per2') * g * pm
     if (!per) return
     rows.push({ stat: statName(k), gain: `+${fmtStat(k, per)}` })
   })

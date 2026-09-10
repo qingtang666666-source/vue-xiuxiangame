@@ -40,6 +40,10 @@ export const RARITY_NAMES = RARITIES.map(r => r.name)
 
 export const STAT_NAMES = { attack: '攻击', defense: '防御', health: '气血', critical: '暴击', dodge: '闪避', cultivationSpeed: '修炼速度', moneyMult: '灵石', critDamage: '暴伤', accuracy: '命中', armorPen: '破甲', block: '格挡', damageReduction: '减伤', tenacity: '韧性' }
 export const statName = s => STAT_NAMES[s] || s
+// 被动功法数值统一放大倍率（主动功法的被动附带数值不变）
+export const PASSIVE_TECH_MULT = 10
+export const passiveValueMult = t => (t?.type === 'passive' ? PASSIVE_TECH_MULT : 1)
+export const passivePer = (t, key = 'per') => (key === 'per2' ? t?.per2 || 0 : t?.per || 0) * passiveValueMult(t)
 
 // 神通四类效果的说明与结算口径（与 battleEngine 实现严格对应），供功法阁与战斗悬浮共用
 export const DIVINE_KINDS = {
@@ -473,8 +477,8 @@ export const methodStats = player => {
   const addPassive = (t, m, frac) => {
     const g = TECH_GRADES[t.grade - 1]?.mult || 1
     const pm = profMult(m.proficiency || 1)
-    acc[t.passive] = (acc[t.passive] || 0) + t.per * m.chapter * g * frac * pm
-    if (t.passive2) acc[t.passive2] = (acc[t.passive2] || 0) + t.per2 * m.chapter * g * frac * pm
+    acc[t.passive] = (acc[t.passive] || 0) + passivePer(t) * m.chapter * g * frac * pm
+    if (t.passive2) acc[t.passive2] = (acc[t.passive2] || 0) + passivePer(t, 'per2') * m.chapter * g * frac * pm
   }
   const addDivine = (t, m) => {
     if (!t.divine) return
