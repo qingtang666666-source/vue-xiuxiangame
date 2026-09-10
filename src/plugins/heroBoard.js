@@ -130,6 +130,15 @@ const HERO_DAO_KEYS = [
   'moneyMult', 'offlineMult', 'lifespan', 'startMoney', 'rootBone', 'daoGain'
 ]
 
+const heroPointNum = (lv, reincarnation) => {
+  const rinMult = reincarnation ? Math.min(60, reincarnation * 10) : 1
+  const lvMult = 1 + Math.min(2, Math.floor((lv || 0) / 45))
+  return rinMult * lvMult
+}
+
+const heroPointBonus = (lv, reincarnation, type) =>
+  (type === 'health' ? 150 : 75) * heroPointNum(lv, reincarnation) * 10
+
 const _heroPlayerCache = new Map()
 const _heroPowerCache = new Map()
 
@@ -156,15 +165,19 @@ const heroPlayerOfRank = rank => {
   const daoLevel = Math.max(0, Math.round(15 * ratio))
   const skillLevel = Math.max(0, Math.round(11 * ratio))
   const reincarnation = Math.round(20 * ratio)
+  const pointTotal = Math.max(0, lv - 1) * 3
+  const pointAtk = Math.floor(pointTotal * 0.4)
+  const pointHp = Math.floor(pointTotal * 0.3)
+  const pointDef = pointTotal - pointAtk - pointHp
   const stage = Math.min(15, Math.floor((lv - 1) / 9))
   const naLevel = Math.max(1, Math.round((5 + stage * 3) * Math.max(0.2, ratio)))
   const affixCount = Math.max(0, Math.round(6 * ratio))
   const hero = {
     level: lv,
-    attack: gear.attack,
-    defense: gear.defense,
-    maxHealth: gear.health,
-    health: gear.health,
+    attack: gear.attack + pointAtk * heroPointBonus(lv, reincarnation, 'attack'),
+    defense: gear.defense + pointDef * heroPointBonus(lv, reincarnation, 'defense'),
+    maxHealth: gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health'),
+    health: gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health'),
     critical: gear.critical,
     dodge: gear.dodge,
     reincarnation,
