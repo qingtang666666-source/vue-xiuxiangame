@@ -21,15 +21,16 @@
 
       <div class="field">
         <div class="label">品阶</div>
-        <el-select v-model="opts.quality" size="small" class="quality-select">
-          <el-option
+        <el-radio-group v-model="opts.quality" size="small" class="quality-group">
+          <el-radio-button
             v-for="q in FORGE_QUALITIES"
             :key="q.key"
-            :label="q.name + '（需 ' + levelNames(q.minLevel) + '）'"
             :value="q.key"
             :disabled="player.level < q.minLevel"
-          />
-        </el-select>
+          >
+            {{ q.name }}
+          </el-radio-button>
+        </el-radio-group>
       </div>
 
       <div class="field">
@@ -258,6 +259,7 @@
     margin-bottom: 6px;
   }
 
+  .quality-group { display: flex; flex-wrap: wrap; gap: 4px; }
   .quality-select,
   .affix-select {
     width: 100%;

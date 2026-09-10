@@ -714,7 +714,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 40;
+      z-index: 70;
       height: calc(58px + env(safe-area-inset-bottom, 0px));
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: rgba(255, 255, 255, 0.94);
@@ -771,6 +771,7 @@
       background: rgba(15, 20, 25, 0.45);
       align-items: flex-end;
       justify-content: center;
+      padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
     }
     .m-sheet {
       width: 100%;
@@ -778,7 +779,7 @@
       background: var(--el-bg-color);
       border-radius: 18px 18px 0 0;
       padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
-      max-height: 88dvh;
+      max-height: calc(88dvh - 58px - env(safe-area-inset-bottom, 0px));
       overflow: auto;
     }
     .m-sheet-head {
