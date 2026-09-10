@@ -39,6 +39,7 @@
     @update:visible="breakthroughTrialShow = $event"
     @success="onTrialSuccess"
     @fail="onTrialFail"
+    @tribulation-fail="onTribulationFail"
   />
 </template>
 
@@ -78,7 +79,6 @@
     return [
       { text: '开始修炼', click: () => startCultivate(), disabled: !isStart.value },
       { text: '停止修炼', click: () => stopCultivate(), disabled: !isStop.value },
-      { text: '渡劫', click: () => doTribulation(), disabled: !canTribulation.value },
       { text: '转生突破', click: () => reincarnationBreakthrough() }
     ]
   })
@@ -118,7 +118,6 @@
     const nextLv = p.level + 1
     const remain = Math.max(0, p.maxCultivation - p.cultivation)
     const req = []
-    if (isTribulationLevel(nextLv) && !(p.passedTribulation || []).includes(nextLv)) req.push(`渡【${tribulationOf(nextLv).name}】`)
     const prevStage = realmStageOf(p.level)
     const targetStage = realmStageOf(nextLv)
     const willCross = targetStage > prevStage
@@ -138,6 +137,7 @@
       req.push(`战力≥${need.toLocaleString('zh-CN')}（当前${power.toLocaleString('zh-CN')}）`)
       req.push('突破试炼胜2场')
     }
+    if (isTribulationLevel(nextLv) && !(p.passedTribulation || []).includes(nextLv)) req.push(`渡【${tribulationOf(nextLv).name}】`)
     return { next: levelNames(nextLv), remain, reqText: req.length ? '需 ' + req.join('、') : '可直接突破' }
   })
 
@@ -275,14 +275,6 @@
         const needsTrial = player.value.level >= 9 && (player.value.level + 1) % 3 === 1
         const danNeed = willCross && player.value.level >= 19 ? Math.max(1, Math.ceil(player.value.level / 15)) : 0
         const lifespanNeed = willCross ? breakthroughLifespanNeed(player.value.level) : 0
-        // 高阶：关键境界节点需渡劫
-        if (firstPass && isTribulationLevel(nextLv) && !(player.value.passedTribulation || []).includes(nextLv)) {
-          stopCultivate()
-          isStop.value = false
-          isStart.value = false
-          texts.value.push(`<span style="color: #F56C6C">天劫将至！请先渡【${tribulationOf(nextLv).name}】方可突破</span>`)
-          return
-        }
         // 先完整校验条件，试炼失败不损失道果/培养丹
         if (firstPass && danNeed && (player.value.props.cultivateDan || 0) < danNeed) {
           stopCultivate()
@@ -511,6 +503,12 @@
     const f = (player.value.stageFails[stage] || 0) + 1
     player.value.stageFails[stage] = f
     texts.value.push(`<span style="color: #F56C6C">突破试炼失败！第 ${f}/${MAX_STAGE_FAILS} 次。请强化装备/功法、提升战力后再挑战</span>`)
+  }
+
+  const onTribulationFail = reason => {
+    pendingBreakCost = null
+    texts.value.push(`<span style="color: #F56C6C">${reason}</span>`)
+    gameNotifys({ title: '渡劫失败', message: reason, type: 'error' })
   }
 
   const setupObserver = () => {

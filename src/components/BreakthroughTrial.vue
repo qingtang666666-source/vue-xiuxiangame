@@ -15,13 +15,13 @@
 <script setup>
   import { ref, computed, watch, nextTick } from 'vue'
   import TurnCombat from './TurnCombat.vue'
-  import { isTribulationLevel } from '@/plugins/tribulation'
+  import { isTribulationLevel, conductTribulation } from '@/plugins/tribulation'
   import { realmStageOf } from '@/plugins/game'
   import { realmPower, enemyStatsForPower } from '@/plugins/breakthroughGate'
   import { useMainStore } from '@/plugins/store'
 
   const props = defineProps({ visible: Boolean })
-  const emit = defineEmits(['update:visible', 'success', 'fail'])
+  const emit = defineEmits(['update:visible', 'success', 'fail', 'tribulation-fail'])
   const store = useMainStore()
   const player = store.player
 
@@ -85,9 +85,15 @@
 
   const onWin = () => {
     if (round.value >= 2) {
-      // 第三重门槛：渡劫/雷罚 —— 按突破境界造成气血百分比伤害，抗住才成功
+      // 最后一步：渡劫/雷罚 —— 按突破境界造成气血百分比伤害，抗住才成功
       const nextLv = player.level + 1
-      if (!isTribulationLevel(nextLv)) {
+      if (isTribulationLevel(nextLv) && !(player.passedTribulation || []).includes(nextLv)) {
+        // 天劫节点：击败同阶对手后，渡劫是最后一道门槛
+        const res = conductTribulation(player)
+        emit('update:visible', false)
+        if (res.ok) emit('success')
+        else emit('tribulation-fail', res.reason)
+      } else if (!isTribulationLevel(nextLv)) {
         const stage = realmStageOf(nextLv)
         const hp = Math.max(1000, player.maxHealth || 1000)
         const pct = Math.min(1.2, 0.3 + stage * 0.055)
@@ -103,7 +109,7 @@
           emit('fail')
         }
       } else {
-        // 天劫节点：已有“渡劫”按钮单独处理（并给劫后加成），此处直接通过
+        // 已渡此劫：直接完成突破
         emit('update:visible', false)
         emit('success')
       }
