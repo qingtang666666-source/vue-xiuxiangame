@@ -13,6 +13,7 @@ export default defineConfig({
   base: './',
   build: {
     minify: 'terser',
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: id => {
@@ -90,22 +91,27 @@ export default defineConfig({
         compact: true,
         stringArray: true,
         shuffleStringArray: true,
-        renameGlobals: false,
+        renameGlobals: true,
         selfDefending: true,
         debugProtection: true,
         debugProtectionInterval: 0,
         rotateStringArray: true,
         numbersToExpressions: true,
         deadCodeInjection: false,
-        stringArrayEncoding: ['base64'],
+        splitStrings: true,
+        splitStringsChunkLength: 8,
+        stringArrayEncoding: ['rc4'],
+        stringArrayWrappersCount: 2,
+        stringArrayWrappersChainedCalls: true,
+        transformObjectKeys: true,
         disableConsoleOutput: true,
-        stringArrayThreshold: 0.85,
+        stringArrayThreshold: 1,
         controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.6,
+        controlFlowFlatteningThreshold: 0.75,
         unicodeEscapeSequence: false,
         identifierNamesGenerator: 'hexadecimal'
       },
-      excludes: ['router.js'],
+      excludes: [],
       autoExcludeNodeModules: true
     })
   ],
