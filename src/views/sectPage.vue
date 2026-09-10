@@ -77,13 +77,20 @@
       </div>
     </div>
 
-    <div class="section-title" v-if="sect.position > 0">宗门任务 <span class="hint">完成后获得贡献度</span></div>
+    <div class="section-title" v-if="sect.position > 0">宗门任务 <span class="hint">今日剩余 {{ Math.max(0, missionState.limit - missionState.used) }}/{{ missionState.limit }} 次 · 完成后获得贡献度</span></div>
     <div class="mission-list" v-if="sect.position > 0">
       <div class="mission-row" v-for="m in sect.missions" :key="m.id">
         <div class="mission-name">{{ m.name }}</div>
         <div class="mission-desc">{{ m.desc }}</div>
         <div class="mission-req">需 {{ levelNames(m.reqLevel) }} · +{{ missionGain(m) }}贡献</div>
-        <el-button size="small" type="success" @click="doMission(m)">执行</el-button>
+        <el-button
+          size="small"
+          :type="missionDoneToday(m) ? 'info' : 'success'"
+          :disabled="missionDoneToday(m) || missionState.used >= missionState.limit"
+          @click="doMission(m)"
+        >
+          {{ missionDoneToday(m) ? '今日已完成' : missionState.used >= missionState.limit ? '今日次数已用完' : '执行' }}
+        </el-button>
       </div>
     </div>
 
@@ -166,6 +173,7 @@
     leaveSect,
     leaveSectCost,
     sectPrivileges,
+    sectMissionState,
     EXCHANGE,
     generateSectChoices,
     joinSect,
@@ -185,6 +193,8 @@
   const gradeInfo = computed(() => sectGradeInfo(player.value))
   const canGrade = computed(() => canUpgradeSectGrade(player.value))
   const leaveCost = computed(() => leaveSectCost(player.value))
+  const missionState = computed(() => sectMissionState(player.value))
+  const missionDoneToday = m => m.doneDate === missionState.value.today
   const privileges = computed(() => {
     const p = sectPrivileges(player.value)
     return [

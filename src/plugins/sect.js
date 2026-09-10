@@ -79,6 +79,7 @@ export const EXCHANGE = [
 
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const pick = arr => arr[Math.floor(Math.random() * arr.length)]
+const todayKey = () => new Date().toLocaleDateString('zh-CN')
 
 // 任务模板
 const MISSION_TEMPLATES = [
@@ -133,6 +134,12 @@ export const ensureSect = player => {
   }
   if (typeof player.sect.gradeIdx !== 'number') player.sect.gradeIdx = 6
   if (!player.sect.gradeName) player.sect.gradeName = SECT_GRADES[player.sect.gradeIdx]?.name || '六流'
+  if (!Array.isArray(player.sect.missions) || !player.sect.missions.length) {
+    const apt = ensureAptitude(player)
+    player.sect.missions = generateSect(player.reincarnation, apt.rootBone).missions
+  }
+  if (typeof player.sect.missionDate !== 'string') player.sect.missionDate = ''
+  if (typeof player.sect.missionDoneCount !== 'number') player.sect.missionDoneCount = 0
   return player.sect
 }
 
@@ -168,6 +175,16 @@ export const sectPrivileges = player => {
     canRecruit: idx >= 8,
     canManage: idx >= 10,
     canAnnounce: idx >= 12
+  }
+}
+
+export const sectMissionState = player => {
+  const sect = getSect(player)
+  const today = todayKey()
+  return {
+    today,
+    used: sect.missionDate === today ? sect.missionDoneCount || 0 : 0,
+    limit: sectPrivileges(player).missionLimit
   }
 }
 
@@ -240,6 +257,16 @@ export const completeMission = (player, missionId) => {
   const sect = getSect(player)
   const mission = (sect.missions || []).find(m => m.id === missionId)
   if (!mission) return { ok: false, reason: '任务不存在' }
+  const today = todayKey()
+  if (sect.missionDate !== today) {
+    sect.missionDate = today
+    sect.missionDoneCount = 0
+  }
+  if (mission.doneDate === today) return { ok: false, reason: '该任务今日已完成' }
+  const priv = sectPrivileges(player)
+  if ((sect.missionDoneCount || 0) >= priv.missionLimit) {
+    return { ok: false, reason: `今日宗门任务次数已用完（${priv.missionLimit} 次）` }
+  }
   if (player.level < mission.reqLevel) return { ok: false, reason: `实力不足(需${levelNames(mission.reqLevel)})` }
   // 战斗类任务：战力判定
   if (mission.combat) {
@@ -247,10 +274,11 @@ export const completeMission = (player, missionId) => {
     const monster = Math.floor(realmPower(mission.reqLevel) * 0.9)
     if (Math.random() > pp / (pp + monster)) return { ok: false, reason: '除妖失利，可再试' }
   }
-  const priv = sectPrivileges(player)
   const gain = Math.floor(mission.contrib * (1 + priv.contributionBonus / 100))
+  mission.doneDate = today
+  sect.missionDoneCount = (sect.missionDoneCount || 0) + 1
   sect.contribution = (sect.contribution || 0) + gain
-  return { ok: true, contrib: gain, baseContrib: mission.contrib, bonus: priv.contributionBonus }
+  return { ok: true, contrib: gain, baseContrib: mission.contrib, bonus: priv.contributionBonus, remaining: Math.max(0, priv.missionLimit - sect.missionDoneCount) }
 }
 
 // 贡献度兑换
