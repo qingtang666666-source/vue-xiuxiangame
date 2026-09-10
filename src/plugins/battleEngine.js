@@ -21,6 +21,15 @@ const clamp0 = v => Math.max(0, v)
 const clamp01 = v => Math.min(1, Math.max(0, v))
 const MP_REGEN_RATE = 0.04
 
+// 历战灵石奖励：中后期按界域递减，避免高境界单场收益膨胀
+export const ladderMoneyMult = level => {
+  const lv = Math.max(1, Math.floor(level || 1))
+  if (lv <= 45) return 1
+  if (lv <= 81) return 0.6
+  if (lv <= 117) return 0.4
+  return 0.25
+}
+
 // 战斗灵力池按本场可上阵神通的消耗总额生成：约等于一轮半技能量。
 // 不再跟随气血无限膨胀，避免后期灵力永远用不完。
 const battleMaxMp = abilities => {
@@ -504,7 +513,7 @@ const awardVictory = st => {
     // 仅计算奖励用于展示，不发放（探索/BOSS 有自己的奖励结算）
     st.reward = { exp: 0, money: 0, dan: 0, herb: 0, stone: 0, enemies: st.enemies.length }
     st.reward.exp = st.enemies.reduce((s, e) => s + Math.floor(e.level * e.level * 1), 0)
-    st.reward.money = st.enemies.reduce((s, e) => s + Math.floor(e.maxHp * 0.6), 0)
+    st.reward.money = st.enemies.reduce((s, e) => s + Math.floor(e.maxHp * 0.6 * (st.ladder ? ladderMoneyMult(e.level) : 1)), 0)
     st.reward.dan = st.enemies.reduce((s, e) => s + Math.max(1, Math.floor(e.level / 30)), 0)
     st.reward.herb = st.enemies.reduce((s, e) => s + Math.max(1, Math.floor(e.level / 15)), 0)
     st.reward.stone = st.enemies.reduce((s, e) => s + Math.max(1, Math.floor(e.level / 20)), 0)
@@ -513,7 +522,7 @@ const awardVictory = st => {
   let exp = 0; let money = 0; let dan = 0; let herb = 0; let stone = 0
   st.enemies.forEach(e => {
     exp += Math.floor(e.level * e.level * 3)
-    money += Math.floor(e.maxHp * 0.6)
+    money += Math.floor(e.maxHp * 0.6 * (st.ladder ? ladderMoneyMult(e.level) : 1))
     dan += Math.max(1, Math.floor(e.level / 30))
     herb += Math.max(1, Math.floor(e.level / 15))
     stone += Math.max(1, Math.floor(e.level / 20))

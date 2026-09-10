@@ -35,7 +35,7 @@ export const FORMATION_GROUPS = [
   { key: 'defense', name: '防御', icon: '🛡️', desc: '以固守之阵，护体如山。', costBase: 900, stems: ['金刚伏魔', '玄武镇岳', '玄龟御', '不动明王', '磐石定', '铁壁守', '万岳镇', '不动如山', '龙鳞御', '镇北', '不灭金身'], effect: lv => ({ defense: 0.006 * lv }) },
   { key: 'control', name: '控制', icon: '⛩️', desc: '以困杀之阵，缚敌无形。', costBase: 1500, stems: ['九宫困仙', '天罗地网', '八卦锁魂', '轩辕封印', '七星缚', '龙虎困', '六合锁', '八荒困', '周天禁', '万象缚', '大道禁'], effect: lv => ({ effectBoost: 0.0015 * lv }) },
   { key: 'cultivate', name: '修炼', icon: '🌀', desc: '以聚灵之阵，事半功倍。', costBase: 700, stems: ['聚灵', '太清周天', '大道鸿蒙', '混元养', '万灵汇', '周天流转', '紫气东来', '一气化三', '九九归元', '参悟', '大衍'], effect: lv => ({ cultivationSpeed: 0.005 * lv, offlineMult: 0.003 * lv }) },
-  { key: 'economy', name: '经济', icon: '💰', desc: '以聚宝之阵，财源广进。', costBase: 1800, stems: ['聚宝纳财', '万载养元', '金池', '招财进宝', '八荒聚宝', '五行生财', '无量聚财', '万宝归宗', '富甲天下', '聚灵纳福', '天地元宝'], effect: lv => ({ moneyMult: 0.005 * lv, offlineMult: 0.003 * lv }) },
+  { key: 'economy', name: '经济', icon: '💰', desc: '以聚宝之阵，财源广进。', costBase: 1800, stems: ['聚宝纳财', '万载养元', '金池', '招财进宝', '八荒聚宝', '五行生财', '无量聚财', '万宝归宗', '富甲天下', '聚灵纳福', '天地元宝'], effect: lv => ({ moneyMult: 0.0025 * lv, offlineMult: 0.003 * lv }) },
   { key: 'support', name: '辅助', icon: '🌿', desc: '以生生之阵，增益万象。', costBase: 2200, stems: ['回春生机', '青木长春', '万灵护体', '生生不息', '甘露', '九转回天', '凤凰涅槃', '起死回生', '万木逢春', '枯木逢春', '造化'], effect: lv => ({ effectBoost: 0.001 * lv, critical: 0.0012 * lv, dodge: 0.0012 * lv }) },
   { key: 'aura', name: '领域', icon: '🌀', desc: '以天地为域，杀伐与悟道并进。', costBase: 1400, stems: ['周天星斗', '天地法域', '万灵领域', '太初之界', '道域流转', '罗天', '周界', '化界', '寰宇', '无量界', '须弥'], effect: lv => ({ attack: 0.005 * lv, cultivationSpeed: 0.004 * lv }) },
   { key: 'guardian', name: '御守', icon: '🛡️', desc: '以不破之壁，御敌养身。', costBase: 1200, stems: ['铁卫', '玄甲', '金钟', '玉壁', '不动明王', '玄武背', '龙鳞甲', '镇岳', '护体', '金刚', '大衍'], effect: lv => ({ defense: 0.005 * lv, critical: 0.001 * lv }) },
@@ -137,7 +137,7 @@ export const formationStats = player => {
     })
   })
   // 阵法加成上限，避免 66 阵叠出天文数字
-  const CAPS = { attack: 4, defense: 4, critical: 0.5, dodge: 0.5, cultivationSpeed: 2.5, moneyMult: 2.5, offlineMult: 2.5, effectBoost: 0.6 }
+  const CAPS = { attack: 4, defense: 4, critical: 0.5, dodge: 0.5, cultivationSpeed: 2.5, moneyMult: 1.0, offlineMult: 2.5, effectBoost: 0.6 }
   Object.keys(acc).forEach(k => {
     if (CAPS[k] != null) acc[k] = Math.min(CAPS[k], acc[k])
   })
