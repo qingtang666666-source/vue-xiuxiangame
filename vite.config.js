@@ -7,7 +7,6 @@ import Components from 'unplugin-vue-components/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import { defineConfig } from 'vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import vitePluginBundleObfuscator from 'vite-plugin-bundle-obfuscator'
 
 export default defineConfig({
   base: './',
@@ -82,37 +81,6 @@ export default defineConfig({
         }),
         ElementPlusResolver()
       ]
-    }),
-    vitePluginBundleObfuscator({
-      log: false,
-      enable: true,
-      options: {
-        log: false,
-        compact: true,
-        stringArray: true,
-        shuffleStringArray: true,
-        renameGlobals: true,
-        selfDefending: true,
-        debugProtection: true,
-        debugProtectionInterval: 0,
-        rotateStringArray: true,
-        numbersToExpressions: true,
-        deadCodeInjection: false,
-        splitStrings: true,
-        splitStringsChunkLength: 8,
-        stringArrayEncoding: ['rc4'],
-        stringArrayWrappersCount: 2,
-        stringArrayWrappersChainedCalls: true,
-        transformObjectKeys: true,
-        disableConsoleOutput: true,
-        stringArrayThreshold: 1,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.75,
-        unicodeEscapeSequence: false,
-        identifierNamesGenerator: 'hexadecimal'
-      },
-      excludes: [],
-      autoExcludeNodeModules: true
     })
   ],
   resolve: {
