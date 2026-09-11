@@ -110,6 +110,7 @@
   import { touchOnline } from './plugins/offline'
   import { idleTick } from './plugins/alchemy'
   import { tickTechniques, techTaskResultMessage } from './plugins/technique'
+  import { migratePetStatsForPlayer } from './plugins/petSystem'
   import { tickActions } from './plugins/actionTimer'
   import { checkSetRewards } from './plugins/setReward'
   import ActionTimerBar from './components/ActionTimerBar.vue'
@@ -350,6 +351,8 @@
     checkAchievements(player.value, 'birth', player.value)
     ensureSect(player.value)
     ensureTime(player.value)
+    // 灵宠数值换成「战力标准」口径：把老存档里已经烤进玩家属性的旧数值改算过来
+    migratePetStatsForPlayer(player.value)
     setInterval(() => {
       // 结算游戏时间流逝与岁数
       syncTime(player.value)

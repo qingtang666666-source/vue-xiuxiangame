@@ -120,7 +120,14 @@
 <style scoped>
   .technique-drawer :deep(.el-drawer__body) {
     display: block;
-    height: 100%;
+    /* 关键：不要写 height:100%。
+       el-drawer 是「纵向 flex + overflow:hidden」的容器，body 定死 100% 会比
+       「抽屉高度 − 标题栏」更高，多出来的那一截被抽屉裁掉、还滚不到 —— 这正是底部显示不全的原因。
+       高度交给 flex 算（flex:1 + min-height:0），下面的 140px 安全边距才能真正滚出来。 */
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    box-sizing: border-box;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;

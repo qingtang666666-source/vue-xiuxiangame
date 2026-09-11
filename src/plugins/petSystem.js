@@ -1,18 +1,40 @@
 // 灵宠系统 —— 统一收服、培养、悟性、转生、出战与放生规则
+//
+// 战力口径（本次重做）：灵宠走玩家同一套「境界战力标准体系」，取标准的 0.1 倍，再乘品质倍率。
+//   · 标准：petPowerStandard(level, quality) = realmPower(level) × 0.1 × 品质倍率
+//   · 品质倍率：凡 1 / 灵 1.7 / 仙 2.9 / 神 5 / 圣 8.6（品质差距直接放大到 8.6 倍）
+//   · 攻/防/血按定位形状分摊这份战力预算；闪避/暴击按品质上限（凡 6% → 圣 35%）随境界成长
+//   · 悟性(后天增加的部分)与转生继续在标准之上加成
+//   界面上显示的「灵宠战力」= 它给玩家总体实力带来的增量（同一套权重，不会再出现两个口径）
 import { maxLv } from './game.js'
 import { applyPlayerAttribute } from './playerAttr.js'
-import equip from './equip.js'
+import { realmPower, POWER_SCALE } from './breakthroughGate.js'
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d)
 
 export const PET_QUALITIES = [
-  { key: 'mortal', name: '凡品', color: 'info', mult: 1.0 },
-  { key: 'spirit', name: '灵品', color: 'success', mult: 1.08 },
-  { key: 'immortal', name: '仙品', color: 'primary', mult: 1.16 },
-  { key: 'divine', name: '神品', color: 'warning', mult: 1.25 },
-  { key: 'saint', name: '圣品', color: 'danger', mult: 1.35 }
+  { key: 'mortal', name: '凡品', color: 'info', mult: 1 },
+  { key: 'spirit', name: '灵品', color: 'success', mult: 1.7 },
+  { key: 'immortal', name: '仙品', color: 'primary', mult: 2.9 },
+  { key: 'divine', name: '神品', color: 'warning', mult: 5 },
+  { key: 'saint', name: '圣品', color: 'danger', mult: 8.6 }
 ]
+
+// 灵宠战力标准：境界战力标准的这一比例（0.1 = 同境界玩家总体实力的一成）
+export const PET_STANDARD_RATIO = 0.1
+
+// 各定位的成长形状：攻/防/血按比例分摊战力预算，闪避/暴击按其占比取品质上限
+const PET_ROLE_SHAPE = {
+  attack: { attack: 1, health: 0.42, defense: 0.3, dodge: 0.55, critical: 1 },
+  defense: { attack: 0.42, health: 0.7, defense: 1, dodge: 0.55, critical: 0.55 },
+  health: { attack: 0.45, health: 1, defense: 0.55, dodge: 0.5, critical: 0.6 },
+  agility: { attack: 0.5, health: 0.4, defense: 0.28, dodge: 1, critical: 0.85 },
+  balance: { attack: 0.7, health: 0.65, defense: 0.62, dodge: 0.72, critical: 0.72 }
+}
+
+// 品质对应的闪避/暴击率上限：凡 5% → 圣 28%
+const PET_RATE_CAP = [0.05, 0.09, 0.14, 0.2, 0.28]
 
 export const PET_ROLES = {
   attack: { key: 'attack', name: '攻宠', icon: '⚔️', skill: '撕咬', desc: '出战时侧重攻击加成' },
@@ -52,6 +74,24 @@ export const petRoleOf = pet => {
   return PET_ROLES[key] || PET_ROLES.balanced
 }
 
+// 品质序号（0 凡品 ~ 4 圣品）
+export const petQualityIndex = pet => Math.max(0, PET_QUALITIES.indexOf(petQualityOf(pet)))
+
+// 灵宠战力标准：与玩家同一套境界战力标准体系，取 PET_STANDARD_RATIO 倍，再乘品质倍率
+export const petPowerStandard = (level, quality) => {
+  const lv = clamp(Math.floor(num(level, 1)), 1, maxLv)
+  const mult = num(quality && quality.mult, 1)
+  return Math.max(1, Math.floor(realmPower(lv) * PET_STANDARD_RATIO * mult))
+}
+
+// 灵宠评分：权重与 playerPowerScore 的实际属性部分完全一致
+//   （攻×4 / 防×2.4 / 血÷100×0.4 / 暴×3.6×100 / 闪×3.2×100，再乘 POWER_SCALE）
+// 这样「灵宠战力」就等于它给玩家总体实力带来的增量，两个口径不会再打架
+export const petStatsScore = s =>
+  Math.floor(
+    (num(s && s.dodge) * 320 + num(s && s.attack) * 4 + (num(s && s.health) / 100) * 0.4 + num(s && s.defense) * 2.4 + num(s && s.critical) * 360) * POWER_SCALE
+  )
+
 export const ensurePet = pet => {
   if (!pet || typeof pet !== 'object') return null
   if (!pet.id) pet.id = Date.now() + Math.floor(Math.random() * 1000)
@@ -75,21 +115,29 @@ export const ensurePet = pet => {
 export const petStats = pet => {
   const p = pet?.initial || {}
   const quality = petQualityOf(pet)
+  const qi = Math.max(0, PET_QUALITIES.indexOf(quality))
+  const shape = PET_ROLE_SHAPE[petRoleOf(pet).key] || PET_ROLE_SHAPE.balance
   const level = clamp(Math.floor(num(pet?.level, 1)), 1, maxLv)
   const rootGain = Math.max(0, Math.floor(num(pet?.rootBone, 1)) - Math.floor(num(p.rootBone, 1)))
   const reincarnation = Math.max(0, Math.floor(num(pet?.reincarnation)))
-  const levelFactor = 1 + (level - 1) * 0.025 * quality.mult
-  const rootFactor = 1 + rootGain * 0.03
-  const reincFactor = 1 + reincarnation * 0.3
-  const mult = levelFactor * rootFactor * reincFactor
-  const dodgeFactor = 1 + (level - 1) * 0.003 + rootGain * 0.015 + reincarnation * 0.04
-  const critFactor = 1 + (level - 1) * 0.004 + rootGain * 0.02 + reincarnation * 0.05
+  // 目标战力：境界标准 × 0.1 × 品质倍率，再乘悟性/转生成长
+  const target = petPowerStandard(level, quality) * (1 + rootGain * 0.03) * (1 + reincarnation * 0.3)
+  // 闪避/暴击是「率」：随境界与悟性/转生成长，按品质上限封顶（不参与体量放大）
+  const rateCap = PET_RATE_CAP[qi] || PET_RATE_CAP[0]
+  const rateGrowth = Math.min(1, 0.3 + (level - 1) / 110) * (1 + rootGain * 0.01 + reincarnation * 0.06)
+  const dodge = clamp(rateCap * shape.dodge * rateGrowth, 0, 0.45)
+  const critical = clamp(rateCap * shape.critical * rateGrowth, 0, 0.45)
+  // 剩下的战力预算全给攻/防/血，按定位形状分摊
+  const bodyBudget = Math.max(1, target - petStatsScore({ dodge, critical }))
+  const body = { attack: 100 * shape.attack, health: 400 * shape.health, defense: 12 * shape.defense }
+  const bodyScore = petStatsScore(body)
+  const k = bodyScore > 0 ? bodyBudget / bodyScore : 1
   return {
-    attack: Math.floor(num(p.attack) * mult),
-    health: Math.floor(num(p.health) * mult),
-    defense: Math.floor(num(p.defense) * mult),
-    dodge: clamp(num(p.dodge) * dodgeFactor, 0, 0.5),
-    critical: clamp(num(p.critical) * critFactor, 0, 0.5)
+    attack: Math.max(1, Math.floor(body.attack * k)),
+    health: Math.max(1, Math.floor(body.health * k)),
+    defense: Math.max(1, Math.floor(body.defense * k)),
+    dodge,
+    critical
   }
 }
 
@@ -97,14 +145,11 @@ export const syncPetStats = pet => {
   if (!pet) return null
   const s = petStats(pet)
   Object.assign(pet, s)
-  pet.score = equip.calculateEquipmentScore(s.dodge, s.attack, s.health, s.critical, s.defense)
+  pet.score = petStatsScore(s)
   return pet
 }
 
-export const petPowerScore = pet => {
-  const s = petStats(pet)
-  return Math.round(equip.calculateEquipmentScore(s.dodge, s.attack, s.health, s.critical, s.defense))
-}
+export const petPowerScore = pet => petStatsScore(petStats(pet))
 
 export const petUpgradeCost = (pet, { reincarnate = false } = {}) => {
   if (!pet) return 0
@@ -135,6 +180,35 @@ export const syncPetForPlayer = (player, pet) => {
   syncPetStats(p)
   if (isActive(player, p)) applyPetDelta(player, oldStats, petStats(p))
   return p
+}
+
+// 旧档迁移：灵宠数值改成「战力标准」口径后，把已经生效在玩家属性里的旧数值换算成新口径。
+// 不迁移的话，老存档里出战灵宠的加成会一直停在旧口径（玩家属性里已经烤进去的旧值不会被重算）。
+export const migratePetStatsForPlayer = player => {
+  if (!player || typeof player !== 'object') return 0
+  const owned = Array.isArray(player.pets) ? player.pets : []
+  owned.forEach(p => syncPetStats(p))
+  const active = player.pet
+  if (!active || !active.id) return 0
+  // 存档里存的就是当时真正加到玩家身上的那份数值
+  const stored = {
+    attack: Math.floor(num(active.attack)),
+    health: Math.floor(num(active.health)),
+    defense: Math.floor(num(active.defense)),
+    dodge: num(active.dodge),
+    critical: num(active.critical)
+  }
+  const fresh = petStats(ensurePet(active))
+  const dirty =
+    stored.attack !== fresh.attack ||
+    stored.health !== fresh.health ||
+    stored.defense !== fresh.defense ||
+    Math.abs(stored.dodge - fresh.dodge) > 1e-9 ||
+    Math.abs(stored.critical - fresh.critical) > 1e-9
+  if (!dirty) return 0
+  applyPetDelta(player, stored, fresh)
+  syncPetStats(active)
+  return 1
 }
 
 export const upgradePet = (player, pet, { reincarnate = false } = {}) => {

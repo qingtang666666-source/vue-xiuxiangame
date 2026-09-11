@@ -254,5 +254,9 @@
   .ops { display: flex; flex-wrap: wrap; gap: 6px; }
   .tpbar2 { margin-bottom: 6px; }
   .outer-actions { margin-top: 16px; display: flex; justify-content: center; }
-  @media only screen and (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  @media only screen and (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    /* 手机端底部固定导航会压住最后一排卡片，这里留出可滚出来的收尾余量 */
+    .tech { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  }
 </style>

@@ -13,17 +13,19 @@ import { insightDiscount } from './insight.js'
 
 export const TECH_GRADES = [
   { g: 1, name: '黄阶', q: 'info', mult: 1 },
-  { g: 2, name: '玄阶', q: 'success', mult: 1.5 },
-  { g: 3, name: '地阶', q: 'primary', mult: 2.2 },
-  { g: 4, name: '天阶', q: 'purple', mult: 3.5 },
-  { g: 5, name: '仙阶', q: 'pink', mult: 5.5 },
-  { g: 6, name: '帝阶', q: 'warning', mult: 11 },
-  { g: 7, name: '神阶', q: 'danger', mult: 17 },
-  { g: 8, name: '灵阶', q: 'cyan', mult: 26 },
-  { g: 9, name: '皇阶', q: 'orange', mult: 40 },
-  { g: 10, name: '圣阶', q: 'gold', mult: 62 },
-  { g: 11, name: '道阶', q: 'legendary', mult: 100 }
+  { g: 2, name: '玄阶', q: 'success', mult: 1.8 },
+  { g: 3, name: '地阶', q: 'primary', mult: 3.25 },
+  { g: 4, name: '天阶', q: 'purple', mult: 5.85 },
+  { g: 5, name: '仙阶', q: 'pink', mult: 10.5 },
+  { g: 6, name: '帝阶', q: 'warning', mult: 19 },
+  { g: 7, name: '神阶', q: 'danger', mult: 34 },
+  { g: 8, name: '灵阶', q: 'cyan', mult: 61 },
+  { g: 9, name: '皇阶', q: 'orange', mult: 110 },
+  { g: 10, name: '圣阶', q: 'gold', mult: 198 },
+  { g: 11, name: '道阶', q: 'legendary', mult: 357 }
 ]
+// 品阶倍率曲线：逐阶 ×1.8（旧版 1→100 只到 1.5~1.6 倍一阶，品阶差距太小）
+// 结果：黄 1 / 玄 1.8 / 地 3.25 / 天 5.85 / 仙 10.5 / 帝 19 / 神 34 / 灵 61 / 皇 110 / 圣 198 / 道 357
 
 // 功法稀有度（越高越稀有，参悟成功率越低、获取途径越少）
 export const RARITIES = [
