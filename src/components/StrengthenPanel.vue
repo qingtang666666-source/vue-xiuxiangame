@@ -5,6 +5,7 @@
     @update:model-value="v => emit('update:visible', v)"
     direction="rtl"
     class="strengthen"
+    size="min(440px, 100vw)"
   >
     <div class="strengthen-box" v-if="info && info.name">
       <el-radio-group v-model="activeMode" size="small" class="mode-tabs">
@@ -163,10 +164,24 @@
 </script>
 
 <style scoped>
+  /* 抽屉（尤其手机端 30% 默认宽度）要能装下整套强化面板；
+     body 交给 flex 算高度并给底部留安全区，最下面的操作区才滚得出来 */
+  .strengthen :deep(.el-drawer__body) {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    box-sizing: border-box;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  }
   .strengthen-box {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
   }
   .mode-tabs { align-self: flex-start; }
   .gain-box {
@@ -195,6 +210,13 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    /* 关键：操作区常驻底部，手机端不用滚到底也能看到并点到「点击强化」 */
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 10px 0;
+    background: var(--el-bg-color);
+    border-top: 1px solid var(--el-border-color-lighter);
   }
   .repair-box {
     display: flex;
@@ -204,6 +226,9 @@
     padding: 10px 12px;
     border-radius: 8px;
     background: rgba(214, 69, 69, 0.12);
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
   }
   .repair-tip { font-size: 13px; color: var(--el-color-danger); }
 </style>

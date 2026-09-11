@@ -5,7 +5,7 @@
     @update:model-value="v => emit('update:visible', v)"
     direction="rtl"
     class="heroBoard"
-    size="420px"
+    size="min(420px, 100vw)"
   >
     <div class="hb">
       <div class="hb-top">
@@ -26,7 +26,7 @@
           <span class="hb-lv">{{ h.realm }}</span>
           <el-tooltip
             v-if="!h.isPlayer"
-            :content="`装备：${h.gear} +${h.strengthen}（${h.gradeName}）\n神通：${h.divine || '无'}`"
+            :content="`装备：${h.gear} +${h.strengthen}（${h.gradeName}）\n功法：${h.tech || '无'}\n神通：${h.divine || '无'}\n灵宠：${h.pet || '无'}`"
             placement="top"
             popper-class="hb-tip"
           >

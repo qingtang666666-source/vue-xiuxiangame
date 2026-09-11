@@ -4,7 +4,8 @@ import { playerPowerScore, enemyStatsForPower } from './breakthroughGate'
 import { levelNames, gradeMultiplier } from './game'
 import { gearRealmMult } from './craft'
 import { FORMATIONS } from './formation'
-import { TECHNIQUES, techGradeForLevel } from './technique'
+import { TECHNIQUES, TECH_GRADES, techGradeForLevel } from './technique'
+import { petStats, petPowerScore, petQualityOf } from './petSystem'
 
 export const HERO_COUNT = 300
 // 豪杰基础属性缩放：让豪杰在同系统加成下保持可追赶，而不是靠裸装数值碾压
@@ -58,16 +59,78 @@ const HERO_DIVINES = [
 
 export const heroDivineOfRank = rank => {
   const r = clampRank(rank)
+  const lv = heroLevelOfRank(r)
+  const ratio = (HERO_COUNT - r + 1) / HERO_COUNT
   const base = HERO_DIVINES[(r - 1) % HERO_DIVINES.length]
+  // 与玩家同源：神通的威力随「功法品阶 + 重数」成长（黄阶≈×1，道阶≈×2）
+  const gate = techGradeForLevel(lv)
+  const gMult = TECH_GRADES[gate - 1]?.mult || 1
+  const chapter = Math.max(1, Math.round(20 * ratio))
+  const gradeScale = Math.pow(gMult, 0.12)
   return {
     id: `hero-divine-${r}`,
     name: base.name,
     kind: base.kind,
-    power: base.power,
+    power: Math.min(4.5, Math.round(base.power * gradeScale * (1 + chapter * 0.04) * 100) / 100),
     mpCost: base.mpCost,
     chance: base.chance,
-    desc: base.desc
+    desc: base.desc,
+    grade: gate,
+    gradeName: TECH_GRADES[gate - 1]?.name || '',
+    chapter
   }
+}
+
+// ---- 豪杰灵宠：与玩家同源（同一套「境界战力标准 ×0.1 × 品质」），随排名提升品质与悟性 ----
+const HERO_PET_BRACKETS = [
+  { maxRank: 20, qi: 4, root: 47, qualityName: '圣品' },
+  { maxRank: 60, qi: 3, root: 40, qualityName: '神品' },
+  { maxRank: 120, qi: 2, root: 30, qualityName: '仙品' },
+  { maxRank: 200, qi: 1, root: 20, qualityName: '灵品' },
+  { maxRank: HERO_COUNT, qi: 0, root: 10, qualityName: '凡品' }
+]
+const HERO_PET_NAMES = [
+  ['灵狐', '灰狼', '石龟'],
+  ['青鸾', '火麟兽', '玄龟'],
+  ['九尾灵狐', '紫电麒麟', '玄武幼崽'],
+  ['烛龙', '白泽', '鲲鹏'],
+  ['太初祖龙', '混沌神凰', '鸿蒙麒麟']
+]
+const HERO_PET_ROLES = ['attack', 'defense', 'health', 'agility', 'balance']
+
+const _heroPetCache = new Map()
+export const heroPetOfRank = rank => {
+  const r = clampRank(rank)
+  if (_heroPetCache.has(r)) return _heroPetCache.get(r)
+  const lv = heroLevelOfRank(r)
+  const ratio = (HERO_COUNT - r + 1) / HERO_COUNT
+  const bracket = HERO_PET_BRACKETS.find(x => r <= x.maxRank) || HERO_PET_BRACKETS[HERO_PET_BRACKETS.length - 1]
+  const names = HERO_PET_NAMES[bracket.qi]
+  // 悟性：基础值决定品质，后天再按排名涨一些（与玩家培养出来的悟性同口径）
+  const pet = {
+    name: names[(r * 7) % names.length],
+    level: lv,
+    role: HERO_PET_ROLES[(r * 3) % HERO_PET_ROLES.length],
+    rootBone: bracket.root + Math.round(6 * ratio),
+    reincarnation: Math.min(3, Math.round(3 * ratio)),
+    initial: { attack: 100, health: 400, defense: 12, dodge: 0.005, critical: 0.005, rootBone: bracket.root }
+  }
+  const stats = petStats(pet)
+  const quality = petQualityOf(pet)
+  const out = {
+    name: pet.name,
+    level: lv,
+    role: pet.role,
+    rootBone: pet.rootBone,
+    reincarnation: pet.reincarnation,
+    quality,
+    qualityName: quality.name,
+    stats,
+    power: petPowerScore(pet),
+    label: `${quality.name}灵宠【${pet.name}】`
+  }
+  _heroPetCache.set(r, out)
+  return out
 }
 
 // 确定性姓名（不随刷新变化）
@@ -172,15 +235,18 @@ const heroPlayerOfRank = rank => {
   const stage = Math.min(15, Math.floor((lv - 1) / 9))
   const naLevel = Math.max(1, Math.round((5 + stage * 3) * Math.max(0.2, ratio)))
   const affixCount = Math.max(0, Math.round(6 * ratio))
+  // 灵宠加成和玩家一样直接并入三维（玩家佩戴灵宠也是直接加到属性上的）
+  const pet = heroPetOfRank(r)
   const hero = {
     level: lv,
-    attack: gear.attack + pointAtk * heroPointBonus(lv, reincarnation, 'attack'),
-    defense: gear.defense + pointDef * heroPointBonus(lv, reincarnation, 'defense'),
-    maxHealth: gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health'),
-    health: gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health'),
-    critical: gear.critical,
-    dodge: gear.dodge,
+    attack: Math.floor(gear.attack + pointAtk * heroPointBonus(lv, reincarnation, 'attack') + pet.stats.attack),
+    defense: Math.floor(gear.defense + pointDef * heroPointBonus(lv, reincarnation, 'defense') + pet.stats.defense),
+    maxHealth: Math.floor(gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health') + pet.stats.health),
+    health: Math.floor(gear.health + pointHp * heroPointBonus(lv, reincarnation, 'health') + pet.stats.health),
+    critical: Math.min(0.6, gear.critical + pet.stats.critical),
+    dodge: Math.min(0.5, gear.dodge + pet.stats.dodge),
     reincarnation,
+    pet: { name: pet.name, qualityName: pet.qualityName, level: pet.level, role: pet.role, power: pet.power },
     props: {},
     equipment: {},
     inventory: [],
@@ -251,6 +317,7 @@ export const heroEnemy = (rank, name) => {
   const lv = heroLevelOfRank(r)
   const gear = heroEquipmentStats(r)
   const divine = heroDivineOfRank(r)
+  const pet = heroPetOfRank(r)
   const st = enemyStatsForPower(heroPowerOfRank(r), 1.0)
   const s2 = Math.min(15, Math.max(0, Math.floor((lv - 1) / 9)))
   return {
@@ -259,6 +326,8 @@ export const heroEnemy = (rank, name) => {
     gear: gear.gear,
     strengthen: gear.strengthen,
     divine: divine.name,
+    divinePower: divine.power,
+    pet: pet.label,
     abilities: [divine],
     skillChance: r <= 20 ? 0.55 : r <= 90 ? 0.44 : 0.34,
     health: st.health,
@@ -266,8 +335,8 @@ export const heroEnemy = (rank, name) => {
     hp: st.health,
     attack: st.attack,
     defense: st.defense,
-    critical: Math.min(0.28, gear.critical + s2 * 0.001),
-    dodge: gear.dodge
+    critical: Math.min(0.6, gear.critical + s2 * 0.001 + pet.stats.critical),
+    dodge: Math.min(0.5, gear.dodge + pet.stats.dodge)
   }
 }
 
@@ -278,6 +347,8 @@ export const generateHeroes = () => {
   const out = []
   for (let i = 1; i <= HERO_COUNT; i++) {
     const gear = heroEquipmentStats(i)
+    const divine = heroDivineOfRank(i)
+    const pet = heroPetOfRank(i)
     out.push({
       id: `hero-${i}`,
       rank: i,
@@ -287,7 +358,10 @@ export const generateHeroes = () => {
       gear: gear.gear,
       strengthen: gear.strengthen,
       gradeName: gear.gradeName,
-      divine: heroDivineOfRank(i).name,
+      divine: `${divine.name}（${divine.gradeName} ${divine.chapter}重 ×${divine.power}）`,
+      tech: `${divine.gradeName}功法 · ${divine.chapter}重`,
+      pet: pet.label,
+      petPower: pet.power,
       power: heroPowerOfRank(i)
     })
   }
