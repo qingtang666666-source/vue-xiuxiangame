@@ -178,3 +178,13 @@
 - 每年 **9 月 9 日**（现实日期）登录可领取：灵石 100,000、筹码 50,000。
 - 文件：`src/plugins/anniversary.js`；存档字段 `player.anniversaryClaims` 记录已领取年份，每年仅一次。
 - 首页会显示“正式版本纪念日”横幅，点击领取；桌面端与手机端均有入口。
+
+## 十四、财富上限体检（灵石 + 筹码 ≤ 50 亿）
+
+- 规则：`灵石(money) + 筹码(chips)` 合计超过 **50 亿**时，多出的部分按异常数据**直接清空**；
+  静默处理，不给玩家任何提示。
+- 扣减顺序：先扣筹码，筹码扣到 0 还不够再扣灵石（尽量不动养成资源）。
+- 文件：`src/plugins/wealthGuard.js`（`WEALTH_TOTAL_CAP` / `wealthTotal` / `trimWealth`）。
+- 自动触发三处：读档后（`persistence.loadState`）、导入存档时（`saveVault.importSaveText`）、
+  每次落盘前（`persistence.persistNow`）——脏数据既进不来也写不进存档。
+- 验证：`node --import ./tools/preload.mjs tools/check-vault.mjs`（末尾“财富上限”段）。

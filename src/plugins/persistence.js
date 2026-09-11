@@ -6,6 +6,7 @@
 
 import { ElNotification } from 'element-plus'
 import { seal, open, writeVault, readVault, backupSave, wipeVault, restoreBackup, listBackups, dropBackups, exportSaveText, importSaveText, auditPlayer, SAVE_KEY } from './saveVault.js'
+import { trimPlayerWealth, trimWealth } from './wealthGuard.js'
 
 export const SAVE_VERSION = 2
 export {
@@ -57,6 +58,8 @@ const warnSaveIssue = nearQuota => {
 const persistNow = store => {
   if (dead) return
   try {
+    // 落盘前体检：灵石 + 筹码合计超限的部分按异常数据清空，脏数据不写进存档
+    trimWealth(store && store.player && store.player.props)
     let raw
     try {
       if (store?.player) store.player.lastSaveAt = Date.now()
@@ -147,6 +150,8 @@ const loadState = () => {
   if (player && typeof player === 'object') {
     player.backpackCapacity = Math.max(player.backpackCapacity || 0, 1000)
     if (typeof data.at === 'number') player.lastSaveAt = Math.max(player.lastSaveAt || 0, data.at)
+    // 读档体检：灵石 + 筹码合计超限的部分按异常数据直接清空
+    trimPlayerWealth(player)
   }
   return { boss: data.boss, player: migratePlayer(player) }
 }
