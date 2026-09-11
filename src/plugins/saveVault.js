@@ -140,6 +140,8 @@ export const auditPlayer = player => {
 
 // ---- localStorage 读写（签名版）----
 export const writeVault = (boss, player) => {
+  // 落盘前最后一道闸：不管调用方是谁，超限的灵石/筹码都不会被写进存档
+  if (player && typeof player === 'object') trimPlayerWealth(player)
   const text = seal({ v: 2, at: Date.now(), boss, player })
   localStorage.setItem(SAVE_KEY, text)
   return text
@@ -150,6 +152,9 @@ export const readVault = () => {
   if (!raw) return null
   try {
     const data = open(raw)
+    // 读档即体检：灵石 + 筹码合计超限的部分按异常数据清空
+    // 放在这里是为了让所有读档入口都生效 —— 旧档升级、回档、GM 读档一律过这一关
+    if (data && data.player) trimPlayerWealth(data.player)
     return { ...data, legacy: data.v === 1 }
   } catch (e) {
     // 校验失败：把原始档另存一份，避免“读坏档 → 顺手覆盖 → 真档没了”
@@ -186,13 +191,17 @@ export const listBackups = () =>
 export const restoreBackup = key => {
   const raw = localStorage.getItem(key)
   if (!raw) return { ok: false, reason: '备份不存在' }
+  let data
   try {
-    open(raw)
+    data = open(raw)
   } catch (e) {
     return { ok: false, reason: String(e && e.message ? e.message : e).split(':')[1] || '备份校验失败' }
   }
   backupSave('before-restore')
-  localStorage.setItem(SAVE_KEY, raw)
+  // 回档同样要过财富体检：超限的部分清掉后再重新签名落盘，避免“回档把脏数据带回来”
+  const trimmed = data && data.player ? trimPlayerWealth(data.player) : 0
+  const out = trimmed > 0 ? seal({ v: 2, at: Date.now(), boss: data.boss, player: data.player }) : raw
+  localStorage.setItem(SAVE_KEY, out)
   return { ok: true }
 }
 

@@ -1,5 +1,6 @@
 ﻿import { setupPersistence, writeVault, readVault, seal, open, backupSave, listBackups, restoreBackup, wipeSave, stopPersistence, flushPersistence, exportSaveText, importSaveText, SAVE_KEY } from '@/plugins/persistence.js'
 import crypto from '@/plugins/crypto.js'
+import { BACKUP_PREFIX } from '@/plugins/saveVault.js'
 
 const mkPlayer = over => ({
   level: 60, name: '林青', attack: 36000, defense: 12000, maxHealth: 3600000, health: 3600000,
@@ -81,6 +82,27 @@ setTimeout(() => {
       flushPersistence(s7)          // 模拟卸载钩子
       setTimeout(() => {
         console.log('   删档后有档:', !!localStorage.getItem(SAVE_KEY), '(应为 false)', '| 备份留存:', listBackups().length)
+
+        console.log('\n== 8. 旧档 / 回档 同样要过财富体检（灵石+筹码 ≤ 50 亿）==')
+        // 模拟“改过的 / 很旧的”超限存档：直接 seal 写 localStorage，绕过写入侧体检
+        localStorage.clear()
+        const overCapSave = seal({ v: 2, at: Date.now(), boss: { name: '凶兽' }, player: mkPlayer({ name: '改档佬', props: { money: 8e9, chips: 3e8 } }) })
+        localStorage.setItem(SAVE_KEY, overCapSave)
+        const s8 = mkStore(mkPlayer({ name: '默认' }))
+        setupPersistence(s8)
+        console.log('   读档后:', JSON.stringify({ money: s8.player.props.money, chips: s8.player.props.chips }), '(应为 5000000000 / 0)')
+
+        // 回档同理：备份里的超限数据不该被带回来
+        localStorage.setItem(BACKUP_PREFIX + 'manual-overcap', overCapSave)
+        const rb1 = restoreBackup(BACKUP_PREFIX + 'manual-overcap')
+        const back1 = readVault()
+        console.log('   回档:', rb1.ok, '| 回档后:', JSON.stringify({ money: back1.player.props.money, chips: back1.player.props.chips }), '(应为 5000000000 / 0)')
+
+        // GM 刷过的档（wealthExempt）回档后依旧豁免
+        localStorage.setItem(BACKUP_PREFIX + 'manual-gm', seal({ v: 2, at: Date.now(), boss: { name: '凶兽' }, player: mkPlayer({ name: 'GM', wealthExempt: true, props: { money: 8e9, chips: 3e8 } }) }))
+        const rb2 = restoreBackup(BACKUP_PREFIX + 'manual-gm')
+        const back2 = readVault()
+        console.log('   GM 豁免回档:', rb2.ok, '| 回档后:', JSON.stringify({ money: back2.player.props.money, chips: back2.player.props.chips }), '(应保持 8000000000 / 300000000)')
       }, 1200)
     }, 1000)
   }, 1000)

@@ -185,8 +185,10 @@
   静默处理，不给玩家任何提示。
 - 扣减顺序：先扣筹码，筹码扣到 0 还不够再扣灵石（尽量不动养成资源）。
 - 文件：`src/plugins/wealthGuard.js`（`WEALTH_TOTAL_CAP` / `wealthTotal` / `trimWealth`）。
-- 自动触发三处：读档后（`persistence.loadState`）、导入存档时（`saveVault.importSaveText`）、
-  每次落盘前（`persistence.persistNow`）——脏数据既进不来也写不进存档。
+- 自动触发（读写两侧都堵）：**读** —— `saveVault.readVault`（所有读档入口的总口子，旧档升级/回档/GM 读档都走它）、
+  `persistence.loadState`；**写** —— `saveVault.importSaveText`（导入）、`saveVault.restoreBackup`（回档，
+  清完还会重新签名落盘）、`saveVault.writeVault` 与 `persistence.persistNow`（落盘）。
+  也就是说：旧存档、导入的存档、回档回来的备份，全都逃不掉，脏数据既进不来也写不出去。
 - 例外：GM 控制台刷出来的灵石/筹码不算异常数据。在 GM 页对灵石或筹码点「加 / 设为」时会自动给玩家
   打上 `player.wealthExempt = true`，带这个标记的档跳过体检；GM 页「资源 → 财富免检」开关可随时关掉它。
 - 验证：`node --import ./tools/preload.mjs tools/check-vault.mjs`（末尾“财富上限”段）。
