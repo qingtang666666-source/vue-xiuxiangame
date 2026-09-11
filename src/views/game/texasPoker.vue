@@ -80,6 +80,7 @@
       <p class="result-net" v-if="state.humanNet !== 0">
         {{ state.humanNet > 0 ? '你赢 ' + state.humanNet : '你输 ' + -state.humanNet }} 筹码
       </p>
+      <p class="result-tax" v-if="roundTax > 0">对局抽税 10%：-{{ roundTax }} 筹码（实收 {{ state.humanNet - roundTax }}）</p>
       <el-button type="primary" @click="startRound">再来一局</el-button>
       <el-button @click="resetToIdle">换个模式</el-button>
     </div>
@@ -92,6 +93,7 @@
   import { useMainStore } from '@/plugins/store'
   import { createPokerEngine, bestName } from './pokerEngine'
   import { cardName, evalSeven } from './pokerUtil'
+  import { taxOnWin } from '@/plugins/gamblingTax'
 
   const store = useMainStore()
   const player = ref(store.player)
@@ -117,6 +119,8 @@
   const inPlay = computed(() => state.value && (state.value.phase === 'betting' || state.value.phase === 'runchoice'))
 
   const human = computed(() => (state.value ? state.value.players[0] : null))
+  // 本局应收的筹码税（只对净赢的部分收 10%）
+  const roundTax = computed(() => taxOnWin(state.value && state.value.humanNet))
   const humanActable = computed(() => human.value && !human.value.folded && !human.value.allIn)
   const humanToCall = computed(() => (human.value && state.value ? state.value.currentBet - human.value.streetBet : 0))
   const humanBestName = computed(() => {
@@ -184,7 +188,9 @@
     if (state.value && state.value.phase === 'over' && !settled.value) {
       settled.value = true
       const net = state.value.humanNet
-      emit('game-result', { success: net >= 0, reward: Math.abs(net), currency: 'chips' })
+      const tax = taxOnWin(net)
+      // 上报税后金额，税在结算这一步就扣掉了（赢钱局：入账 = 净赢 − 税）
+      emit('game-result', { success: net >= 0, reward: Math.abs(net) - tax, currency: 'chips', tax })
     }
   }
 
@@ -392,6 +398,11 @@
 
   .result-net {
     color: #e6a23c;
+  }
+
+  .result-tax {
+    color: #909399;
+    font-size: 13px;
   }
 
   .log {

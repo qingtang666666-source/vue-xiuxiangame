@@ -187,4 +187,14 @@
 - 文件：`src/plugins/wealthGuard.js`（`WEALTH_TOTAL_CAP` / `wealthTotal` / `trimWealth`）。
 - 自动触发三处：读档后（`persistence.loadState`）、导入存档时（`saveVault.importSaveText`）、
   每次落盘前（`persistence.persistNow`）——脏数据既进不来也写不进存档。
+- 例外：GM 控制台刷出来的灵石/筹码不算异常数据。在 GM 页对灵石或筹码点「加 / 设为」时会自动给玩家
+  打上 `player.wealthExempt = true`，带这个标记的档跳过体检；GM 页「资源 → 财富免检」开关可随时关掉它。
 - 验证：`node --import ./tools/preload.mjs tools/check-vault.mjs`（末尾“财富上限”段）。
+
+## 十五、赌局赢钱税（炸金花 / 德州扑克 10%）
+
+- 规则：**炸金花**与**德州扑克**单局结束后，按本局净赢（`humanNet`）征收 **10%** 筹码税，输钱/平局不收。
+- 结算：税额在下发奖励那一步直接扣掉，玩家实际入账 = 净赢 − 税（向下取整），无需额外扣款流程。
+- 文件：`src/plugins/gamblingTax.js`（`GAMBLING_TAX_RATE` / `taxOnWin` / `netAfterTax`）；
+  结算点 `zhaJinHua.vue`、`texasPoker.vue` 的 `settleIfOver`，牌桌结果区会显示“对局抽税 10%”一行。
+- 只影响这两款玩法：斗地主、骰子、石头剪刀布等不受影响。

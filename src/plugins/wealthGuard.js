@@ -7,8 +7,12 @@
 // 触发时机（三处，都是自动的）：
 //   1) 读档后立刻体检一次  —— persistence.loadState / saveVault.importSaveText
 //   2) 每次落盘前再体检一次 —— persistence.persistNow（自动保存前兜底，脏数据写不进存档）
+//
+// 例外：GM 控制台刷出来的灵石/筹码不算异常数据 —— 刷取时会给玩家打上 `wealthExempt`，
+// 带这个标记的档跳过体检（GM 页可以手动关掉标记，恢复正常体检）。
 
 export const WEALTH_TOTAL_CAP = 5_000_000_000 // 50 亿
+export const WEALTH_EXEMPT_FIELD = 'wealthExempt'
 
 // 只取有效计数：非数字/负数/NaN 一律按 0 参与计算（不主动改写，只用于比较）
 const toCount = v => {
@@ -40,4 +44,11 @@ export const trimWealth = props => {
 }
 
 /** 玩家对象级别的体检入口（读档/导入时直接用） */
-export const trimPlayerWealth = player => trimWealth(player && player.props)
+export const trimPlayerWealth = player => {
+  if (!player || typeof player !== 'object') return 0
+  if (player[WEALTH_EXEMPT_FIELD]) return 0
+  return trimWealth(player.props)
+}
+
+/** 该玩家是否豁免财富体检（GM 刷的灵石/筹码） */
+export const wealthExempt = player => !!(player && player[WEALTH_EXEMPT_FIELD])

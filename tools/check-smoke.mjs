@@ -1,5 +1,6 @@
 ﻿import { setRewardSummary, checkSetRewards, setRewardStatus } from '@/plugins/setReward.js'
 import { canCraft, recipeCostList, RECIPES } from '@/plugins/alchemy.js'
+import { taxOnWin, netAfterTax, GAMBLING_TAX_RATE } from '@/plugins/gamblingTax.js'
 import { TALISMANS, canCraftTalisman } from '@/plugins/talisman.js'
 import { FORMATIONS, formationStats, canUpgradeFormation } from '@/plugins/formation.js'
 import { craftTierMax, craftLevelOfTier } from '@/plugins/craft.js'
@@ -17,3 +18,4 @@ console.log('道阶阵:', form.name, '| 需境界', form.minLevel, '| 0级升1�
 console.log('阵法加成(空):', JSON.stringify(formationStats(p)))
 console.log('可炼上限(道祖, 越级2):', craftTierMax(p), '| 各阶解锁:', Array.from({length:11}, (_, i) => craftLevelOfTier(i + 1)).join(','))
 console.log('丹方清单样例:', JSON.stringify(recipeCostList(p, pill.id)))
+console.log('赌局赢钱税:', GAMBLING_TAX_RATE, '| 赢 1000 抽', taxOnWin(1000), '| 输 500 抽', taxOnWin(-500), '| 赢 999 税后', netAfterTax(999))

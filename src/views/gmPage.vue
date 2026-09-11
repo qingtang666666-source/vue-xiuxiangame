@@ -14,6 +14,7 @@
         <div class="row"><span>悟性丹</span><el-input-number v-model="amt.rootBone" size="small" /><el-button size="small" type="primary" @click="add('rootBone')">加</el-button><el-button size="small" plain @click="setRes('rootBone')">设为</el-button></div>
         <div class="row"><span>混沌石</span><el-input-number v-model="amt.currency" size="small" /><el-button size="small" type="primary" @click="add('currency')">加</el-button><el-button size="small" plain @click="setRes('currency')">设为</el-button></div>
         <div class="row"><span>筹码</span><el-input-number v-model="amt.chips" size="small" /><el-button size="small" type="primary" @click="add('chips')">加</el-button><el-button size="small" plain @click="setRes('chips')">设为</el-button></div>
+        <div class="row"><span>财富免检</span><el-switch v-model="player.wealthExempt" size="small" /><span class="hint">GM 刷灵石/筹码会自动打开；开启后不受「灵石+筹码 50 亿上限」清空</span></div>
         <div class="row"><span>道痕</span><el-input-number v-model="amt.daoMark" size="small" :min="0" /><el-button size="small" type="primary" @click="setDaoMark">加</el-button><el-button size="small" plain @click="setDaoMarkValue">设为</el-button></div>
         <div class="row"><span>赛季分</span><el-input-number v-model="amt.seasonPts" size="small" :min="0" /><el-button size="small" type="primary" @click="setSeason">加</el-button><el-button size="small" plain @click="setSeasonValue">设为</el-button></div>
       </el-collapse-item>
@@ -229,8 +230,12 @@
   const hasClaimableCodex = computed(() => codexMilestones.value.some(m => m.claimable))
 
   const note = m => gameNotifys({ title: 'GM', message: m, type: 'success' })
-  const add = key => { player.value.props[key] = (player.value.props[key] || 0) + (amt[key] || 0); note('资源已加') }
-  const setRes = key => { player.value.props[key] = amt[key] || 0; note('资源已设置') }
+  // GM 刷出来的灵石/筹码不算异常数据：刷取即打上“财富免检”，跳过 50 亿上限体检
+  const markWealthExempt = key => {
+    if (key === 'money' || key === 'chips') player.value.wealthExempt = true
+  }
+  const add = key => { player.value.props[key] = (player.value.props[key] || 0) + (amt[key] || 0); markWealthExempt(key); note('资源已加') }
+  const setRes = key => { player.value.props[key] = amt[key] || 0; markWealthExempt(key); note('资源已设置') }
   const setDaoMark = () => { player.value.daoMark = (player.value.daoMark || 0) + (amt.daoMark || 0); note('道痕已加') }
   const setDaoMarkValue = () => { player.value.daoMark = amt.daoMark || 0; note('道痕已设置') }
   const setSeason = () => { if (!player.value.season) player.value.season = { points: 0 }; player.value.season.points = (player.value.season.points || 0) + (amt.seasonPts || 0); note('赛季分已加') }

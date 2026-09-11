@@ -125,6 +125,8 @@ export const useMainStore = defineStore('main', {
       tribulationCdUntil: 0,
       heroRank: 301,
       heroClaimDate: '',
+      // GM 刷的灵石/筹码豁免“财富上限体检”（超过 50 亿也不清空）
+      wealthExempt: false,
       realm: {
         stage: 0
       },

@@ -37,3 +37,7 @@ console.log('刚好等于上限不处理:', trimWealth(border), '→', JSON.stri
 const richForImport = { ...p, props: { ...p.props, money: 8_000_000_000, chips: 300_000_000 } }
 const richImport = importSaveText(exportSaveText({ name: 'x' }, richForImport))
 console.log('导入超限档:', richImport.ok, '| 清空数值', richImport.wealthTrimmed, '| 剩余合计', wealthTotal(richImport.player.props))
+// GM 刷出来的灵石/筹码带 wealthExempt 标记，不做体检
+const exempt = { ...p, wealthExempt: true, props: { ...p.props, money: 8_000_000_000, chips: 300_000_000 } }
+const exemptImport = importSaveText(exportSaveText({ name: 'x' }, exempt))
+console.log('GM 豁免档:', exemptImport.ok, '| 清空数值', exemptImport.wealthTrimmed, '| 合计', wealthTotal(exemptImport.player.props))

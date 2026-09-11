@@ -6,7 +6,7 @@
 
 import { ElNotification } from 'element-plus'
 import { seal, open, writeVault, readVault, backupSave, wipeVault, restoreBackup, listBackups, dropBackups, exportSaveText, importSaveText, auditPlayer, SAVE_KEY } from './saveVault.js'
-import { trimPlayerWealth, trimWealth } from './wealthGuard.js'
+import { trimPlayerWealth } from './wealthGuard.js'
 
 export const SAVE_VERSION = 2
 export {
@@ -59,7 +59,7 @@ const persistNow = store => {
   if (dead) return
   try {
     // 落盘前体检：灵石 + 筹码合计超限的部分按异常数据清空，脏数据不写进存档
-    trimWealth(store && store.player && store.player.props)
+    trimPlayerWealth(store && store.player)
     let raw
     try {
       if (store?.player) store.player.lastSaveAt = Date.now()

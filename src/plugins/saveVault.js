@@ -11,7 +11,7 @@
 
 import CryptoJS from 'crypto-js'
 import { playerPowerScore } from './breakthroughGate.js'
-import { trimWealth } from './wealthGuard.js'
+import { trimPlayerWealth } from './wealthGuard.js'
 import crypto from './crypto.js'
 
 export const SAVE_KEY = 'vuex'
@@ -232,8 +232,8 @@ export const importSaveText = text => {
   const chipsBefore = Number(props.chips) || 0
   const chipsTrimmed = Math.max(0, chipsBefore - IMPORT_CHIP_CAP)
   if (chipsTrimmed > 0) props.chips = IMPORT_CHIP_CAP
-  // 灵石 + 筹码合计超限的部分同样按异常数据清空
-  const wealthTrimmed = trimWealth(props)
+  // 灵石 + 筹码合计超限的部分同样按异常数据清空（GM 豁免档跳过）
+  const wealthTrimmed = trimPlayerWealth(data.player)
   return {
     ok: true,
     boss: data.boss,
