@@ -3,6 +3,8 @@ import { canCraft, recipeCostList, RECIPES } from '@/plugins/alchemy.js'
 import { taxOnWin, netAfterTax, GAMBLING_TAX_RATE } from '@/plugins/gamblingTax.js'
 import { petPowerStandard, petStats, petPowerScore, createCapturedPet, PET_QUALITIES } from '@/plugins/petSystem.js'
 import { TECH_GRADES } from '@/plugins/technique.js'
+import { battleMpPool, MP_CYCLE_MIN, MP_CYCLE_MAX } from '@/plugins/battleEngine.js'
+import { heroEnemy } from '@/plugins/heroBoard.js'
 import { TALISMANS, canCraftTalisman } from '@/plugins/talisman.js'
 import { FORMATIONS, formationStats, canUpgradeFormation } from '@/plugins/formation.js'
 import { craftTierMax, craftLevelOfTier } from '@/plugins/craft.js'
@@ -35,3 +37,8 @@ console.log('灵宠样例(lv144 凡品):', JSON.stringify({ ...petStats(mkPet(0,
 
 // 功法品阶倍率：逐阶 ×1.8（黄 1 → 道 357）
 console.log('功法品阶倍率:', TECH_GRADES.map(g => `${g.name} ${g.mult}`).join(' / '))
+
+// 战斗灵力池：随境界放宽（底子 150→600，轮数 1.2→2.2）
+console.log('灵力池底子(无神通):', [1, 40, 80, 120, 144].map(lv => `lv${lv}=${battleMpPool(lv, [])}`).join(' / '), '| 轮数', MP_CYCLE_MIN, '→', MP_CYCLE_MAX)
+console.log('灵力池(5 门道阶神通):', [1, 60, 100, 144].map(lv => `lv${lv}=${battleMpPool(lv, [3283, 3283, 3283, 3283, 3283])}`).join(' / '))
+console.log('豪杰灵力池:', [1, 100, 300].map(r => `rank${r}(lv${heroEnemy(r).level})=${heroEnemy(r).maxMp}`).join(' / '))

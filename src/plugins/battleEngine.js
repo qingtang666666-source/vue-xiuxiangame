@@ -30,12 +30,26 @@ export const ladderMoneyMult = level => {
   return 0.25
 }
 
-// 战斗灵力池按本场可上阵神通的消耗总额生成：约等于一轮半技能量。
-// 不再跟随气血无限膨胀，避免后期灵力永远用不完。
-const battleMaxMp = abilities => {
-  const totalCost = (abilities || []).reduce((sum, ab) => sum + Math.max(0, ab.mpCost || 0), 0)
-  return Math.max(150, Math.floor(totalCost * 1.2))
+// 战斗灵力池 = max(境界底子, 本场上阵神通总耗 × 轮数)
+//   · 轮数 = 把上阵神通各放一遍算一轮：低境界 1.2 轮 → 道祖 2.2 轮（境界越高越能多放几手）
+//   · 境界底子 = 150 → 600（1 级到道祖），保证少带/没带神通时也有基本灵力
+// 依旧不跟气血/战力膨胀，只跟「境界 × 实际神通消耗」走，避免后期灵力永远用不完。
+export const MP_CYCLE_MIN = 1.2
+export const MP_CYCLE_MAX = 2.2
+export const MP_FLOOR_MIN = 150
+export const MP_FLOOR_MAX = 600
+export const mpPoolOf = level => {
+  const lv = Math.max(1, Math.min(144, Math.floor(Number(level) || 1)))
+  const t = (lv - 1) / 143 // 境界进度 0~1
+  return { cycles: MP_CYCLE_MIN + (MP_CYCLE_MAX - MP_CYCLE_MIN) * t, floorMp: Math.floor(MP_FLOOR_MIN + (MP_FLOOR_MAX - MP_FLOOR_MIN) * t) }
 }
+// costs：本场上阵神通的灵力消耗列表（豪杰等 NPC 传自己的神通消耗，口径一致）
+export const battleMpPool = (level, costs = []) => {
+  const { cycles, floorMp } = mpPoolOf(level)
+  const totalCost = (costs || []).reduce((sum, c) => sum + Math.max(0, Number(c) || 0), 0)
+  return Math.max(floorMp, Math.floor(totalCost * cycles))
+}
+const battleMaxMp = (player, abilities) => battleMpPool(player?.level, (abilities || []).map(ab => ab.mpCost))
 const enemySkillCost = e => Math.max(20, Math.floor(16 + (e?.level || 1) * 0.22 + ((e?.name || '').includes('首领') ? 8 : 0)))
 
 // —— 把玩家快照成战斗实体 ——
@@ -44,7 +58,7 @@ export const createPlayerEntity = player => {
   const ex = eff.extras || {}
   const maxHp = eff.maxHealth || player.maxHealth || 1000
   const abilities = getPlayerAbilities(player)
-  const maxMp = battleMaxMp(abilities)
+  const maxMp = battleMaxMp(player, abilities)
   return {
     id: '__player__',
     isPlayer: true,
@@ -133,7 +147,11 @@ export const startBattle = (player, enemies = buildEnemies(player, {}), opts = {
 export const monsterToEntity = (m, idx = 0) => {
   const hp = m?.health || m?.maxHp || 100
   const elite = (m?.name || '').includes('首领')
-  const maxMp = Math.max(80, Math.floor(70 + (m?.level || 1) * 1.2 + (elite ? 60 : 0)))
+  // 自带灵力池的敌人（如豪杰，按自己境界与神通消耗算）优先用自己的；野怪沿用旧公式
+  const ownMp = Number(m?.maxMp)
+  const maxMp = Number.isFinite(ownMp) && ownMp > 0
+    ? Math.floor(ownMp)
+    : Math.max(80, Math.floor(70 + (m?.level || 1) * 1.2 + (elite ? 60 : 0)))
   return {
     id: `cm-${idx}`,
     isPlayer: false,

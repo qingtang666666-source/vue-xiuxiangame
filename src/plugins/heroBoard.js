@@ -6,6 +6,7 @@ import { gearRealmMult } from './craft'
 import { FORMATIONS } from './formation'
 import { TECHNIQUES, TECH_GRADES, techGradeForLevel } from './technique'
 import { petStats, petPowerScore, petQualityOf } from './petSystem'
+import { battleMpPool } from './battleEngine'
 
 export const HERO_COUNT = 300
 // 豪杰基础属性缩放：让豪杰在同系统加成下保持可追赶，而不是靠裸装数值碾压
@@ -329,6 +330,8 @@ export const heroEnemy = (rank, name) => {
     divinePower: divine.power,
     pet: pet.label,
     abilities: [divine],
+    // 灵力池与玩家同口径：按自己境界算轮数/底子，按「上阵神通」算消耗（豪杰满配 5 门主动功法）
+    maxMp: battleMpPool(lv, Array(5).fill(divine.mpCost)),
     skillChance: r <= 20 ? 0.55 : r <= 90 ? 0.44 : 0.34,
     health: st.health,
     maxHp: st.health,
